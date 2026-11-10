@@ -7,3 +7,6 @@ __pycache__/
 .DS_Store
 .terraform/
 *.tfstate*
+
+# generated recipe photos (uploaded to Supabase instead)
+infra/scripts/out/

@@ -175,6 +175,9 @@ export default function Recipes() {
         ))}
       </ul>
       {!status && shown.length === 0 && <p>Нічого не знайдено.</p>}
+      <p>
+        <small>Фото в каталозі створені штучним інтелектом і мають ілюстративний характер.</small>
+      </p>
     </div>
   )
 }
