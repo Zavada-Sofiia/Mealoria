@@ -1,8 +1,21 @@
+import os
+
 from fastapi import Depends, FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.auth import current_user_id
 
 app = FastAPI(title="Mealoria API")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=os.environ.get(
+        "CORS_ORIGINS",
+        "https://mealoria.zavada-sofia.workers.dev,http://localhost:5173",
+    ).split(","),
+    allow_headers=["Authorization", "Content-Type"],
+    allow_methods=["*"],
+)
 
 
 @app.get("/api/health")
