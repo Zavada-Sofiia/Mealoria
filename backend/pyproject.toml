@@ -2,7 +2,7 @@
 name = "mealoria-backend"
 version = "0.1.0"
 requires-python = ">=3.11"
-dependencies = ["fastapi", "uvicorn[standard]"]
+dependencies = ["fastapi", "uvicorn[standard]", "pyjwt[crypto]"]
 
 [project.optional-dependencies]
 dev = ["pytest", "httpx"]
