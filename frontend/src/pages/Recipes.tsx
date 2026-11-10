@@ -94,7 +94,9 @@ export default function Recipes() {
     }
   }
 
-  const shown = recipes.filter((r) => !category || r.category === category)
+  const shown = recipes
+    .filter((r) => !category || r.category === category)
+    .sort((a, b) => CATEGORIES.indexOf(a.category) - CATEGORIES.indexOf(b.category))
 
   return (
     <div>
