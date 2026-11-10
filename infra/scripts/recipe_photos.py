@@ -12,6 +12,7 @@ Upload the files from out/ to Supabase Storage: bucket dish-photos, folder recip
 import base64
 import json
 import os
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -74,6 +75,11 @@ def main() -> None:
     account, token = os.environ.get("CF_ACCOUNT_ID"), os.environ.get("CF_API_TOKEN")
     if not dry and not (account and token):
         sys.exit("Set CF_ACCOUNT_ID and CF_API_TOKEN (or use --dry-run).")
+    if not dry and not re.fullmatch(r"[0-9a-f]{32}", account):
+        sys.exit(
+            "CF_ACCOUNT_ID must be the 32-character hex Account ID from the Cloudflare "
+            "dashboard, not a placeholder."
+        )
     OUT.mkdir(exist_ok=True)
     failed = 0
     for slug, (name, prompt) in RECIPES.items():
@@ -87,9 +93,12 @@ def main() -> None:
         try:
             target.write_bytes(generate(prompt, account, token))
             print(f"ok     {slug}  ({name})")
-        except Exception as e:  # keep going so one failure does not lose the rest
+        except Exception as e:
             failed += 1
             print(f"FAILED {slug}: {e}")
+            if failed == 1 and not any(OUT.glob("*.jpg")):
+                sys.exit("\nThe very first request failed, so something is wrong with the "
+                         "Account ID or the token. Fix it and run the script again.")
     if not dry:
         print(f"\nDone. {len(RECIPES) - failed}/{len(RECIPES)} images in {OUT}")
 
