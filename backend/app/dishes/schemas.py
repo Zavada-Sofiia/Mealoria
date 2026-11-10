@@ -14,6 +14,7 @@ class DishIn(BaseModel):
     protein_g: float | None = Field(default=None, ge=0, le=1000)
     fat_g: float | None = Field(default=None, ge=0, le=1000)
     carbs_g: float | None = Field(default=None, ge=0, le=1000)
+    photo_url: str | None = Field(default=None, max_length=500)
 
 
 class DishOut(DishIn):

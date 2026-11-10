@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Response
 from fastapi.security import HTTPAuthorizationCredentials
 
 from app.auth import bearer, current_user_id
+from app.dishes.photos import check_photo_url
 from app.dishes.schemas import DishIn, DishOut
 from app.dishes.store import SupabaseDishStore
 
@@ -30,6 +31,7 @@ def create_dish(
     user_id: str = Depends(current_user_id),
     store: SupabaseDishStore = Depends(get_store),
 ):
+    check_photo_url(body.photo_url, user_id)
     return store.create(user_id, body.model_dump())
 
 
@@ -37,9 +39,10 @@ def create_dish(
 def update_dish(
     dish_id: UUID,
     body: DishIn,
-    _: str = Depends(current_user_id),
+    user_id: str = Depends(current_user_id),
     store: SupabaseDishStore = Depends(get_store),
 ):
+    check_photo_url(body.photo_url, user_id)
     row = store.update(str(dish_id), body.model_dump())
     if row is None:
         raise HTTPException(status_code=404, detail="Dish not found")

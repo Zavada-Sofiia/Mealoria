@@ -16,6 +16,7 @@ type Recipe = {
   cuisine: string | null
   cook_minutes: number
   budget: string
+  photo_url: string | null
 }
 type Dish = { id: string }
 
@@ -129,6 +130,13 @@ export default function Recipes() {
       <ul className="cards">
         {shown.map((r) => (
           <li key={r.id}>
+            <div className="media">
+              {r.photo_url ? (
+                <img className="thumb" src={r.photo_url} alt={r.name} loading="lazy" />
+              ) : (
+                <div className="thumb empty">🍽</div>
+              )}
+              <div>
             <strong>{r.name}</strong> · {r.category} · {r.calories} ккал · Б {r.protein_g} / Ж{' '}
             {r.fat_g} / В {r.carbs_g} г
             <div>
@@ -161,6 +169,8 @@ export default function Recipes() {
                 <button onClick={() => addToCalendar(r)}>Додати</button>
               </div>
             )}
+              </div>
+            </div>
           </li>
         ))}
       </ul>

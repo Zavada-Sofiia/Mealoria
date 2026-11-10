@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { apiFetch } from '../api/client'
+import { deleteDishPhoto, uploadDishPhoto } from '../api/photos'
 
 type Ingredient = { name: string; amount: string }
 type DishInput = {
@@ -11,16 +12,19 @@ type DishInput = {
   protein_g: number | null
   fat_g: number | null
   carbs_g: number | null
+  photo_url: string | null
 }
 type Dish = DishInput & { id: string }
 
-const EMPTY: DishInput = { name: '', recipe: '', ingredients: [], calories: null, protein_g: null, fat_g: null, carbs_g: null }
+const EMPTY: DishInput = { name: '', recipe: '', ingredients: [], calories: null, protein_g: null, fat_g: null, carbs_g: null, photo_url: null }
 
 export default function Dishes() {
   const [dishes, setDishes] = useState<Dish[]>([])
   const [form, setForm] = useState<DishInput>(EMPTY)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [status, setStatus] = useState('Завантаження…')
+  const [uploading, setUploading] = useState(false)
+  const editedPhoto = editingId ? (dishes.find((d) => d.id === editingId)?.photo_url ?? null) : null
 
   useEffect(() => {
     apiFetch<Dish[]>('/api/dishes')
@@ -38,6 +42,23 @@ export default function Dishes() {
     }))
   }
 
+  async function pickPhoto(file: File | undefined) {
+    if (!file) return
+    setUploading(true)
+    try {
+      const url = await uploadDishPhoto(file)
+      const old = form.photo_url
+      setForm((f) => ({ ...f, photo_url: url }))
+      // an unsaved earlier upload would otherwise stay in storage forever
+      if (old && old !== editedPhoto) await deleteDishPhoto(old)
+      setStatus('')
+    } catch {
+      setStatus('Не вдалося завантажити фото. Спробуйте інший файл (JPEG, PNG або WebP)')
+    } finally {
+      setUploading(false)
+    }
+  }
+
   async function save(e: FormEvent) {
     e.preventDefault()
     const body = JSON.stringify({
@@ -53,6 +74,7 @@ export default function Dishes() {
         const created = await apiFetch<Dish>('/api/dishes', { ...init, method: 'POST' })
         setDishes((ds) => [created, ...ds])
       }
+      if (editedPhoto && editedPhoto !== form.photo_url) await deleteDishPhoto(editedPhoto)
       setForm(EMPTY)
       setEditingId(null)
       setStatus('Збережено')
@@ -65,6 +87,7 @@ export default function Dishes() {
     if (!confirm('Видалити страву?')) return
     try {
       await apiFetch<void>(`/api/dishes/${id}`, { method: 'DELETE' })
+      void deleteDishPhoto(dishes.find((d) => d.id === id)?.photo_url ?? null)
       setDishes((ds) => ds.filter((d) => d.id !== id))
     } catch {
       setStatus('Не вдалося видалити')
@@ -81,6 +104,7 @@ export default function Dishes() {
       protein_g: d.protein_g,
       fat_g: d.fat_g,
       carbs_g: d.carbs_g,
+      photo_url: d.photo_url,
     })
   }
 
@@ -151,6 +175,31 @@ export default function Dishes() {
             + Інгредієнт
           </button>
         </fieldset>
+        <div className="photo-field">
+          <strong style={{ fontSize: '0.92rem' }}>Фото</strong>
+          <div style={{ marginTop: 6 }}>
+            {form.photo_url && <img src={form.photo_url} alt="Фото страви" />}
+            <div className="actions" style={{ marginBottom: 16 }}>
+              <label className="inline" style={{ margin: 0 }}>
+                <input type="file" accept="image/*" disabled={uploading}
+                  onChange={(e) => {
+                    void pickPhoto(e.target.files?.[0])
+                    e.target.value = ''
+                  }} />
+              </label>
+              {uploading && <span className="muted">Завантажуємо…</span>}
+              {form.photo_url && !uploading && (
+                <button type="button" className="danger"
+                  onClick={() => {
+                    if (form.photo_url !== editedPhoto) void deleteDishPhoto(form.photo_url)
+                    setForm({ ...form, photo_url: null })
+                  }}>
+                  Прибрати фото
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
         <label>
           Рецепт
           <textarea value={form.recipe} maxLength={5000}
@@ -171,6 +220,13 @@ export default function Dishes() {
       <ul className="cards">
         {dishes.map((d) => (
           <li key={d.id}>
+            <div className="media">
+              {d.photo_url ? (
+                <img className="thumb" src={d.photo_url} alt="" loading="lazy" />
+              ) : (
+                <div className="thumb empty">🍽</div>
+              )}
+              <div>
             <strong>{d.name}</strong>
             {d.calories != null && ` · ${d.calories} ккал`}
             {(d.protein_g != null || d.fat_g != null || d.carbs_g != null) &&
@@ -183,6 +239,8 @@ export default function Dishes() {
             <button className="danger" onClick={() => remove(d.id)}>
               Видалити
             </button>
+            </div>
+              </div>
             </div>
           </li>
         ))}

@@ -18,3 +18,4 @@ class RecipeOut(BaseModel):
     cuisine: str | None = None
     cook_minutes: int
     budget: str
+    photo_url: str | None = None

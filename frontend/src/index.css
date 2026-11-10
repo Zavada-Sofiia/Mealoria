@@ -347,6 +347,12 @@ fieldset label {
 input[type='number'] {
   max-width: 220px;
 }
+input[type='file'] {
+  width: auto;
+  padding: 0;
+  border: 0;
+  background: none;
+}
 input[type='date'] {
   width: auto;
 }
@@ -447,6 +453,44 @@ progress {
   width: 100%;
   height: 12px;
   accent-color: var(--teal);
+}
+
+.media {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+.media > div:not(.thumb) {
+  flex: 1;
+  min-width: 0;
+}
+.thumb {
+  flex: none;
+  width: 96px;
+  height: 96px;
+  border-radius: 10px;
+  object-fit: cover;
+  background: var(--teal-soft);
+}
+.thumb.empty {
+  display: grid;
+  place-items: center;
+  color: var(--teal);
+  font-size: 1.8rem;
+}
+.photo-field img {
+  display: block;
+  width: 160px;
+  height: 160px;
+  object-fit: cover;
+  border-radius: 10px;
+  margin-bottom: 8px;
+}
+@media (max-width: 480px) {
+  .thumb {
+    width: 72px;
+    height: 72px;
+  }
 }
 
 /* ---------- calendar ---------- */

@@ -4,7 +4,7 @@ import httpx
 
 FIELDS = (
     "id,name,category,recipe,ingredients,calories,protein_g,fat_g,carbs_g,"
-    "diet,allergens,cuisine,cook_minutes,budget"
+    "diet,allergens,cuisine,cook_minutes,budget,photo_url"
 )
 
 
