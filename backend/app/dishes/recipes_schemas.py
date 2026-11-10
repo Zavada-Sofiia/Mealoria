@@ -13,3 +13,8 @@ class RecipeOut(BaseModel):
     protein_g: float
     fat_g: float
     carbs_g: float
+    diet: str
+    allergens: list[str]
+    cuisine: str | None = None
+    cook_minutes: int
+    budget: str

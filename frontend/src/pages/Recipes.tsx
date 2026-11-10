@@ -11,10 +11,30 @@ type Recipe = {
   protein_g: number
   fat_g: number
   carbs_g: number
+  diet: string
+  allergens: string[]
+  cuisine: string | null
+  cook_minutes: number
+  budget: string
 }
 type Dish = { id: string }
 
 const CATEGORIES = ['сніданок', 'обід', 'вечеря', 'перекус']
+const DIET_LABEL: Record<string, string> = {
+  vegan: 'веганське',
+  vegetarian: 'вегетаріанське',
+  pescatarian: 'з рибою',
+}
+const ALLERGEN_LABEL: Record<string, string> = {
+  gluten: 'глютен',
+  lactose: 'лактоза',
+  nuts: 'горіхи',
+  peanuts: 'арахіс',
+  eggs: 'яйця',
+  fish: 'риба',
+  seafood: 'морепродукти',
+  soy: 'соя',
+}
 const today = () => {
   const d = new Date()
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
@@ -24,6 +44,7 @@ export default function Recipes() {
   const [recipes, setRecipes] = useState<Recipe[]>([])
   const [query, setQuery] = useState('')
   const [category, setCategory] = useState('')
+  const [forMe, setForMe] = useState(false)
   const [status, setStatus] = useState('Завантаження…')
   const [planning, setPlanning] = useState<string | null>(null)
   const [date, setDate] = useState(today())
@@ -32,7 +53,7 @@ export default function Recipes() {
   useEffect(() => {
     let current = true
     const timer = setTimeout(() => {
-      apiFetch<Recipe[]>(`/api/recipes?q=${encodeURIComponent(query)}`)
+      apiFetch<Recipe[]>(`/api/recipes?q=${encodeURIComponent(query)}&for_me=${forMe}`)
         .then((r) => {
           if (!current) return
           setRecipes(r)
@@ -44,7 +65,7 @@ export default function Recipes() {
       current = false
       clearTimeout(timer)
     }
-  }, [query])
+  }, [query, forMe])
 
   const json = { 'Content-Type': 'application/json' }
 
@@ -88,6 +109,20 @@ export default function Recipes() {
           ))}
         </select>
       </p>
+      <p>
+        <label>
+          <input type="checkbox" checked={forMe} onChange={(e) => setForMe(e.target.checked)} />{' '}
+          Враховувати мої вподобання (дієта, алергени, час, бюджет)
+        </label>
+      </p>
+      {forMe && (
+        <p>
+          <small>
+            Фільтр працює за відповідями з профілю. Інші алергії, вписані текстом, не враховуються,
+            тому завжди перевіряйте склад самостійно.
+          </small>
+        </p>
+      )}
       {status && <p>{status}</p>}
 
       <ul>
@@ -95,6 +130,14 @@ export default function Recipes() {
           <li key={r.id}>
             <strong>{r.name}</strong> · {r.category} · {r.calories} ккал · Б {r.protein_g} / Ж{' '}
             {r.fat_g} / В {r.carbs_g} г
+            <div>
+              <small>
+                {r.cook_minutes} хв
+                {r.diet !== 'any' && ` · ${DIET_LABEL[r.diet]}`}
+                {r.allergens.length > 0 &&
+                  ` · містить: ${r.allergens.map((a) => ALLERGEN_LABEL[a] ?? a).join(', ')}`}
+              </small>
+            </div>
             <details>
               <summary>Рецепт</summary>
               <div>{r.ingredients.map((i) => `${i.name} (${i.amount})`).join(', ')}</div>
