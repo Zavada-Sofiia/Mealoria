@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.auth import current_user_id
 from app.calendar.router import router as calendar_router
+from app.calories.router import router as calories_router
 from app.dishes.recipes_router import router as recipes_router
 from app.dishes.router import router as dishes_router
 from app.limits.router import router as limits_router
@@ -28,6 +29,7 @@ app.include_router(dishes_router)
 app.include_router(recipes_router)
 app.include_router(calendar_router)
 app.include_router(shopping_router)
+app.include_router(calories_router)
 app.include_router(limits_router)
 
 

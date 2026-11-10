@@ -7,6 +7,7 @@ export default function Nav() {
       <Link to="/">Календар</Link> · <Link to="/dishes">Мої страви</Link> ·{' '}
       <Link to="/recipes">Рецепти</Link> ·{' '}
       <Link to="/shopping">Продукти</Link> ·{' '}
+      <Link to="/calories">Калорії</Link> ·{' '}
       <Link to="/profile">Профіль</Link> ·{' '}
       <Link to="/pricing">Тарифи</Link> ·{' '}
       <Link to="/support">Підтримати</Link> ·{' '}
