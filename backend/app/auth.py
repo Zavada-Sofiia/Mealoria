@@ -10,7 +10,7 @@ log = logging.getLogger(__name__)
 
 
 def _supabase_url() -> str:
-    return os.environ["SUPABASE_URL"].rstrip("/")
+    return os.environ["SUPABASE_URL"].strip().rstrip("/.")
 
 
 def _jwks_client() -> jwt.PyJWKClient:
