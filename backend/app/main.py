@@ -4,6 +4,7 @@ from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.auth import current_user_id
+from app.profile.router import router as profile_router
 
 app = FastAPI(title="Mealoria API")
 
@@ -16,6 +17,8 @@ app.add_middleware(
     allow_headers=["Authorization", "Content-Type"],
     allow_methods=["*"],
 )
+
+app.include_router(profile_router)
 
 
 @app.get("/api/health")

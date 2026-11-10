@@ -4,6 +4,7 @@ import type { Session } from '@supabase/supabase-js'
 import { supabase } from './api/supabase'
 import Auth from './pages/Auth'
 import Placeholder from './pages/Placeholder'
+import Profile from './pages/Profile'
 
 function App() {
   const [session, setSession] = useState<Session | null | undefined>(undefined)
@@ -26,7 +27,7 @@ function App() {
         />
         <Route
           path="/profile"
-          element={session ? <Placeholder title="Профіль" /> : <Navigate to="/auth" />}
+          element={session ? <Profile /> : <Navigate to="/auth" />}
         />
       </Routes>
     </BrowserRouter>
