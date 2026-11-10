@@ -4,8 +4,8 @@ import type { Session } from '@supabase/supabase-js'
 import { supabase } from './api/supabase'
 import Nav from './components/Nav'
 import Auth from './pages/Auth'
+import Calendar from './pages/Calendar'
 import Dishes from './pages/Dishes'
-import Placeholder from './pages/Placeholder'
 import Profile from './pages/Profile'
 
 function App() {
@@ -26,7 +26,7 @@ function App() {
         <Route path="/auth" element={session ? <Navigate to="/" /> : <Auth />} />
         <Route
           path="/"
-          element={session ? <Placeholder title="Календар" /> : <Navigate to="/auth" />}
+          element={session ? <Calendar /> : <Navigate to="/auth" />}
         />
         <Route
           path="/dishes"

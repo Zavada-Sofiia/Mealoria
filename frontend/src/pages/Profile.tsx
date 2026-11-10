@@ -1,6 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { apiFetch } from '../api/client'
-import { supabase } from '../api/supabase'
 
 type ProfileData = {
   sex: 'male' | 'female'
@@ -132,7 +131,6 @@ export default function Profile() {
       </label>
 
       <button type="submit">Зберегти</button>
-      <button type="button" onClick={() => supabase.auth.signOut()}>Вийти</button>
       {status && <p>{status}</p>}
     </form>
   )
