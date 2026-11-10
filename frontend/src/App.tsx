@@ -7,6 +7,7 @@ import PublicNav from './components/PublicNav'
 import Auth from './pages/Auth'
 import Calendar from './pages/Calendar'
 import Calories from './pages/Calories'
+import Dashboard from './pages/Dashboard'
 import Dishes from './pages/Dishes'
 import Home from './pages/Home'
 import Pricing from './pages/Pricing'
@@ -34,7 +35,11 @@ function App() {
         <Route path="/auth" element={session ? <Navigate to="/" /> : <Auth />} />
         <Route
           path="/"
-          element={session ? <Calendar /> : <Home />}
+          element={session ? <Dashboard /> : <Home />}
+        />
+        <Route
+          path="/calendar"
+          element={session ? <Calendar /> : <Navigate to="/auth" />}
         />
         <Route path="/pricing" element={<Pricing session={session} />} />
         <Route path="/support" element={<Support />} />

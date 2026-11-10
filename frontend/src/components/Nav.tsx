@@ -3,14 +3,15 @@ import { useEffect } from 'react'
 import { supabase } from '../api/supabase'
 
 const TABS = [
-  ['/', 'Календар'],
+  ['/', 'Головна'],
+  ['/calendar', 'Календар'],
   ['/dishes', 'Страви'],
   ['/shopping', 'Продукти'],
-  ['/calories', 'Калорії'],
   ['/profile', 'Профіль'],
 ]
 const MAIN = [
-  ['/', 'Календар'],
+  ['/', 'Головна'],
+  ['/calendar', 'Календар'],
   ['/dishes', 'Мої страви'],
   ['/recipes', 'Рецепти'],
   ['/shopping', 'Список продуктів'],

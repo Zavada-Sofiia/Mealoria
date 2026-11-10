@@ -99,7 +99,7 @@ export default function Shopping() {
       {status && <p className="status">{status}</p>}
       {!status && data.items.length === 0 && data.at_home.length === 0 && (
         <p>
-          Список порожній. Додайте страви з інгредієнтами в <Link to="/">календар</Link>.
+          Список порожній. Додайте страви з інгредієнтами в <Link to="/calendar">календар</Link>.
         </p>
       )}
 

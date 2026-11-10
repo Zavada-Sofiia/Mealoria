@@ -12,6 +12,7 @@ import {
 import { Link } from 'react-router-dom'
 import { apiFetch } from '../api/client'
 import { addDays, iso, mondayOf, pad } from '../dates'
+import { mealName } from '../meals'
 
 type Dish = { id: string; name: string; calories: number | null }
 type Entry = { id: string; date: string; slot: number; dish: Dish | null }
@@ -21,16 +22,6 @@ type ProfileResponse = {
 }
 
 const DAY_NAMES = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд']
-const MEAL_NAMES: Record<number, string[]> = {
-  1: ['Їжа'],
-  2: ['Сніданок', 'Вечеря'],
-  3: ['Сніданок', 'Обід', 'Вечеря'],
-  4: ['Сніданок', 'Обід', 'Перекус', 'Вечеря'],
-  5: ['Сніданок', 'Перекус', 'Обід', 'Перекус', 'Вечеря'],
-}
-
-const mealName = (count: number, slot: number) => MEAL_NAMES[count]?.[slot] ?? `Прийом ${slot + 1}`
-
 function Draggable({ id, children }: { id: string; children: React.ReactNode }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id })
   return (
