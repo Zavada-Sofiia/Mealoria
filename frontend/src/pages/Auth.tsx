@@ -23,6 +23,15 @@ export default function Auth() {
     navigate('/')
   }
 
+  async function signInWithGoogle() {
+    setMessage('')
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: window.location.origin },
+    })
+    if (error) setMessage(error.message)
+  }
+
   return (
     <form onSubmit={submit}>
       <h1>{mode === 'signin' ? 'Вхід' : 'Реєстрація'}</h1>
@@ -44,6 +53,10 @@ export default function Auth() {
       <button type="submit">{mode === 'signin' ? 'Увійти' : 'Зареєструватися'}</button>
       <button type="button" onClick={() => setMode(mode === 'signin' ? 'signup' : 'signin')}>
         {mode === 'signin' ? 'Створити акаунт' : 'Вже є акаунт'}
+      </button>
+      <hr />
+      <button type="button" onClick={signInWithGoogle}>
+        Увійти через Google
       </button>
       {message && <p>{message}</p>}
     </form>
