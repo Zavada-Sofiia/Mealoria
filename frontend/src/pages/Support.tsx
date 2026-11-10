@@ -2,21 +2,21 @@ const DONATION_URL = import.meta.env.VITE_DONATION_URL as string | undefined
 
 export default function Support() {
   return (
-    <div>
+    <div className="narrow">
       <h1>Підтримати проєкт</h1>
-      <p>
-        Mealoria робить невелика команда. Якщо сервіс став вам у пригоді, ви можете підтримати
-        його добровільним донатом у будь-якій сумі.
-      </p>
-      {DONATION_URL ? (
+      <section className="card red">
         <p>
-          <a href={DONATION_URL} target="_blank" rel="noreferrer">
-            <button>Підтримати</button>
-          </a>
+          Mealoria робить невелика команда. Якщо сервіс став вам у пригоді, ви можете підтримати
+          його добровільним донатом у будь-якій сумі.
         </p>
-      ) : (
-        <p>Посилання для донатів скоро з'явиться.</p>
-      )}
+        {DONATION_URL ? (
+          <a href={DONATION_URL} target="_blank" rel="noreferrer">
+            <button className="big">Підтримати</button>
+          </a>
+        ) : (
+          <p className="status">Посилання для донатів скоро з'явиться.</p>
+        )}
+      </section>
     </div>
   )
 }

@@ -88,23 +88,25 @@ export default function Shopping() {
   return (
     <div>
       <h1>Список продуктів</h1>
-      <p>
-        <button onClick={() => goToWeek(addDays(weekStart, -7))}>← Тиждень</button> {start} —{' '}
-        {iso(addDays(weekStart, 6))}{' '}
-        <button onClick={() => goToWeek(addDays(weekStart, 7))}>Тиждень →</button>{' '}
+      <div className="week-nav">
+        <button onClick={() => goToWeek(addDays(weekStart, -7))}>←</button>
+        <strong>
+          {start} — {iso(addDays(weekStart, 6))}
+        </strong>
+        <button onClick={() => goToWeek(addDays(weekStart, 7))}>→</button>
         <button onClick={() => goToWeek(mondayOf(new Date()))}>Сьогодні</button>
-      </p>
-      {status && <p>{status}</p>}
+      </div>
+      {status && <p className="status">{status}</p>}
       {!status && data.items.length === 0 && data.at_home.length === 0 && (
         <p>
           Список порожній. Додайте страви з інгредієнтами в <Link to="/">календар</Link>.
         </p>
       )}
 
-      <ul style={{ listStyle: 'none', padding: 0 }}>
+      <ul className="cards">
         {[...todo, ...done].map((i) => (
           <li key={i.name} style={{ textDecoration: i.checked ? 'line-through' : undefined, opacity: i.checked ? 0.6 : 1 }}>
-            <label>
+            <label className="inline" style={{ margin: 0 }}>
               <input type="checkbox" checked={i.checked} onChange={() => toggle(i)} /> {i.name}
               {i.amount && ` — ${i.amount}`}
             </label>
@@ -113,13 +115,13 @@ export default function Shopping() {
       </ul>
 
       <h2>Вже є вдома</h2>
-      <p>Ці продукти не потраплять до списку.</p>
-      <form onSubmit={addPantry}>
-        <input placeholder="Наприклад, сіль" value={newItem} maxLength={100}
-          onChange={(e) => setNewItem(e.target.value)} />{' '}
+      <p className="muted">Ці продукти не потраплять до списку.</p>
+      <form onSubmit={addPantry} className="actions" style={{ marginBottom: 12 }}>
+        <input placeholder="Наприклад, сіль" value={newItem} maxLength={100} style={{ maxWidth: 280 }}
+          onChange={(e) => setNewItem(e.target.value)} />
         <button type="submit">Додати</button>
       </form>
-      <ul>
+      <ul className="cards">
         {pantry.map((p) => (
           <li key={p.id}>
             {p.name} <button onClick={() => removePantry(p.id)}>×</button>

@@ -49,14 +49,14 @@ function DaySummary() {
   const diff = target ? Math.round(total - target) : null
 
   return (
-    <section>
-      <h2>День</h2>
-      <p>
-        <button onClick={() => goTo(addDays(date, -1))}>←</button>{' '}
-        <input type="date" value={day} onChange={(e) => e.target.value && goTo(new Date(e.target.value + 'T00:00'))} />{' '}
+    <section className="card">
+      <h2 style={{ marginTop: 0 }}>День</h2>
+      <div className="week-nav">
+        <button onClick={() => goTo(addDays(date, -1))}>←</button>
+        <input type="date" value={day} onChange={(e) => e.target.value && goTo(new Date(e.target.value + 'T00:00'))} />
         <button onClick={() => goTo(addDays(date, 1))}>→</button>
-      </p>
-      {status && <p>{status}</p>}
+      </div>
+      {status && <p className="status">{status}</p>}
       {data && (
         <>
           <p>
@@ -141,16 +141,16 @@ function DishCalculator() {
   }
 
   return (
-    <section>
-      <h2>Калькулятор страви</h2>
-      <form onSubmit={search}>
-        <input placeholder="Продукт, наприклад гречка" value={query}
-          onChange={(e) => setQuery(e.target.value)} />{' '}
+    <section className="card red">
+      <h2 style={{ marginTop: 0 }}>Калькулятор страви</h2>
+      <form onSubmit={search} className="actions" style={{ marginBottom: 12 }}>
+        <input placeholder="Продукт, наприклад гречка" value={query} style={{ maxWidth: 320 }}
+          onChange={(e) => setQuery(e.target.value)} />
         <button type="submit">Знайти</button>
       </form>
-      {status && <p>{status}</p>}
+      {status && <p className="status">{status}</p>}
 
-      <ul>
+      <ul className="cards">
         {results.map((f) => (
           <li key={f.name}>
             {f.name} · {f.kcal_100g} ккал / 100 г{' '}
@@ -162,7 +162,7 @@ function DishCalculator() {
       {lines.length > 0 && (
         <>
           <h3>Склад</h3>
-          <ul>
+          <ul className="cards">
             {lines.map((l, i) => (
               <li key={i}>
                 {l.name}{' '}

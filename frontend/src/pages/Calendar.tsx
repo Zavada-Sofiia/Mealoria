@@ -55,16 +55,7 @@ function Draggable({ id, children }: { id: string; children: React.ReactNode }) 
 function Cell({ id, children }: { id: string; children: React.ReactNode }) {
   const { setNodeRef, isOver } = useDroppable({ id })
   return (
-    <td
-      ref={setNodeRef}
-      style={{
-        verticalAlign: 'top',
-        minWidth: 110,
-        height: 64,
-        border: '1px solid #8884',
-        background: isOver ? '#8882' : undefined,
-      }}
-    >
+    <td ref={setNodeRef} className={isOver ? 'drop-over' : undefined}>
       {children}
     </td>
   )
@@ -164,21 +155,23 @@ export default function Calendar() {
           Кількість прийомів їжі береться з <Link to="/profile">профілю</Link>. Поки що показано 3.
         </p>
       )}
-      <p>
-        <button onClick={() => goToWeek(addDays(weekStart, -7))}>← Тиждень</button>{' '}
-        {iso(weekStart)} — {iso(addDays(weekStart, 6))}{' '}
-        <button onClick={() => goToWeek(addDays(weekStart, 7))}>Тиждень →</button>{' '}
+      <div className="week-nav">
+        <button onClick={() => goToWeek(addDays(weekStart, -7))}>←</button>
+        <strong>
+          {iso(weekStart)} — {iso(addDays(weekStart, 6))}
+        </strong>
+        <button onClick={() => goToWeek(addDays(weekStart, 7))}>→</button>
         <button onClick={() => goToWeek(mondayOf(new Date()))}>Сьогодні</button>
-      </p>
-      {status && <p>{status}</p>}
+      </div>
+      {status && <p className="status">{status}</p>}
 
       <DndContext sensors={sensors} onDragEnd={onDragEnd}>
         <div>
           <strong>Мої страви</strong> (перетягніть у клітинку):
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, margin: '8px 0 16px' }}>
+          <div className="palette">
             {dishes.map((d) => (
               <Draggable key={d.id} id={`dish:${d.id}`}>
-                <span style={{ border: '1px solid #8886', borderRadius: 6, padding: '4px 8px' }}>
+                <span className="chip">
                   {d.name}
                   {d.calories != null && ` · ${d.calories}`}
                 </span>
@@ -188,8 +181,8 @@ export default function Calendar() {
           </div>
         </div>
 
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ borderCollapse: 'collapse' }}>
+        <div className="week-scroll">
+          <table className="week">
             <thead>
               <tr>
                 <th />
@@ -212,8 +205,8 @@ export default function Calendar() {
                           .filter((e) => e.date === date && e.slot === slot)
                           .map((e) => (
                             <Draggable key={e.id} id={`entry:${e.id}`}>
-                              <div>
-                                {e.dish?.name ?? '—'}{' '}
+                              <div className="entry">
+                                <span>{e.dish?.name ?? '—'}</span>
                                 <button
                                   onPointerDown={(ev) => ev.stopPropagation()}
                                   onClick={() => remove(e.id)}
@@ -236,7 +229,7 @@ export default function Calendar() {
                 {days.map((d) => {
                   const total = dayCalories(iso(d))
                   return (
-                    <td key={iso(d)} style={{ textAlign: 'center' }}>
+                    <td key={iso(d)}>
                       {total}
                       {target ? ` / ${target}` : ''}
                     </td>

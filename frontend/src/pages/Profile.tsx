@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
+import { Link } from 'react-router-dom'
 import { apiFetch } from '../api/client'
 
 type ProfileData = {
@@ -167,6 +168,8 @@ export default function Profile() {
     <form onSubmit={save}>
       <h1>Профіль</h1>
 
+      <section className="card">
+      <h2 style={{ marginTop: 0 }}>Про вас</h2>
       <label>
         Стать
         <select value={form.sex} onChange={(e) => set('sex', e.target.value as ProfileData['sex'])}>
@@ -174,6 +177,7 @@ export default function Profile() {
           <option value="male">Чоловік</option>
         </select>
       </label>
+      <div className="row">
       <label>
         Вік
         <input type="number" min={10} max={100} value={form.age}
@@ -189,6 +193,7 @@ export default function Profile() {
         <input type="number" min={30} max={300} step={0.1} value={form.weight_kg}
           onChange={(e) => set('weight_kg', Number(e.target.value))} required />
       </label>
+      </div>
       <label>
         Активність
         <select value={form.activity}
@@ -207,6 +212,7 @@ export default function Profile() {
           <option value="gain">Набрати вагу</option>
         </select>
       </label>
+      <div className="row">
       <label>
         Прийомів їжі на день
         <input type="number" min={1} max={8} value={form.meals_per_day}
@@ -218,7 +224,11 @@ export default function Profile() {
           placeholder={recommended ? String(recommended) : ''}
           onChange={(e) => set('target_calories', e.target.value ? Number(e.target.value) : null)} />
       </label>
-      <h2>Вподобання</h2>
+      </div>
+      </section>
+
+      <section className="card red">
+      <h2 style={{ marginTop: 0 }}>Вподобання</h2>
       <Choice legend="Тип харчування" options={DIETS} value={form.diet}
         onChange={(v) => set('diet', v)} />
       <Multi legend="Алергії та непереносимість" options={ALLERGENS} value={form.allergens}
@@ -240,8 +250,15 @@ export default function Profile() {
           onChange={(e) => set('allergies', e.target.value)} />
       </label>
 
-      <button type="submit">Зберегти</button>
-      {status && <p>{status}</p>}
+      </section>
+
+      <div className="actions">
+      <button type="submit" className="big">Зберегти</button>
+      </div>
+      {status && <p className="status" style={{ marginTop: 16 }}>{status}</p>}
+      <p style={{ marginTop: 16 }}>
+        <Link to="/pricing">Тариф і оплата</Link> · <Link to="/support">Підтримати проєкт</Link>
+      </p>
     </form>
   )
 }

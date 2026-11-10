@@ -98,9 +98,10 @@ export default function Recipes() {
   return (
     <div>
       <h1>Рецепти</h1>
-      <p>
-        <input placeholder="Пошук за назвою" value={query} onChange={(e) => setQuery(e.target.value)} />{' '}
-        <select value={category} onChange={(e) => setCategory(e.target.value)}>
+      <div className="actions" style={{ marginBottom: 12 }}>
+        <input placeholder="Пошук за назвою" value={query} style={{ maxWidth: 320 }}
+          onChange={(e) => setQuery(e.target.value)} />
+        <select value={category} style={{ width: 'auto' }} onChange={(e) => setCategory(e.target.value)}>
           <option value="">Усі категорії</option>
           {CATEGORIES.map((c) => (
             <option key={c} value={c}>
@@ -108,9 +109,9 @@ export default function Recipes() {
             </option>
           ))}
         </select>
-      </p>
+      </div>
       <p>
-        <label>
+        <label className="inline">
           <input type="checkbox" checked={forMe} onChange={(e) => setForMe(e.target.checked)} />{' '}
           Враховувати мої вподобання (дієта, алергени, час, бюджет)
         </label>
@@ -123,9 +124,9 @@ export default function Recipes() {
           </small>
         </p>
       )}
-      {status && <p>{status}</p>}
+      {status && <p className="status">{status}</p>}
 
-      <ul>
+      <ul className="cards">
         {shown.map((r) => (
           <li key={r.id}>
             <strong>{r.name}</strong> · {r.category} · {r.calories} ккал · Б {r.protein_g} / Ж{' '}
@@ -143,12 +144,14 @@ export default function Recipes() {
               <div>{r.ingredients.map((i) => `${i.name} (${i.amount})`).join(', ')}</div>
               <p>{r.recipe}</p>
             </details>
-            <button onClick={() => saveToDishes(r)}>У мої страви</button>{' '}
-            <button onClick={() => setPlanning(planning === r.id ? null : r.id)}>В календар</button>
+            <div className="actions" style={{ marginTop: 8 }}>
+              <button onClick={() => saveToDishes(r)}>У мої страви</button>
+              <button onClick={() => setPlanning(planning === r.id ? null : r.id)}>В календар</button>
+            </div>
             {planning === r.id && (
-              <div>
-                <input type="date" value={date} onChange={(e) => setDate(e.target.value)} />{' '}
-                <select value={slot} onChange={(e) => setSlot(Number(e.target.value))}>
+              <div className="actions" style={{ marginTop: 8 }}>
+                <input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+                <select value={slot} style={{ width: 'auto' }} onChange={(e) => setSlot(Number(e.target.value))}>
                   {[0, 1, 2, 3, 4, 5, 6, 7].map((s) => (
                     <option key={s} value={s}>
                       Прийом {s + 1}

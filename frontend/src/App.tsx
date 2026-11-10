@@ -29,6 +29,7 @@ function App() {
   return (
     <BrowserRouter>
       {session ? <Nav /> : <PublicNav />}
+      <main className="page">
       <Routes>
         <Route path="/auth" element={session ? <Navigate to="/" /> : <Auth />} />
         <Route
@@ -58,6 +59,7 @@ function App() {
           element={session ? <Profile /> : <Navigate to="/auth" />}
         />
       </Routes>
+      </main>
     </BrowserRouter>
   )
 }

@@ -91,13 +91,14 @@ export default function Dishes() {
         <Link to="/recipes">Знайти рецепт</Link>
       </p>
 
-      <form onSubmit={save}>
+      <form onSubmit={save} className="card">
         <h2>{editingId ? 'Редагувати страву' : 'Додати страву'}</h2>
         <label>
           Назва
           <input value={form.name} maxLength={100} required
             onChange={(e) => setForm({ ...form, name: e.target.value })} />
         </label>
+        <div className="row">
         <label>
           Калорії на порцію
           <input type="number" min={0} max={5000} value={form.calories ?? ''}
@@ -126,6 +127,7 @@ export default function Dishes() {
               setForm({ ...form, carbs_g: e.target.value ? Number(e.target.value) : null })
             } />
         </label>
+        </div>
         <fieldset>
           <legend>Інгредієнти</legend>
           {form.ingredients.map((ing, i) => (
@@ -154,17 +156,19 @@ export default function Dishes() {
           <textarea value={form.recipe} maxLength={5000}
             onChange={(e) => setForm({ ...form, recipe: e.target.value })} />
         </label>
+        <div className="actions">
         <button type="submit">{editingId ? 'Зберегти зміни' : 'Додати'}</button>
         {editingId && (
           <button type="button" onClick={() => { setEditingId(null); setForm(EMPTY) }}>
             Скасувати
           </button>
         )}
+        </div>
       </form>
 
-      {status && <p>{status}</p>}
+      {status && <p className="status">{status}</p>}
 
-      <ul>
+      <ul className="cards">
         {dishes.map((d) => (
           <li key={d.id}>
             <strong>{d.name}</strong>
@@ -174,8 +178,12 @@ export default function Dishes() {
             {d.ingredients.length > 0 && (
               <div>{d.ingredients.map((i) => `${i.name}${i.amount ? ` (${i.amount})` : ''}`).join(', ')}</div>
             )}
+            <div className="actions" style={{ marginTop: 8 }}>
             <button onClick={() => edit(d)}>Редагувати</button>
-            <button onClick={() => remove(d.id)}>Видалити</button>
+            <button className="danger" onClick={() => remove(d.id)}>
+              Видалити
+            </button>
+            </div>
           </li>
         ))}
       </ul>

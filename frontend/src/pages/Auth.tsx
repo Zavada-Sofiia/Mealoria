@@ -33,32 +33,40 @@ export default function Auth() {
   }
 
   return (
-    <form onSubmit={submit}>
+    <form onSubmit={submit} className="card narrow">
       <h1>{mode === 'signin' ? 'Вхід' : 'Реєстрація'}</h1>
-      <input
-        type="email"
-        placeholder="Email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        required
-      />
-      <input
-        type="password"
-        placeholder="Пароль"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        minLength={6}
-        required
-      />
-      <button type="submit">{mode === 'signin' ? 'Увійти' : 'Зареєструватися'}</button>
-      <button type="button" onClick={() => setMode(mode === 'signin' ? 'signup' : 'signin')}>
-        {mode === 'signin' ? 'Створити акаунт' : 'Вже є акаунт'}
-      </button>
+      <label>
+        Email
+        <input
+          type="email"
+          autoComplete="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+        />
+      </label>
+      <label>
+        Пароль
+        <input
+          type="password"
+          autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          minLength={6}
+          required
+        />
+      </label>
+      <div className="actions">
+        <button type="submit">{mode === 'signin' ? 'Увійти' : 'Зареєструватися'}</button>
+        <button type="button" onClick={() => setMode(mode === 'signin' ? 'signup' : 'signin')}>
+          {mode === 'signin' ? 'Створити акаунт' : 'Вже є акаунт'}
+        </button>
+      </div>
       <hr />
-      <button type="button" onClick={signInWithGoogle}>
+      <button type="button" onClick={signInWithGoogle} style={{ width: '100%' }}>
         Увійти через Google
       </button>
-      {message && <p>{message}</p>}
+      {message && <p className="status" style={{ marginTop: 16 }}>{message}</p>}
     </form>
   )
 }
