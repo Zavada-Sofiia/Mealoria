@@ -10,6 +10,11 @@ type ProfileData = {
   goal: 'lose' | 'maintain' | 'gain'
   meals_per_day: number
   target_calories: number | null
+  diet: string
+  allergens: string[]
+  cuisines: string[]
+  cook_time: string
+  budget: string
   preferences: string
   allergies: string
 }
@@ -25,8 +30,102 @@ const EMPTY: ProfileData = {
   goal: 'maintain',
   meals_per_day: 3,
   target_calories: null,
+  diet: 'any',
+  allergens: [],
+  cuisines: [],
+  cook_time: 'any',
+  budget: 'any',
   preferences: '',
   allergies: '',
+}
+
+const DIETS = [
+  ['any', 'Їм усе'],
+  ['vegetarian', 'Вегетаріанське'],
+  ['vegan', 'Веганське'],
+  ['pescatarian', 'Пескетаріанське (з рибою)'],
+]
+const ALLERGENS = [
+  ['gluten', 'Глютен'],
+  ['lactose', 'Лактоза'],
+  ['nuts', 'Горіхи'],
+  ['peanuts', 'Арахіс'],
+  ['eggs', 'Яйця'],
+  ['fish', 'Риба'],
+  ['seafood', 'Морепродукти'],
+  ['soy', 'Соя'],
+]
+const CUISINES = [
+  ['ukrainian', 'Українська'],
+  ['italian', 'Італійська'],
+  ['asian', 'Азійська'],
+  ['georgian', 'Грузинська'],
+  ['mediterranean', 'Середземноморська'],
+]
+const COOK_TIMES = [
+  ['15', 'До 15 хвилин'],
+  ['30', 'До 30 хвилин'],
+  ['60', 'До години'],
+  ['any', 'Не важливо'],
+]
+const BUDGETS = [
+  ['low', 'Економно'],
+  ['medium', 'Середній'],
+  ['any', 'Не важливо'],
+]
+
+function Choice({
+  legend,
+  options,
+  value,
+  onChange,
+}: {
+  legend: string
+  options: string[][]
+  value: string
+  onChange: (v: string) => void
+}) {
+  return (
+    <fieldset>
+      <legend>{legend}</legend>
+      {options.map(([key, label]) => (
+        <label key={key}>
+          <input type="radio" name={legend} checked={value === key} onChange={() => onChange(key)} />{' '}
+          {label}{' '}
+        </label>
+      ))}
+    </fieldset>
+  )
+}
+
+function Multi({
+  legend,
+  options,
+  value,
+  onChange,
+}: {
+  legend: string
+  options: string[][]
+  value: string[]
+  onChange: (v: string[]) => void
+}) {
+  return (
+    <fieldset>
+      <legend>{legend}</legend>
+      {options.map(([key, label]) => (
+        <label key={key}>
+          <input
+            type="checkbox"
+            checked={value.includes(key)}
+            onChange={() =>
+              onChange(value.includes(key) ? value.filter((v) => v !== key) : [...value, key])
+            }
+          />{' '}
+          {label}{' '}
+        </label>
+      ))}
+    </fieldset>
+  )
 }
 
 export default function Profile() {
@@ -119,13 +218,24 @@ export default function Profile() {
           placeholder={recommended ? String(recommended) : ''}
           onChange={(e) => set('target_calories', e.target.value ? Number(e.target.value) : null)} />
       </label>
+      <h2>Вподобання</h2>
+      <Choice legend="Тип харчування" options={DIETS} value={form.diet}
+        onChange={(v) => set('diet', v)} />
+      <Multi legend="Алергії та непереносимість" options={ALLERGENS} value={form.allergens}
+        onChange={(v) => set('allergens', v)} />
+      <Multi legend="Улюблені кухні" options={CUISINES} value={form.cuisines}
+        onChange={(v) => set('cuisines', v)} />
+      <Choice legend="Скільки часу готуєте" options={COOK_TIMES} value={form.cook_time}
+        onChange={(v) => set('cook_time', v)} />
+      <Choice legend="Бюджет" options={BUDGETS} value={form.budget}
+        onChange={(v) => set('budget', v)} />
       <label>
-        Вподобання
+        Що не любите чи не їсте
         <textarea maxLength={1000} value={form.preferences}
           onChange={(e) => set('preferences', e.target.value)} />
       </label>
       <label>
-        Алергії
+        Інші алергії
         <textarea maxLength={1000} value={form.allergies}
           onChange={(e) => set('allergies', e.target.value)} />
       </label>

@@ -65,3 +65,22 @@ def test_save_then_read(client):
 
 def test_validation(client):
     assert client.put("/api/profile", json={**BODY, "age": 5}).status_code == 422
+
+
+def test_preference_questions_saved_and_validated(client):
+    answers = {
+        "diet": "vegetarian",
+        "allergens": ["lactose", "nuts"],
+        "cuisines": ["italian"],
+        "cook_time": "30",
+        "budget": "low",
+    }
+    client.put("/api/profile", json={**BODY, **answers})
+    read = client.get("/api/profile").json()["profile"]
+    assert {k: read[k] for k in answers} == answers
+
+    defaults = client.put("/api/profile", json=BODY).json()["profile"]
+    assert defaults["diet"] == "any" and defaults["allergens"] == []
+
+    assert client.put("/api/profile", json={**BODY, "diet": "carnivore"}).status_code == 422
+    assert client.put("/api/profile", json={**BODY, "allergens": ["pollen"]}).status_code == 422

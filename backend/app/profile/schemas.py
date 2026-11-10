@@ -3,6 +3,13 @@ from typing import Literal
 from pydantic import BaseModel, Field
 
 
+Diet = Literal["any", "vegetarian", "vegan", "pescatarian"]
+Allergen = Literal["gluten", "lactose", "nuts", "peanuts", "eggs", "fish", "seafood", "soy"]
+Cuisine = Literal["ukrainian", "italian", "asian", "georgian", "mediterranean"]
+CookTime = Literal["15", "30", "60", "any"]
+Budget = Literal["low", "medium", "any"]
+
+
 class ProfileIn(BaseModel):
     sex: Literal["male", "female"]
     age: int = Field(ge=10, le=100)
@@ -12,6 +19,11 @@ class ProfileIn(BaseModel):
     goal: Literal["lose", "maintain", "gain"]
     meals_per_day: int = Field(default=3, ge=1, le=8)
     target_calories: int | None = Field(default=None, ge=800, le=6000)
+    diet: Diet = "any"
+    allergens: list[Allergen] = Field(default_factory=list, max_length=8)
+    cuisines: list[Cuisine] = Field(default_factory=list, max_length=5)
+    cook_time: CookTime = "any"
+    budget: Budget = "any"
     preferences: str = Field(default="", max_length=1000)
     allergies: str = Field(default="", max_length=1000)
 
