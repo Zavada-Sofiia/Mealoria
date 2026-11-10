@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
+import { Link } from 'react-router-dom'
 import { apiFetch } from '../api/client'
 
 type Ingredient = { name: string; amount: string }
@@ -86,6 +87,9 @@ export default function Dishes() {
   return (
     <div>
       <h1>Мої страви</h1>
+      <p>
+        <Link to="/recipes">Знайти рецепт</Link>
+      </p>
 
       <form onSubmit={save}>
         <h2>{editingId ? 'Редагувати страву' : 'Додати страву'}</h2>

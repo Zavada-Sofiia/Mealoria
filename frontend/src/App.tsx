@@ -7,6 +7,7 @@ import Auth from './pages/Auth'
 import Calendar from './pages/Calendar'
 import Dishes from './pages/Dishes'
 import Profile from './pages/Profile'
+import Recipes from './pages/Recipes'
 
 function App() {
   const [session, setSession] = useState<Session | null | undefined>(undefined)
@@ -31,6 +32,10 @@ function App() {
         <Route
           path="/dishes"
           element={session ? <Dishes /> : <Navigate to="/auth" />}
+        />
+        <Route
+          path="/recipes"
+          element={session ? <Recipes /> : <Navigate to="/auth" />}
         />
         <Route
           path="/profile"
