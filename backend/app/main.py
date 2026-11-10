@@ -8,6 +8,7 @@ from app.calendar.router import router as calendar_router
 from app.dishes.recipes_router import router as recipes_router
 from app.dishes.router import router as dishes_router
 from app.profile.router import router as profile_router
+from app.shopping.router import router as shopping_router
 
 app = FastAPI(title="Mealoria API")
 
@@ -25,6 +26,7 @@ app.include_router(profile_router)
 app.include_router(dishes_router)
 app.include_router(recipes_router)
 app.include_router(calendar_router)
+app.include_router(shopping_router)
 
 
 @app.get("/api/health")

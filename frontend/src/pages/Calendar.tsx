@@ -11,6 +11,7 @@ import {
 } from '@dnd-kit/core'
 import { Link } from 'react-router-dom'
 import { apiFetch } from '../api/client'
+import { addDays, iso, mondayOf, pad } from '../dates'
 
 type Dish = { id: string; name: string; calories: number | null }
 type Entry = { id: string; date: string; slot: number; dish: Dish | null }
@@ -28,10 +29,6 @@ const MEAL_NAMES: Record<number, string[]> = {
   5: ['Сніданок', 'Перекус', 'Обід', 'Перекус', 'Вечеря'],
 }
 
-const pad = (n: number) => String(n).padStart(2, '0')
-const iso = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
-const addDays = (d: Date, n: number) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n)
-const mondayOf = (d: Date) => addDays(d, -((d.getDay() + 6) % 7))
 const mealName = (count: number, slot: number) => MEAL_NAMES[count]?.[slot] ?? `Прийом ${slot + 1}`
 
 function Draggable({ id, children }: { id: string; children: React.ReactNode }) {

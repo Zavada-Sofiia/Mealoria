@@ -6,6 +6,7 @@ export default function Nav() {
     <nav>
       <Link to="/">Календар</Link> · <Link to="/dishes">Мої страви</Link> ·{' '}
       <Link to="/recipes">Рецепти</Link> ·{' '}
+      <Link to="/shopping">Продукти</Link> ·{' '}
       <Link to="/profile">Профіль</Link> ·{' '}
       <button onClick={() => supabase.auth.signOut()}>Вийти</button>
     </nav>
