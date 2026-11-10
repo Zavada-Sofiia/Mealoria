@@ -44,6 +44,9 @@ DISH = {
     "recipe": "Варити 1 годину",
     "ingredients": [{"name": "Буряк", "amount": "2 шт"}],
     "calories": 250,
+    "protein_g": 8.5,
+    "fat_g": 10,
+    "carbs_g": 30,
 }
 
 
@@ -51,6 +54,7 @@ def test_create_and_list(client):
     created = client.post("/api/dishes", json=DISH)
     assert created.status_code == 201
     assert created.json()["name"] == "Борщ"
+    assert created.json()["protein_g"] == 8.5
     assert [d["name"] for d in client.get("/api/dishes").json()] == ["Борщ"]
 
 
@@ -71,3 +75,9 @@ def test_missing_dish_is_404(client):
 def test_validation(client):
     assert client.post("/api/dishes", json={**DISH, "name": ""}).status_code == 422
     assert client.put("/api/dishes/not-a-uuid", json=DISH).status_code == 422
+
+
+def test_macros_are_optional_and_validated(client):
+    bare = {"name": "Чай"}
+    assert client.post("/api/dishes", json=bare).json()["protein_g"] is None
+    assert client.post("/api/dishes", json={**bare, "fat_g": -1}).status_code == 422

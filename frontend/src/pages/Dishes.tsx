@@ -7,10 +7,13 @@ type DishInput = {
   recipe: string
   ingredients: Ingredient[]
   calories: number | null
+  protein_g: number | null
+  fat_g: number | null
+  carbs_g: number | null
 }
 type Dish = DishInput & { id: string }
 
-const EMPTY: DishInput = { name: '', recipe: '', ingredients: [], calories: null }
+const EMPTY: DishInput = { name: '', recipe: '', ingredients: [], calories: null, protein_g: null, fat_g: null, carbs_g: null }
 
 export default function Dishes() {
   const [dishes, setDishes] = useState<Dish[]>([])
@@ -74,6 +77,9 @@ export default function Dishes() {
       recipe: d.recipe,
       ingredients: d.ingredients,
       calories: d.calories,
+      protein_g: d.protein_g,
+      fat_g: d.fat_g,
+      carbs_g: d.carbs_g,
     })
   }
 
@@ -93,6 +99,27 @@ export default function Dishes() {
           <input type="number" min={0} max={5000} value={form.calories ?? ''}
             onChange={(e) =>
               setForm({ ...form, calories: e.target.value ? Number(e.target.value) : null })
+            } />
+        </label>
+        <label>
+          Білки, г
+          <input type="number" min={0} max={1000} step={0.1} value={form.protein_g ?? ''}
+            onChange={(e) =>
+              setForm({ ...form, protein_g: e.target.value ? Number(e.target.value) : null })
+            } />
+        </label>
+        <label>
+          Жири, г
+          <input type="number" min={0} max={1000} step={0.1} value={form.fat_g ?? ''}
+            onChange={(e) =>
+              setForm({ ...form, fat_g: e.target.value ? Number(e.target.value) : null })
+            } />
+        </label>
+        <label>
+          Вуглеводи, г
+          <input type="number" min={0} max={1000} step={0.1} value={form.carbs_g ?? ''}
+            onChange={(e) =>
+              setForm({ ...form, carbs_g: e.target.value ? Number(e.target.value) : null })
             } />
         </label>
         <fieldset>
@@ -138,6 +165,8 @@ export default function Dishes() {
           <li key={d.id}>
             <strong>{d.name}</strong>
             {d.calories != null && ` · ${d.calories} ккал`}
+            {(d.protein_g != null || d.fat_g != null || d.carbs_g != null) &&
+              ` · Б ${d.protein_g ?? 0} / Ж ${d.fat_g ?? 0} / В ${d.carbs_g ?? 0} г`}
             {d.ingredients.length > 0 && (
               <div>{d.ingredients.map((i) => `${i.name}${i.amount ? ` (${i.amount})` : ''}`).join(', ')}</div>
             )}

@@ -11,6 +11,9 @@ class DishIn(BaseModel):
     recipe: str = Field(default="", max_length=5000)
     ingredients: list[Ingredient] = Field(default_factory=list, max_length=50)
     calories: int | None = Field(default=None, ge=0, le=5000)
+    protein_g: float | None = Field(default=None, ge=0, le=1000)
+    fat_g: float | None = Field(default=None, ge=0, le=1000)
+    carbs_g: float | None = Field(default=None, ge=0, le=1000)
 
 
 class DishOut(DishIn):
