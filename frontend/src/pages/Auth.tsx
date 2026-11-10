@@ -20,7 +20,7 @@ export default function Auth() {
     }
     const { error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) return setMessage(error.message)
-    navigate('/')
+    navigate('/today')
   }
 
   async function signInWithGoogle() {

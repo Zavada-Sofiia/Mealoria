@@ -32,10 +32,14 @@ function App() {
       {session ? <Nav /> : <PublicNav />}
       <main className="page">
       <Routes>
-        <Route path="/auth" element={session ? <Navigate to="/" /> : <Auth />} />
+        <Route path="/auth" element={session ? <Navigate to="/today" /> : <Auth />} />
         <Route
           path="/"
-          element={session ? <Dashboard /> : <Home />}
+          element={<Home signedIn={!!session} />}
+        />
+        <Route
+          path="/today"
+          element={session ? <Dashboard /> : <Navigate to="/auth" />}
         />
         <Route
           path="/calendar"

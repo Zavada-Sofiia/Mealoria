@@ -3,21 +3,21 @@ import { useEffect } from 'react'
 import { supabase } from '../api/supabase'
 
 const TABS = [
-  ['/', 'Головна'],
+  ['/today', 'Сьогодні'],
   ['/calendar', 'Календар'],
   ['/dishes', 'Страви'],
   ['/shopping', 'Продукти'],
   ['/profile', 'Профіль'],
 ]
 const MAIN = [
-  ['/', 'Головна'],
+  ['/today', 'Сьогодні'],
   ['/calendar', 'Календар'],
   ['/dishes', 'Мої страви'],
   ['/recipes', 'Рецепти'],
   ['/shopping', 'Список продуктів'],
   ['/calories', 'Калорії'],
 ]
-const MORE = [
+const RIGHT = [
   ['/profile', 'Профіль'],
   ['/pricing', 'Тарифи'],
   ['/support', 'Підтримати'],
@@ -33,29 +33,37 @@ export default function Nav() {
     <>
       <header className="topbar">
         <div className="topbar-inner">
-          <NavLink to="/" className="logo">
+          <NavLink to="/" className="logo" end>
             Mealoria<span>.</span>
           </NavLink>
+          <NavLink to="/" end className="about-link desktop-only">
+            Про сайт
+          </NavLink>
           <span style={{ flex: 1 }} />
+          <nav className="nav-links right desktop-only">
+            {RIGHT.map(([to, label]) => (
+              <NavLink key={to} to={to}>
+                {label}
+              </NavLink>
+            ))}
+          </nav>
           <button className="secondary" onClick={() => supabase.auth.signOut()}>
             Вийти
           </button>
         </div>
       </header>
       <aside className="sidebar">
-        {[MAIN, MORE].map((group, i) => (
-          <nav key={i}>
-            {group.map(([to, label]) => (
-              <NavLink key={to} to={to} end={to === '/'}>
-                {label}
-              </NavLink>
-            ))}
-          </nav>
-        ))}
+        <nav>
+          {MAIN.map(([to, label]) => (
+            <NavLink key={to} to={to}>
+              {label}
+            </NavLink>
+          ))}
+        </nav>
       </aside>
       <nav className="tabbar">
         {TABS.map(([to, label]) => (
-          <NavLink key={to} to={to} end={to === '/'}>
+          <NavLink key={to} to={to}>
             {label}
           </NavLink>
         ))}

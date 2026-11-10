@@ -106,6 +106,29 @@ hr {
   flex: 1;
   flex-wrap: wrap;
 }
+.nav-links.right {
+  flex: none;
+}
+.about-link {
+  padding: 6px 12px;
+  border-radius: 999px;
+  color: var(--ink);
+  text-decoration: none;
+  font-size: 0.95rem;
+}
+.about-link:hover {
+  background: var(--teal-soft);
+}
+.about-link.active {
+  background: var(--teal-soft);
+  color: var(--teal-dark);
+}
+.site-footer {
+  margin-top: 40px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+}
 .nav-links a {
   padding: 6px 12px;
   border-radius: 999px;
@@ -184,6 +207,9 @@ hr {
     padding-bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom));
   }
   .sidebar {
+    display: none;
+  }
+  .desktop-only {
     display: none;
   }
   .topbar-inner {
