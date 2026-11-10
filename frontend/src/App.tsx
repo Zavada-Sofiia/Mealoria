@@ -3,9 +3,13 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from './api/supabase'
 import Nav from './components/Nav'
+import PublicNav from './components/PublicNav'
 import Auth from './pages/Auth'
 import Calendar from './pages/Calendar'
 import Dishes from './pages/Dishes'
+import Home from './pages/Home'
+import Pricing from './pages/Pricing'
+import Support from './pages/Support'
 import Profile from './pages/Profile'
 import Recipes from './pages/Recipes'
 import Shopping from './pages/Shopping'
@@ -23,13 +27,15 @@ function App() {
 
   return (
     <BrowserRouter>
-      {session && <Nav />}
+      {session ? <Nav /> : <PublicNav />}
       <Routes>
         <Route path="/auth" element={session ? <Navigate to="/" /> : <Auth />} />
         <Route
           path="/"
-          element={session ? <Calendar /> : <Navigate to="/auth" />}
+          element={session ? <Calendar /> : <Home />}
         />
+        <Route path="/pricing" element={<Pricing session={session} />} />
+        <Route path="/support" element={<Support />} />
         <Route
           path="/dishes"
           element={session ? <Dishes /> : <Navigate to="/auth" />}

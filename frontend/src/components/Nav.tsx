@@ -8,6 +8,8 @@ export default function Nav() {
       <Link to="/recipes">Рецепти</Link> ·{' '}
       <Link to="/shopping">Продукти</Link> ·{' '}
       <Link to="/profile">Профіль</Link> ·{' '}
+      <Link to="/pricing">Тарифи</Link> ·{' '}
+      <Link to="/support">Підтримати</Link> ·{' '}
       <button onClick={() => supabase.auth.signOut()}>Вийти</button>
     </nav>
   )
