@@ -15,9 +15,12 @@ create table if not exists public.profiles (
 
 alter table public.profiles enable row level security;
 
+drop policy if exists "own profile: select" on public.profiles;
 create policy "own profile: select" on public.profiles
   for select using (auth.uid() = user_id);
+drop policy if exists "own profile: insert" on public.profiles;
 create policy "own profile: insert" on public.profiles
   for insert with check (auth.uid() = user_id);
+drop policy if exists "own profile: update" on public.profiles;
 create policy "own profile: update" on public.profiles
   for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
