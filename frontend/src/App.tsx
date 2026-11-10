@@ -2,7 +2,9 @@ import { useEffect, useState } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from './api/supabase'
+import Nav from './components/Nav'
 import Auth from './pages/Auth'
+import Dishes from './pages/Dishes'
 import Placeholder from './pages/Placeholder'
 import Profile from './pages/Profile'
 
@@ -19,11 +21,16 @@ function App() {
 
   return (
     <BrowserRouter>
+      {session && <Nav />}
       <Routes>
         <Route path="/auth" element={session ? <Navigate to="/" /> : <Auth />} />
         <Route
           path="/"
           element={session ? <Placeholder title="Календар" /> : <Navigate to="/auth" />}
+        />
+        <Route
+          path="/dishes"
+          element={session ? <Dishes /> : <Navigate to="/auth" />}
         />
         <Route
           path="/profile"
