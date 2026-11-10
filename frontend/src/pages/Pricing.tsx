@@ -4,7 +4,7 @@ import type { Session } from '@supabase/supabase-js'
 import { apiFetch } from '../api/client'
 
 // Shown to visitors; change here when the real price is decided.
-const PREMIUM_PRICE = '99 грн / міс'
+const PREMIUM_PRICE = '49 грн / міс'
 
 const FREE = [
   'Реєстрація, профіль і вподобання',
