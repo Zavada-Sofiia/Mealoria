@@ -125,11 +125,65 @@ hr {
   display: none;
 }
 
+.sidebar {
+  position: fixed;
+  top: 61px;
+  bottom: 0;
+  left: 0;
+  width: 220px;
+  padding: 20px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  border-right: 1px solid var(--line);
+  background: var(--card);
+  overflow-y: auto;
+}
+.sidebar nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.sidebar nav + nav {
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+.sidebar a {
+  padding: 9px 14px;
+  border-radius: 10px;
+  color: var(--ink);
+  text-decoration: none;
+  font-weight: 500;
+}
+.sidebar a:hover {
+  background: var(--teal-soft);
+}
+.sidebar a.active {
+  background: var(--teal);
+  color: #fff;
+}
+
+@media (min-width: 761px) {
+  body.has-tabbar .topbar-inner {
+    max-width: none;
+    padding: 10px 24px;
+  }
+  body.has-tabbar .page {
+    margin-left: 220px;
+    max-width: none;
+    padding-left: 32px;
+    padding-right: 32px;
+  }
+  body.has-tabbar .page > * {
+    max-width: 1040px;
+  }
+}
+
 @media (max-width: 760px) {
   body.has-tabbar {
     padding-bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom));
   }
-  .nav-links.desktop-only {
+  .sidebar {
     display: none;
   }
   .topbar-inner {

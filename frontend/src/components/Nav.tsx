@@ -9,12 +9,14 @@ const TABS = [
   ['/calories', 'Калорії'],
   ['/profile', 'Профіль'],
 ]
-const DESKTOP = [
+const MAIN = [
   ['/', 'Календар'],
   ['/dishes', 'Мої страви'],
   ['/recipes', 'Рецепти'],
-  ['/shopping', 'Продукти'],
+  ['/shopping', 'Список продуктів'],
   ['/calories', 'Калорії'],
+]
+const MORE = [
   ['/profile', 'Профіль'],
   ['/pricing', 'Тарифи'],
   ['/support', 'Підтримати'],
@@ -33,18 +35,23 @@ export default function Nav() {
           <NavLink to="/" className="logo">
             Mealoria<span>.</span>
           </NavLink>
-          <nav className="nav-links desktop-only">
-            {DESKTOP.map(([to, label]) => (
-              <NavLink key={to} to={to} end={to === '/'}>
-                {label}
-              </NavLink>
-            ))}
-          </nav>
+          <span style={{ flex: 1 }} />
           <button className="secondary" onClick={() => supabase.auth.signOut()}>
             Вийти
           </button>
         </div>
       </header>
+      <aside className="sidebar">
+        {[MAIN, MORE].map((group, i) => (
+          <nav key={i}>
+            {group.map(([to, label]) => (
+              <NavLink key={to} to={to} end={to === '/'}>
+                {label}
+              </NavLink>
+            ))}
+          </nav>
+        ))}
+      </aside>
       <nav className="tabbar">
         {TABS.map(([to, label]) => (
           <NavLink key={to} to={to} end={to === '/'}>
