@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { apiFetch } from '../api/client'
 import { BarChart, LineChart } from '../components/Charts'
+import MealPhotoCard from '../components/MealPhotoCard'
 import { addDays, fmtDate, iso } from '../dates'
 import { t } from '../i18n'
 import { macrosLine } from '../macros'
@@ -351,6 +352,7 @@ export default function Calories() {
       <DaySummary />
       <Trends />
       <WeightJournal />
+      <MealPhotoCard />
       <DishCalculator />
     </div>
   )

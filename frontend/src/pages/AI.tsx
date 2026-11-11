@@ -1,12 +1,12 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { ApiError, apiFetch } from '../api/client'
+import { apiFetch } from '../api/client'
 import { supabase } from '../api/supabase'
-import { blobToBase64, compressImage, uploadDishPhoto } from '../api/photos'
-import PhotoPicker from '../components/PhotoPicker'
 import SectionRail from '../components/SectionRail'
 import { Link } from 'react-router-dom'
 import { usePlan } from '../plan/context'
 import { oneStepPerLine } from '../steps'
+import { aiErrorText as errorText } from '../aiError'
+import { kcalMacros as macros } from '../macros'
 import { t } from '../i18n'
 
 type Ingredient = { name: string; amount: string }
@@ -23,17 +23,6 @@ type Idea = {
   recipe: string
   missing?: string[]
 }
-type MealPhoto = {
-  is_food: boolean
-  name: string
-  calories: number
-  protein_g: number
-  fat_g: number
-  carbs_g: number
-  fiber_g?: number
-  ingredients: Ingredient[]
-  comment: string
-}
 type Quota = { used: number; limit: number }
 
 const CATEGORIES = ['сніданок', 'обід', 'вечеря', 'перекус']
@@ -41,30 +30,6 @@ const CATEGORIES = ['сніданок', 'обід', 'вечеря', 'перек�
 const ENGLISH_CATEGORIES: Record<string, string> = { breakfast: 'сніданок', lunch: 'обід', dinner: 'вечеря', snack: 'перекус' }
 const toCategory = (c: string) => ENGLISH_CATEGORIES[c.toLowerCase()] ?? c.toLowerCase()
 const json = { 'Content-Type': 'application/json' }
-
-function errorText(e: unknown): string {
-  if (e instanceof ApiError) {
-    if (e.status === 429) return t('Ліміт запитів до ШІ на сьогодні вичерпано. Спробуйте завтра')
-    if (e.status === 503) return t('ШІ ще не налаштований на сервері')
-    if (e.status === 502 && e.detail.startsWith('AI is busy')) {
-      const reason = e.detail.includes(': ') ? e.detail.slice(e.detail.indexOf(': ') + 2) : ''
-      return `${t('ШІ зараз перевантажений. Спробуйте за кілька хвилин, цей запит не списано з ліміту.')}${reason ? t(' Технічна причина: {reason}', { reason }) : ''}`
-    }
-    if (e.status === 502) {
-      // admins get "message: technical reason" from the backend
-      const reason = e.detail.includes(': ') ? e.detail.slice(e.detail.indexOf(': ') + 2) : ''
-      return `${t('ШІ не зміг відповісти. Спробуйте ще раз або інше фото.')}${reason ? t(' Технічна причина: {reason}', { reason }) : ''}`
-    }
-  }
-  return t('Щось пішло не так. Спробуйте ще раз')
-}
-
-function macros(x: { calories: number; protein_g: number; fat_g: number; carbs_g: number; fiber_g?: number }) {
-  const v = { kcal: x.calories, p: x.protein_g, f: x.fat_g, c: x.carbs_g }
-  return x.fiber_g
-    ? t('{kcal} ккал · Б {p} / Ж {f} / В {c} · Кл {k} г', { ...v, k: x.fiber_g })
-    : t('{kcal} ккал · Б {p} / Ж {f} / В {c} г', v)
-}
 
 // Results stay in this browser (per account) until cleared, so leaving the page does not lose them.
 type Saved = {
@@ -74,10 +39,8 @@ type Saved = {
   fridge: string
   fridgeStrict: boolean
   fridgeIdeas: Idea[]
-  meal: MealPhoto | null
-  mealPhoto: string | null // compressed photo as a data URL
 }
-const EMPTY_SAVED: Saved = { category: '', note: '', ideas: [], fridge: '', fridgeStrict: false, fridgeIdeas: [], meal: null, mealPhoto: null }
+const EMPTY_SAVED: Saved = { category: '', note: '', ideas: [], fridge: '', fridgeStrict: false, fridgeIdeas: [] }
 const storageKey = (userId: string) => `mealoria.ai.v1.${userId}`
 
 function loadSaved(userId: string): Saved {
@@ -92,7 +55,6 @@ function loadSaved(userId: string): Saved {
 const RAIL = [
   { id: 'ai-recipes', label: 'Підбір' },
   { id: 'ai-fridge', label: 'З холодильника' },
-  { id: 'ai-photo', label: 'По фото' },
 ]
 
 function IdeaList({ ideas, saved, onSave }: { ideas: Idea[]; saved: string[]; onSave: (i: Idea) => void }) {
@@ -139,14 +101,11 @@ function AIPage({ userId }: { userId: string }) {
   const [category, setCategory] = useState(saved.category)
   const [note, setNote] = useState(saved.note)
   const [ideas, setIdeas] = useState<Idea[]>(saved.ideas)
-  const [meal, setMeal] = useState<MealPhoto | null>(saved.meal)
-  const [mealPhoto, setMealPhoto] = useState<string | null>(saved.mealPhoto)
   const [fridge, setFridge] = useState(saved.fridge)
   const [fridgeStrict, setFridgeStrict] = useState(saved.fridgeStrict)
   const [fridgeIdeas, setFridgeIdeas] = useState<Idea[]>(saved.fridgeIdeas)
-  const [busy, setBusy] = useState<'ideas' | 'fridge' | 'photo' | null>(null)
+  const [busy, setBusy] = useState<'ideas' | 'fridge' | null>(null)
   const [savedNames, setSavedNames] = useState<string[]>([])
-  const [mealSaved, setMealSaved] = useState(false)
   const [status, setStatus] = useState('')
 
   useEffect(() => {
@@ -154,12 +113,12 @@ function AIPage({ userId }: { userId: string }) {
     try {
       localStorage.setItem(
         storageKey(userId),
-        JSON.stringify({ category, note, ideas, fridge, fridgeStrict, fridgeIdeas, meal, mealPhoto }),
+        JSON.stringify({ category, note, ideas, fridge, fridgeStrict, fridgeIdeas }),
       )
     } catch {
       // storage full or blocked: the results just will not survive leaving the page
     }
-  }, [userId, category, note, ideas, fridge, fridgeStrict, fridgeIdeas, meal, mealPhoto])
+  }, [userId, category, note, ideas, fridge, fridgeStrict, fridgeIdeas])
 
   useEffect(() => {
     apiFetch<Quota>('/api/ai/quota')
@@ -251,67 +210,12 @@ function AIPage({ userId }: { userId: string }) {
     }
   }
 
-  async function analyse(file: File | undefined) {
-    if (!file) return
-    setBusy('photo')
-    setStatus('')
-    setMeal(null)
-    setMealSaved(false)
-    try {
-      const image_base64 = await blobToBase64(await compressImage(file))
-      setMealPhoto(`data:image/jpeg;base64,${image_base64}`)
-      setMeal(
-        await apiFetch<MealPhoto>('/api/ai/meal-photo', {
-          method: 'POST',
-          headers: json,
-          body: JSON.stringify({ image_base64, mime_type: 'image/jpeg' }),
-        }),
-      )
-    } catch (err) {
-      setStatus(err instanceof ApiError ? errorText(err) : t('Не вдалося обробити фото'))
-    } finally {
-      setBusy(null)
-      void refreshQuota()
-    }
-  }
-
-  async function saveMeal() {
-    if (!meal || !mealPhoto || mealSaved) return
-    setMealSaved(true)
-    try {
-      const photo_url = await uploadDishPhoto(await (await fetch(mealPhoto)).blob())
-      await apiFetch('/api/dishes', {
-        method: 'POST',
-        headers: json,
-        body: JSON.stringify({
-          name: meal.name || t('Страва'),
-          calories: meal.calories,
-          protein_g: meal.protein_g,
-          fat_g: meal.fat_g,
-          carbs_g: meal.carbs_g,
-          fiber_g: meal.fiber_g || null,
-          ingredients: meal.ingredients,
-          photo_url,
-        }),
-      })
-      setStatus(t('«{name}» додано до моїх страв', { name: meal.name }))
-      setMeal(null)
-      setMealPhoto(null)
-      setMealSaved(false)
-    } catch {
-      setMealSaved(false)
-      setStatus(t('Не вдалося зберегти страву'))
-    }
-  }
-
   const left = quota ? Math.max(0, quota.limit - quota.used) : null
-  const hasResults = ideas.length > 0 || fridgeIdeas.length > 0 || meal !== null
+  const hasResults = ideas.length > 0 || fridgeIdeas.length > 0
 
   function clearResults() {
     setIdeas([])
     setFridgeIdeas([])
-    setMeal(null)
-    setMealPhoto(null)
     setStatus('')
   }
 
@@ -399,47 +303,9 @@ function AIPage({ userId }: { userId: string }) {
         {fridgeIdeas.length > 0 && <IdeaList ideas={fridgeIdeas} saved={savedNames} onSave={saveIdea} />}
       </section>
 
-      <section className="card red" id="ai-photo">
-        <h2>{t('Калорії по фото')}</h2>
-        <p className="muted">{t('Сфотографуйте страву, і ШІ оцінить калорії, БЖВ та інгредієнти.')}</p>
-        <PhotoPicker
-          onFile={(f) => void analyse(f)}
-          disabled={busy !== null || left === 0}
-          busy={busy === 'photo'}
-          title={t('Обрати фото страви')}
-        />
-        {busy === 'photo' && <p className="status" style={{ marginTop: 12 }}>{t('Аналізуємо фото…')}</p>}
-        {meal && !meal.is_food && (
-          <p className="status" style={{ marginTop: 12 }}>
-            {t('На фото не видно їжі. Спробуйте інше.')}
-          </p>
-        )}
-        {meal && meal.is_food && (
-          <div style={{ marginTop: 16 }}>
-            {mealPhoto && (
-              <img src={mealPhoto} alt={t('Ваше фото')} style={{ width: 140, height: 140, objectFit: 'cover', borderRadius: 10, marginBottom: 10 }} />
-            )}
-            <h3>{meal.name}</h3>
-            <p>
-              <strong>{macros(meal)}</strong>
-            </p>
-            <p className="muted">
-              {meal.ingredients.map((x) => `${x.name} (${x.amount})`).join(', ')}
-            </p>
-            {meal.comment && <p className="muted">{meal.comment}</p>}
-            <p>
-              <small>{t('Це лише оцінка, реальні значення можуть відрізнятися.')}</small>
-            </p>
-            <button onClick={saveMeal} disabled={mealSaved}>
-              {mealSaved ? t('Додано ✓') : t('Зберегти як страву')}
-            </button>
-          </div>
-        )}
-      </section>
-
       <p>
         <small>
-          {t('Фото й побажання надсилаються в Google Gemini. На безкоштовному тарифі Google може використовувати такі дані для покращення своїх продуктів, тому не завантажуйте фото з людьми чи особисту інформацію.')}
+          {t('Побажання та список продуктів надсилаються в Google Gemini. На безкоштовному тарифі Google може використовувати такі дані для покращення своїх продуктів, тому не вписуйте особисту інформацію.')}
         </small>
       </p>
     </div>
