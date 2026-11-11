@@ -1,5 +1,6 @@
 import json
 import os
+import time
 
 import httpx
 
@@ -8,13 +9,24 @@ API = "https://generativelanguage.googleapis.com/v1beta/models"
 # Lite is fast; the heavier Flash models "think" for a minute and time out on a free instance.
 DEFAULT_MODEL = "gemini-flash-lite-latest"
 # Tried in order when the first model is overloaded, times out or has been retired.
-DEFAULT_FALLBACKS = ["gemini-3.1-flash-lite", "gemini-3.5-flash-lite"]
-ATTEMPT_TIMEOUT = 25  # seconds; three attempts must fit inside Render's ~100 s request limit
-RETRY_STATUSES = {404, 429, 500, 502, 503, 504}
+DEFAULT_FALLBACKS = [
+    "gemini-3.1-flash-lite",
+    "gemini-3.5-flash-lite",
+    "gemini-flash-latest",
+    "gemini-2.5-flash-lite",
+]
+ATTEMPT_TIMEOUT = 25  # seconds for one model
+TOTAL_BUDGET = 75  # seconds for all attempts; Render cuts requests off at about 100 s
+BUSY_STATUSES = {429, 500, 502, 503, 504}  # temporary trouble on Google's side
+RETRY_STATUSES = BUSY_STATUSES | {404}  # 404: this model name was retired, try another
 
 
 class AIError(Exception):
     pass
+
+
+class AIBusy(AIError):
+    """Every model we tried was overloaded or too slow; trying again later should work."""
 
 
 def is_configured() -> bool:
@@ -26,15 +38,15 @@ def models_to_try() -> list[str]:
     extra = os.environ.get("GEMINI_FALLBACK_MODELS")
     fallbacks = [m.strip() for m in extra.split(",") if m.strip()] if extra else DEFAULT_FALLBACKS
     ordered = [first] + [m for m in fallbacks if m != first]
-    return ordered[:3]
+    return ordered[:5]
 
 
-def _call(model: str, key: str, body: dict) -> dict:
+def _call(model: str, key: str, body: dict, timeout: float) -> dict:
     r = httpx.post(
         f"{API}/{model}:generateContent",
         headers={"x-goog-api-key": key},
         json=body,
-        timeout=ATTEMPT_TIMEOUT,
+        timeout=timeout,
     )
     r.raise_for_status()
     return json.loads(r.json()["candidates"][0]["content"]["parts"][0]["text"])
@@ -61,16 +73,27 @@ def generate_json(
     }
 
     problems: list[str] = []
+    busy = True  # stays True while every failure so far was temporary
+    started = time.monotonic()
     for model in models_to_try():
+        remaining = TOTAL_BUDGET - (time.monotonic() - started)
+        if remaining < 3:
+            break
         try:
-            return _call(model, key, body)
+            return _call(model, key, body, min(ATTEMPT_TIMEOUT, remaining))
         except httpx.HTTPStatusError as e:
             status = e.response.status_code
             problems.append(f"[{model}] Gemini returned {status}: {e.response.text[:200]}")
             if status not in RETRY_STATUSES:
+                busy = False
                 break
+            busy = busy and status in BUSY_STATUSES
+            if status in BUSY_STATUSES:
+                time.sleep(1)  # demand spikes are short, a moment helps
         except httpx.TransportError as e:  # timeouts, connection resets
             problems.append(f"[{model}] {type(e).__name__}: {e}")
         except (KeyError, IndexError, ValueError) as e:  # empty or non-JSON answer
             problems.append(f"[{model}] bad answer: {type(e).__name__}: {e}")
-    raise AIError(" | ".join(problems))
+            busy = False
+    error = AIBusy if busy and problems else AIError
+    raise error(" | ".join(problems))

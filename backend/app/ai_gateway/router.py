@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials
 
 from app.ai_gateway import prompts
-from app.ai_gateway.gemini import generate_json, is_configured
+from app.ai_gateway.gemini import AIBusy, generate_json, is_configured
 from app.ai_gateway.quota import SupabaseQuotaStore, daily_limit
 from app.ai_gateway.schemas import (
     MealPhotoIn,
@@ -28,18 +28,32 @@ def get_quota_store(
 
 
 def _failure(message: str, error: Exception, quota: SupabaseQuotaStore) -> HTTPException:
-    """502 for the user; developers (public.admins) also get the technical reason."""
+    """502 for the user; developers (public.admins) also get the technical reason.
+
+    A request that failed is not charged to the daily limit.
+    """
     log.warning("%s: %r", message, error, exc_info=error)
+    if isinstance(error, AIBusy):
+        message = "AI is busy"  # the site shows a friendly "try again in a few minutes"
     reason = f"{type(error).__name__}: {error}"[:300]
     detail = f"{message}: {reason}" if quota.is_admin() else message
     return HTTPException(status_code=502, detail=detail)
 
 
-def _use_quota(quota: SupabaseQuotaStore) -> None:
+def _check_quota(quota: SupabaseQuotaStore) -> None:
     if not is_configured():
         raise HTTPException(status_code=503, detail="AI is not configured")
-    if not quota.consume(daily_limit())["allowed"]:
+    status = quota.status(daily_limit())
+    if status["used"] >= status["limit"]:
         raise HTTPException(status_code=429, detail="Daily AI limit reached")
+
+
+def _charge(quota: SupabaseQuotaStore) -> None:
+    """Count one successful request. Failing to count must not lose the user's answer."""
+    try:
+        quota.consume(daily_limit())
+    except Exception:
+        log.exception("Could not record AI usage")
 
 
 @router.get("/quota", response_model=Quota)
@@ -57,12 +71,14 @@ def meal_photo(
     _: str = Depends(current_user_id),
     quota: SupabaseQuotaStore = Depends(get_quota_store),
 ):
-    _use_quota(quota)
+    _check_quota(quota)
     try:
         data = generate_json(
             prompts.MEAL_PHOTO_PROMPT, prompts.MEAL_PHOTO_SCHEMA, body.image_base64, body.mime_type
         )
-        return MealPhotoOut(**data)
+        result = MealPhotoOut(**data)
+        _charge(quota)
+        return result
     except Exception as e:  # any failure must become a JSON 502 the browser can read
         raise _failure("AI could not analyse the photo", e, quota)
 
@@ -74,9 +90,11 @@ def recipe_ideas(
     quota: SupabaseQuotaStore = Depends(get_quota_store),
     profiles: SupabaseProfileStore = Depends(get_profile_store),
 ):
-    _use_quota(quota)
+    _check_quota(quota)
     try:
         prompt = prompts.recipe_prompt(profiles.get(user_id), body.category, body.note.strip())
-        return RecipeIdeasOut(**generate_json(prompt, prompts.RECIPES_SCHEMA))
+        result = RecipeIdeasOut(**generate_json(prompt, prompts.RECIPES_SCHEMA))
+        _charge(quota)
+        return result
     except Exception as e:  # any failure must become a JSON 502 the browser can read
         raise _failure("AI could not suggest recipes", e, quota)

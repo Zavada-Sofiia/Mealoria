@@ -47,6 +47,11 @@ class FakeProfiles:
         return self.row
 
 
+@pytest.fixture(autouse=True)
+def no_sleep(monkeypatch):
+    monkeypatch.setattr(gemini.time, "sleep", lambda s: None)
+
+
 @pytest.fixture
 def env(monkeypatch):
     monkeypatch.setenv("GEMINI_API_KEY", "test-key")
@@ -199,7 +204,7 @@ def test_bad_key_does_not_retry(monkeypatch):
 def test_all_models_failing_lists_every_reason(monkeypatch):
     monkeypatch.setenv("GEMINI_API_KEY", "k")
     monkeypatch.setenv("GEMINI_MODEL", "m1")
-    monkeypatch.setenv("GEMINI_FALLBACK_MODELS", "m2, m3, m4")
+    monkeypatch.setenv("GEMINI_FALLBACK_MODELS", "m2, m3, m4, m5, m6")
 
     def fake_post(url, headers, json, timeout):
         return httpx.Response(503, request=httpx.Request("POST", url), text="busy")
@@ -208,7 +213,8 @@ def test_all_models_failing_lists_every_reason(monkeypatch):
     with pytest.raises(gemini.AIError) as err:
         gemini.generate_json("hi", {})
     text = str(err.value)
-    assert "[m1]" in text and "[m2]" in text and "[m3]" in text and "[m4]" not in text
+    assert all(f"[m{i}]" in text for i in range(1, 6)) and "[m6]" not in text
+    assert isinstance(err.value, gemini.AIBusy)
 
 
 def test_missing_key_raises(monkeypatch):
@@ -244,3 +250,41 @@ def test_unexpected_errors_still_return_a_readable_502(env, monkeypatch):
     assert "RuntimeError: something unforeseen" in r.json()["detail"]
     quota.admin = False
     assert client.post("/api/ai/meal-photo", json=PHOTO).json()["detail"] == "AI could not analyse the photo"
+
+
+def test_failed_request_is_not_charged_but_success_is(env, monkeypatch):
+    client, quota, _, _ = env
+
+    def busy(*a, **k):
+        raise gemini.AIBusy("[m] Gemini returned 503: high demand")
+
+    monkeypatch.setattr(ai_router, "generate_json", busy)
+    r = client.post("/api/ai/recipes", json={})
+    assert r.status_code == 502 and r.json()["detail"] == "AI is busy"
+    assert quota.used == 0
+
+    monkeypatch.setattr(ai_router, "generate_json", lambda *a, **k: IDEAS)
+    assert client.post("/api/ai/recipes", json={}).status_code == 200
+    assert quota.used == 1
+
+
+def test_admin_sees_the_reason_behind_a_busy_answer(env, monkeypatch):
+    client, quota, _, _ = env
+    quota.admin = True
+
+    def busy(*a, **k):
+        raise gemini.AIBusy("[m] Gemini returned 503: high demand")
+
+    monkeypatch.setattr(ai_router, "generate_json", busy)
+    detail = client.post("/api/ai/recipes", json={}).json()["detail"]
+    assert detail.startswith("AI is busy: AIBusy: [m] Gemini returned 503")
+
+
+def test_quota_failure_after_success_still_returns_the_answer(env, monkeypatch):
+    client, quota, _, _ = env
+
+    def broken_consume(limit):
+        raise httpx.ConnectError("db down")
+
+    monkeypatch.setattr(quota, "consume", broken_consume)
+    assert client.post("/api/ai/recipes", json={}).status_code == 200

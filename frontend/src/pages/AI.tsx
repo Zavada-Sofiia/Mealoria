@@ -34,6 +34,10 @@ function errorText(e: unknown): string {
   if (e instanceof ApiError) {
     if (e.status === 429) return 'Ліміт запитів до ШІ на сьогодні вичерпано. Спробуйте завтра'
     if (e.status === 503) return 'ШІ ще не налаштований на сервері'
+    if (e.status === 502 && e.detail.startsWith('AI is busy')) {
+      const reason = e.detail.includes(': ') ? e.detail.slice(e.detail.indexOf(': ') + 2) : ''
+      return `ШІ зараз перевантажений. Спробуйте за кілька хвилин, цей запит не списано з ліміту.${reason ? ` Технічна причина: ${reason}` : ''}`
+    }
     if (e.status === 502) {
       // admins get "message: technical reason" from the backend
       const reason = e.detail.includes(': ') ? e.detail.slice(e.detail.indexOf(': ') + 2) : ''
