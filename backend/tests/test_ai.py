@@ -138,7 +138,7 @@ def test_generate_json_parses_gemini_response(monkeypatch):
 
     monkeypatch.setattr(gemini.httpx, "post", fake_post)
     assert gemini.generate_json("hi", {"type": "OBJECT"}, "QUJD") == {"a": 1}
-    assert seen["key"] == "k" and "gemini-flash-latest:generateContent" in seen["url"]
+    assert seen["key"] == "k" and "gemini-flash-lite-latest:generateContent" in seen["url"]
     parts = seen["body"]["contents"][0]["parts"]
     assert parts[1]["inline_data"]["data"] == "QUJD"
 
@@ -166,7 +166,7 @@ def test_gemini_error_body_is_kept_for_the_logs(monkeypatch):
         )
 
     monkeypatch.setattr(gemini.httpx, "post", bad_model)
-    with pytest.raises(gemini.AIError, match="404.*model not found"):
+    with pytest.raises(gemini.AIError, match=r"\[gemini-flash-lite-latest\] Gemini returned 404.*model not found"):
         gemini.generate_json("hi", {})
 
 
