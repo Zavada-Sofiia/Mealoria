@@ -35,6 +35,17 @@ const ALLERGEN_LABEL: Record<string, string> = {
   fish: 'риба',
   seafood: 'морепродукти',
   soy: 'соя',
+  sesame: 'кунжут',
+  mustard: 'гірчиця',
+  celery: 'селера',
+  honey: 'мед',
+  citrus: 'цитрусові',
+  berries: 'ягоди',
+  cocoa: 'какао',
+  mushrooms: 'гриби',
+  corn: 'кукурудза',
+  legumes: 'бобові',
+  tomatoes: 'томати',
 }
 const today = () => {
   const d = new Date()

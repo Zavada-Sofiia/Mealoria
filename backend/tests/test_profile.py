@@ -84,3 +84,10 @@ def test_preference_questions_saved_and_validated(client):
 
     assert client.put("/api/profile", json={**BODY, "diet": "carnivore"}).status_code == 422
     assert client.put("/api/profile", json={**BODY, "allergens": ["pollen"]}).status_code == 422
+
+
+def test_extended_allergens_are_accepted(client):
+    extra = ["sesame", "mustard", "celery", "honey", "citrus", "berries", "cocoa",
+             "mushrooms", "corn", "legumes", "tomatoes"]
+    r = client.put("/api/profile", json={**BODY, "allergens": ["gluten", *extra]})
+    assert r.status_code == 200 and len(r.json()["profile"]["allergens"]) == 12

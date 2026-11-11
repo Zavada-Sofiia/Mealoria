@@ -4,7 +4,11 @@ from pydantic import BaseModel, Field
 
 
 Diet = Literal["any", "vegetarian", "vegan", "pescatarian"]
-Allergen = Literal["gluten", "lactose", "nuts", "peanuts", "eggs", "fish", "seafood", "soy"]
+Allergen = Literal[
+    "gluten", "lactose", "nuts", "peanuts", "eggs", "fish", "seafood", "soy",
+    "sesame", "mustard", "celery", "honey", "citrus", "berries", "cocoa", "mushrooms",
+    "corn", "legumes", "tomatoes",
+]
 Cuisine = Literal["ukrainian", "italian", "asian", "georgian", "mediterranean"]
 CookTime = Literal["15", "30", "60", "any"]
 Budget = Literal["low", "medium", "any"]
@@ -20,7 +24,7 @@ class ProfileIn(BaseModel):
     meals_per_day: int = Field(default=3, ge=1, le=8)
     target_calories: int | None = Field(default=None, ge=800, le=6000)
     diet: Diet = "any"
-    allergens: list[Allergen] = Field(default_factory=list, max_length=8)
+    allergens: list[Allergen] = Field(default_factory=list, max_length=19)
     cuisines: list[Cuisine] = Field(default_factory=list, max_length=5)
     cook_time: CookTime = "any"
     budget: Budget = "any"

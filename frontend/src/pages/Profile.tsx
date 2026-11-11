@@ -57,6 +57,17 @@ const ALLERGENS = [
   ['fish', 'Риба'],
   ['seafood', 'Морепродукти'],
   ['soy', 'Соя'],
+  ['sesame', 'Кунжут'],
+  ['mustard', 'Гірчиця'],
+  ['celery', 'Селера'],
+  ['honey', 'Мед'],
+  ['citrus', 'Цитрусові'],
+  ['berries', 'Ягоди'],
+  ['cocoa', 'Какао та шоколад'],
+  ['mushrooms', 'Гриби'],
+  ['corn', 'Кукурудза'],
+  ['legumes', 'Бобові'],
+  ['tomatoes', 'Томати'],
 ]
 const CUISINES = [
   ['ukrainian', 'Українська'],

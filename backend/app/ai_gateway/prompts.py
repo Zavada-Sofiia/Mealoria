@@ -13,6 +13,17 @@ ALLERGENS = {
     "fish": "риба",
     "seafood": "морепродукти",
     "soy": "соя",
+    "sesame": "кунжут",
+    "mustard": "гірчиця",
+    "celery": "селера",
+    "honey": "мед",
+    "citrus": "цитрусові",
+    "berries": "ягоди",
+    "cocoa": "какао та шоколад",
+    "mushrooms": "гриби",
+    "corn": "кукурудза",
+    "legumes": "бобові (квасоля, горох, нут)",
+    "tomatoes": "томати",
 }
 CUISINES = {
     "ukrainian": "українська",
