@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { ApiError, apiFetch } from '../api/client'
 import { blobToBase64, compressImage, uploadDishPhoto } from '../api/photos'
+import PhotoPicker from '../components/PhotoPicker'
 
 type Ingredient = { name: string; amount: string }
 type Idea = {
@@ -215,11 +216,12 @@ export default function AI() {
       <section className="card red">
         <h2>Калорії по фото</h2>
         <p className="muted">Сфотографуйте страву, і ШІ оцінить калорії, БЖВ та інгредієнти.</p>
-        <input type="file" accept="image/*" disabled={busy !== null || left === 0}
-          onChange={(e) => {
-            void analyse(e.target.files?.[0])
-            e.target.value = ''
-          }} />
+        <PhotoPicker
+          onFile={(f) => void analyse(f)}
+          disabled={busy !== null || left === 0}
+          busy={busy === 'photo'}
+          title="Обрати фото страви"
+        />
         {busy === 'photo' && <p className="status" style={{ marginTop: 12 }}>Аналізуємо фото…</p>}
         {meal && !meal.is_food && (
           <p className="status" style={{ marginTop: 12 }}>

@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { apiFetch } from '../api/client'
 import { deleteDishPhoto, uploadDishPhoto } from '../api/photos'
+import PhotoPicker from '../components/PhotoPicker'
 
 type Ingredient = { name: string; amount: string }
 type DishInput = {
@@ -177,17 +178,15 @@ export default function Dishes() {
         </fieldset>
         <div className="photo-field">
           <strong style={{ fontSize: '0.92rem' }}>Фото</strong>
-          <div style={{ marginTop: 6 }}>
+          <div className="photo-row">
             {form.photo_url && <img src={form.photo_url} alt="Фото страви" />}
-            <div className="actions" style={{ marginBottom: 16 }}>
-              <label className="inline" style={{ margin: 0 }}>
-                <input type="file" accept="image/*" disabled={uploading}
-                  onChange={(e) => {
-                    void pickPhoto(e.target.files?.[0])
-                    e.target.value = ''
-                  }} />
-              </label>
-              {uploading && <span className="muted">Завантажуємо…</span>}
+            <div className="photo-controls">
+              <PhotoPicker
+                onFile={(f) => void pickPhoto(f)}
+                disabled={uploading}
+                busy={uploading}
+                title={form.photo_url ? 'Замінити фото' : 'Обрати фото'}
+              />
               {form.photo_url && !uploading && (
                 <button type="button" className="danger"
                   onClick={() => {
