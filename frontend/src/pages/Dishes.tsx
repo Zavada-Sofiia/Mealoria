@@ -98,9 +98,7 @@ export default function Dishes() {
       if (e.status === 429) return t('Ліміт ШІ-фото на сьогодні вичерпано. Спробуйте завтра')
       if (e.status === 503) return t('Генерацію фото ще не налаштовано на сервері')
       if (e.status === 502 && e.detail.startsWith('AI is busy')) {
-        // only admins get the technical reason from the server
-        const reason = e.detail.includes(': ') ? e.detail.slice(e.detail.indexOf(': ') + 2) : ''
-        return `${t('ШІ зараз перевантажений. Спробуйте за кілька хвилин, цей запит не списано з ліміту')}${reason ? '.' + t(' Технічна причина: {reason}', { reason }) : ''}`
+        return t('ШІ зараз перевантажений. Спробуйте за кілька хвилин, цей запит не списано з ліміту')
       }
       if (e.status === 502) {
         const reason = e.detail.includes(': ') ? e.detail.slice(e.detail.indexOf(': ') + 2) : ''
@@ -119,8 +117,7 @@ export default function Dishes() {
       if (e.status === 429) return t('Ліміт запитів до ШІ на сьогодні вичерпано')
       if (e.status === 503) return t('ШІ ще не налаштований на сервері')
       if (e.status === 502 && e.detail.startsWith('AI is busy')) {
-        const reason = e.detail.includes(': ') ? e.detail.slice(e.detail.indexOf(': ') + 2) : ''
-        return `${t('ШІ зараз перевантажений, спробуйте за кілька хвилин')}${reason ? '.' + t(' Технічна причина: {reason}', { reason }) : ''}`
+        return t('ШІ зараз перевантажений, спробуйте за кілька хвилин')
       }
       if (e.status === 502) {
         const reason = e.detail.includes(': ') ? e.detail.slice(e.detail.indexOf(': ') + 2) : ''
