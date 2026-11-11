@@ -93,7 +93,9 @@ export default function Dashboard() {
               <strong style={{ fontSize: '1.6rem' }}>{total}</strong>
               {target ? ` / ${target} ккал` : ' ккал'}
             </p>
-            {target ? <progress value={Math.min(total, target)} max={target} /> : null}
+            {target ? (
+              <progress className={total > target ? 'over' : undefined} value={Math.min(total, target)} max={target} />
+            ) : null}
             <p className="muted">
               Б {day.total.protein_g} · Ж {day.total.fat_g} · В {day.total.carbs_g} г
             </p>

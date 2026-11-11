@@ -63,7 +63,9 @@ function DaySummary() {
             <strong>{Math.round(total)}</strong>
             {target ? ` / ${target} ккал` : ' ккал (задайте ціль у профілі)'}
           </p>
-          {target ? <progress value={Math.min(total, target)} max={target} /> : null}
+          {target ? (
+            <progress className={total > target ? 'over' : undefined} value={Math.min(total, target)} max={target} />
+          ) : null}
           {diff !== null && (
             <p>{diff > 0 ? `Перевищення на ${diff} ккал` : `Залишилось ${-diff} ккал`}</p>
           )}

@@ -1,12 +1,13 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { apiFetch } from '../api/client'
+import RangeField from '../components/RangeField'
 
 type ProfileData = {
   sex: 'male' | 'female'
-  age: number
-  height_cm: number
-  weight_kg: number
+  age: number | null
+  height_cm: number | null
+  weight_kg: number | null
   activity: 'sedentary' | 'light' | 'moderate' | 'active'
   goal: 'lose' | 'maintain' | 'gain'
   meals_per_day: number
@@ -24,9 +25,9 @@ type ProfileResponse = { profile: ProfileData | null; recommended_calories: numb
 
 const EMPTY: ProfileData = {
   sex: 'female',
-  age: 25,
-  height_cm: 165,
-  weight_kg: 60,
+  age: null,
+  height_cm: null,
+  weight_kg: null,
   activity: 'light',
   goal: 'maintain',
   meals_per_day: 3,
@@ -150,6 +151,10 @@ export default function Profile() {
 
   async function save(e: FormEvent) {
     e.preventDefault()
+    if (form.age === null || form.height_cm === null || form.weight_kg === null) {
+      setStatus('Вкажіть вік, зріст і вагу')
+      return
+    }
     setStatus('Зберігаємо…')
     try {
       const r = await apiFetch<ProfileResponse>('/api/profile', {
@@ -177,23 +182,12 @@ export default function Profile() {
           <option value="male">Чоловік</option>
         </select>
       </label>
-      <div className="row">
-      <label>
-        Вік
-        <input type="number" min={10} max={100} value={form.age}
-          onChange={(e) => set('age', Number(e.target.value))} required />
-      </label>
-      <label>
-        Зріст, см
-        <input type="number" min={100} max={250} value={form.height_cm}
-          onChange={(e) => set('height_cm', Number(e.target.value))} required />
-      </label>
-      <label>
-        Вага, кг
-        <input type="number" min={30} max={300} step={0.1} value={form.weight_kg}
-          onChange={(e) => set('weight_kg', Number(e.target.value))} required />
-      </label>
-      </div>
+      <RangeField label="Вік" unit="років" min={10} max={100} value={form.age}
+        placeholder="—" onChange={(v) => set('age', v)} />
+      <RangeField label="Зріст" unit="см" min={100} max={250} value={form.height_cm}
+        placeholder="—" onChange={(v) => set('height_cm', v)} />
+      <RangeField label="Вага" unit="кг" min={30} max={200} value={form.weight_kg}
+        placeholder="—" decimals onChange={(v) => set('weight_kg', v)} />
       <label>
         Активність
         <select value={form.activity}
@@ -212,19 +206,16 @@ export default function Profile() {
           <option value="gain">Набрати вагу</option>
         </select>
       </label>
-      <div className="row">
-      <label>
-        Прийомів їжі на день
-        <input type="number" min={1} max={8} value={form.meals_per_day}
-          onChange={(e) => set('meals_per_day', Number(e.target.value))} required />
-      </label>
+      <RangeField label="Прийомів їжі на день" unit="разів" min={1} max={8}
+        value={form.meals_per_day}
+        onChange={(v) => set('meals_per_day', v ?? 3)} />
       <label>
         Бажаний калораж{recommended ? ` (рекомендовано: ${recommended})` : ''}
-        <input type="number" min={800} max={6000} value={form.target_calories ?? ''}
-          placeholder={recommended ? String(recommended) : ''}
+        <input type="number" inputMode="numeric" min={800} max={6000}
+          value={form.target_calories ?? ''}
+          placeholder={recommended ? String(recommended) : 'Автоматично'}
           onChange={(e) => set('target_calories', e.target.value ? Number(e.target.value) : null)} />
       </label>
-      </div>
       </section>
 
       <section className="card red">
