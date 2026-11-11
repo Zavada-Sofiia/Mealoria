@@ -118,7 +118,7 @@ export default function MealPhotoCard() {
   }
 
   return (
-    <section className="card red">
+    <section className="card red" id="cal-photo">
       <h2 style={{ marginTop: 0 }}>{t('Калорії по фото')}</h2>
       <p className="muted">
         {t('Сфотографуйте страву, і ШІ оцінить калорії, БЖВ та інгредієнти.')}

@@ -1549,7 +1549,8 @@ button.add-dish:hover {
 }
 
 /* ---------- section tabs (AI assistant) ---------- */
-.card[id^='ai-'] {
+.card[id^='ai-'],
+.card[id^='cal-'] {
   scroll-margin-top: 130px;
 }
 .section-tabs {
@@ -1564,13 +1565,18 @@ button.add-dish:hover {
   background: color-mix(in srgb, var(--card) 92%, transparent);
   backdrop-filter: blur(6px);
   box-shadow: var(--shadow);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.section-tabs::-webkit-scrollbar {
+  display: none;
 }
 .section-tabs-thumb {
   position: absolute;
   top: 4px;
   bottom: 4px;
-  left: 4px;
-  width: calc((100% - 8px) / var(--n, 3));
+  left: 0;
+  width: 0;
   border-radius: 999px;
   background: var(--teal);
   transition: transform 0.25s ease;
@@ -1578,7 +1584,8 @@ button.add-dish:hover {
 }
 .section-tabs button {
   position: relative;
-  flex: 1;
+  flex: 1 0 auto;
+  white-space: nowrap;
   min-height: 38px;
   padding: 4px 8px;
   border: 0;

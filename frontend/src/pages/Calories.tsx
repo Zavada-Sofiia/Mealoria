@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { apiFetch } from '../api/client'
 import { BarChart, LineChart } from '../components/Charts'
 import MealPhotoCard from '../components/MealPhotoCard'
+import SectionRail from '../components/SectionRail'
 import { addDays, fmtDate, iso } from '../dates'
 import { t } from '../i18n'
 import { macrosLine } from '../macros'
@@ -54,7 +55,7 @@ function DaySummary() {
   const diff = target ? Math.round(total - target) : null
 
   return (
-    <section className="card">
+    <section className="card" id="cal-day">
       <h2 style={{ marginTop: 0 }}>{t('День')}</h2>
       <div className="week-nav">
         <button onClick={() => goTo(addDays(date, -1))}>←</button>
@@ -75,9 +76,7 @@ function DaySummary() {
             <p>{diff > 0 ? t('Перевищення на {n} ккал', { n: diff }) : t('Залишилось {n} ккал', { n: -diff })}</p>
           )}
           <p>
-            {data.total.fiber_g
-              ? t('Білки {p} г · Жири {f} г · Вуглеводи {c} г · Клітковина {k} г', { p: data.total.protein_g, f: data.total.fat_g, c: data.total.carbs_g, k: data.total.fiber_g })
-              : t('Білки {p} г · Жири {f} г · Вуглеводи {c} г', { p: data.total.protein_g, f: data.total.fat_g, c: data.total.carbs_g })}
+            {t('Білки {p} г · Жири {f} г · Вуглеводи {c} г · Клітковина {k} г', { p: data.total.protein_g, f: data.total.fat_g, c: data.total.carbs_g, k: data.total.fiber_g ?? 0 })}
           </p>
           {data.meals.length === 0 ? (
             <p>{t('На цей день у календарі немає страв.')}</p>
@@ -152,7 +151,7 @@ function DishCalculator() {
   }
 
   return (
-    <section className="card red">
+    <section className="card red" id="cal-trend">
       <h2 style={{ marginTop: 0 }}>{t('Калькулятор страви')}</h2>
       <form onSubmit={search} className="actions" style={{ marginBottom: 12 }}>
         <input placeholder={t('Продукт, наприклад гречка')} value={query} style={{ maxWidth: 320 }}
@@ -232,7 +231,7 @@ function Trends() {
   const average = planned.length ? Math.round(planned.reduce((s, d) => s + d.kcal, 0) / planned.length) : 0
 
   return (
-    <section className="card">
+    <section className="card" id="cal-weight">
       <h2 style={{ marginTop: 0 }}>{t('Динаміка калорій')}</h2>
       <div className="seg">
         {[7, 30].map((n) => (
@@ -307,7 +306,7 @@ function WeightJournal() {
   const change = first && last && first !== last ? Math.round((last.weight_kg - first.weight_kg) * 10) / 10 : null
 
   return (
-    <section className="card red">
+    <section className="card red" id="cal-calc">
       <h2 style={{ marginTop: 0 }}>{t('Журнал ваги')}</h2>
       <form onSubmit={save} className="actions" style={{ marginBottom: 12 }}>
         <input type="date" value={day} max={today} onChange={(e) => e.target.value && setDay(e.target.value)} />
@@ -345,10 +344,19 @@ function WeightJournal() {
   )
 }
 
+const RAIL = [
+  { id: 'cal-day', label: 'День' },
+  { id: 'cal-trend', label: 'Динаміка' },
+  { id: 'cal-weight', label: 'Вага' },
+  { id: 'cal-photo', label: 'По фото' },
+  { id: 'cal-calc', label: 'Калькулятор' },
+]
+
 export default function Calories() {
   return (
     <div>
       <h1>{t('Калорії')}</h1>
+      <SectionRail items={RAIL} />
       <DaySummary />
       <Trends />
       <WeightJournal />

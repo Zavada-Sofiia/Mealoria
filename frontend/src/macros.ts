@@ -2,10 +2,12 @@ import { t } from './i18n'
 
 type Grams = number | null | undefined
 
-/** "Б 12 · Ж 8 · В 40 · Кл 5 г": protein, fat, carbs and, when known, fibre. */
-export function macrosLine(p: Grams, f: Grams, c: Grams, fiber?: Grams): string {
+/** "Б 12 · Ж 8 · В 40 · Кл 5 г": protein, fat, carbs and fibre (shown when known, or always when asked). */
+export function macrosLine(p: Grams, f: Grams, c: Grams, fiber?: Grams, alwaysFiber = false): string {
   const v = { p: p ?? 0, f: f ?? 0, c: c ?? 0 }
-  return fiber ? t('Б {p} · Ж {f} · В {c} · Кл {k} г', { ...v, k: fiber }) : t('Б {p} · Ж {f} · В {c} г', v)
+  return fiber || alwaysFiber
+    ? t('Б {p} · Ж {f} · В {c} · Кл {k} г', { ...v, k: fiber ?? 0 })
+    : t('Б {p} · Ж {f} · В {c} г', v)
 }
 
 /** "340 ккал · Б 12 / Ж 8 / В 40 · Кл 5 г" for an AI estimate. */

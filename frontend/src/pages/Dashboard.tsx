@@ -100,7 +100,7 @@ export default function Dashboard() {
               <progress className={total > target ? 'over' : undefined} value={Math.min(total, target)} max={target} />
             ) : null}
             <p className="muted">
-              {macrosLine(day.total.protein_g, day.total.fat_g, day.total.carbs_g, day.total.fiber_g)}
+              {macrosLine(day.total.protein_g, day.total.fat_g, day.total.carbs_g, day.total.fiber_g, true)}
             </p>
             <Link to="/calories">{t('Деталі →')}</Link>
           </section>
