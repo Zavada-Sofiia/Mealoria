@@ -1508,3 +1508,27 @@ button.star.on {
   border: 0;
   background: transparent;
 }
+
+.dish-tools {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px 12px;
+  align-items: center;
+  margin-bottom: 14px;
+}
+.dish-tools input[type='search'] {
+  grid-column: 1 / -1;
+}
+.dish-tools select {
+  width: auto;
+}
+
+button.add-dish,
+:root[data-theme='dark'] button.add-dish {
+  background: var(--teal);
+  border-color: var(--teal);
+  color: #fff;
+}
+button.add-dish:hover {
+  background: var(--teal-hover);
+}

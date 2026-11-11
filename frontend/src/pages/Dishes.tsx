@@ -5,7 +5,7 @@ import { deleteDishPhoto, uploadDishPhoto } from '../api/photos'
 import PhotoPicker from '../components/PhotoPicker'
 import { usePlan } from '../plan/context'
 import { oneStepPerLine } from '../steps'
-import { t } from '../i18n'
+import { locale, t } from '../i18n'
 
 type Ingredient = { name: string; amount: string }
 type DishInput = {
@@ -22,6 +22,26 @@ type DishInput = {
 }
 type Dish = DishInput & { id: string }
 
+type Sort = 'fav' | 'new' | 'old' | 'name' | 'kcal_asc' | 'kcal_desc'
+const SORTS: [Sort, string][] = [
+  ['fav', 'Спочатку улюблені'],
+  ['new', 'Нові спочатку'],
+  ['old', 'Старі спочатку'],
+  ['name', 'За назвою (А–Я)'],
+  ['kcal_asc', 'Калорії: від менших'],
+  ['kcal_desc', 'Калорії: від більших'],
+]
+
+function loadSort(): Sort {
+  try {
+    const saved = localStorage.getItem('dishSort')
+    if (SORTS.some(([key]) => key === saved)) return saved as Sort
+  } catch {
+    // no storage: use the default
+  }
+  return 'fav'
+}
+
 const EMPTY: DishInput = { name: '', recipe: '', ingredients: [], calories: null, protein_g: null, fat_g: null, carbs_g: null, photo_url: null, favorite: false, servings: 1 }
 
 export default function Dishes() {
@@ -29,6 +49,10 @@ export default function Dishes() {
   const [dishes, setDishes] = useState<Dish[]>([])
   const [form, setForm] = useState<DishInput>(EMPTY)
   const [editingId, setEditingId] = useState<string | null>(null)
+  const [formOpen, setFormOpen] = useState(false)
+  const [query, setQuery] = useState('')
+  const [sort, setSortState] = useState<Sort>(loadSort)
+  const [onlyFav, setOnlyFav] = useState(false)
   const [status, setStatus] = useState(t('Завантаження…'))
   const [uploading, setUploading] = useState(false)
   const [drawing, setDrawing] = useState<string | null>(null)
@@ -221,6 +245,27 @@ export default function Dishes() {
     }
   }
 
+  const sorted = (() => {
+    const needle = query.trim().toLowerCase()
+    const shown = dishes.filter((d) => (!onlyFav || d.favorite) && d.name.toLowerCase().includes(needle))
+    const byName = (a: Dish, b: Dish) => a.name.localeCompare(b.name, locale())
+    const kcal = (d: Dish, dir: 1 | -1) => (d.calories == null ? Infinity : d.calories * dir)
+    switch (sort) {
+      case 'old':
+        return [...shown].reverse()
+      case 'name':
+        return [...shown].sort(byName)
+      case 'kcal_asc':
+        return [...shown].sort((a, b) => kcal(a, 1) - kcal(b, 1) || byName(a, b))
+      case 'kcal_desc':
+        return [...shown].sort((a, b) => kcal(a, -1) - kcal(b, -1) || byName(a, b))
+      case 'fav':
+        return [...shown].sort((a, b) => Number(b.favorite) - Number(a.favorite))
+      default:
+        return shown // the server already returns the newest first
+    }
+  })()
+
   const atLimit = me !== null && !editingId && dishes.length >= me.dishes
 
   async function save(e: FormEvent) {
@@ -257,6 +302,7 @@ export default function Dishes() {
       if (editedPhoto && editedPhoto !== form.photo_url) await deleteDishPhoto(editedPhoto)
       setForm(EMPTY)
       setEditingId(null)
+      setFormOpen(false)
       setStatus(
         estimated
           ? t('Збережено, КБЖВ розраховано ШІ')
@@ -297,7 +343,24 @@ export default function Dishes() {
     }
   }
 
+  function setSort(next: Sort) {
+    setSortState(next)
+    try {
+      localStorage.setItem('dishSort', next)
+    } catch {
+      // the choice just lasts until the page is closed
+    }
+  }
+
+  function closeForm() {
+    setEditingId(null)
+    setForm(EMPTY)
+    setFormOpen(false)
+  }
+
   function edit(d: Dish) {
+    setFormOpen(true)
+    window.scrollTo(0, 0)
     setEditingId(d.id)
     setForm({
       name: d.name,
@@ -329,10 +392,16 @@ export default function Dishes() {
           )}
         </p>
       )}
-      <p>
-        <Link to="/recipes">{t('Знайти рецепт')}</Link>
-      </p>
+      {!formOpen && (
+        <div className="actions" style={{ marginBottom: 14 }}>
+          <button type="button" className="big add-dish" onClick={() => setFormOpen(true)}>
+            {t('+ Додати страву')}
+          </button>
+          <Link to="/recipes">{t('Знайти рецепт')}</Link>
+        </div>
+      )}
 
+      {formOpen && (
       <form onSubmit={save} className="card">
         <h2>{editingId ? t('Редагувати страву') : t('Додати страву')}</h2>
         <label>
@@ -456,18 +525,35 @@ export default function Dishes() {
             {t('Ліміт страв вичерпано. Видаліть зайві або')} <Link to="/pricing">{t('перейдіть на преміум')}</Link>.
           </span>
         )}
-        {editingId && (
-          <button type="button" onClick={() => { setEditingId(null); setForm(EMPTY) }}>
-            {t('Скасувати')}
-          </button>
-        )}
+        <button type="button" onClick={closeForm}>
+          {t('Скасувати')}
+        </button>
         </div>
       </form>
+      )}
 
       {status && <p className="status">{status}</p>}
 
+      {!formOpen && dishes.length > 0 && (
+        <div className="dish-tools">
+          <input type="search" placeholder={t('Пошук серед моїх страв')} value={query}
+            onChange={(e) => setQuery(e.target.value)} />
+          <select aria-label={t('Сортування')} value={sort} onChange={(e) => setSort(e.target.value as Sort)}>
+            {SORTS.map(([key, label]) => (
+              <option key={key} value={key}>
+                {t(label)}
+              </option>
+            ))}
+          </select>
+          <label className="inline">
+            <input type="checkbox" checked={onlyFav} onChange={(e) => setOnlyFav(e.target.checked)} /> {t('Лише улюблені')}
+          </label>
+        </div>
+      )}
+      {!formOpen && (
+        <>
       <ul className="cards">
-        {[...dishes].sort((a, b) => Number(b.favorite) - Number(a.favorite)).map((d) => (
+        {sorted.map((d) => (
           <li key={d.id}>
             <div className="media">
               {d.photo_url ? (
@@ -526,6 +612,9 @@ export default function Dishes() {
         ))}
       </ul>
       {!status && dishes.length === 0 && <p>{t('Страв поки немає. Додайте першу.')}</p>}
+      {dishes.length > 0 && sorted.length === 0 && <p>{t('Нічого не знайдено серед ваших страв.')}</p>}
+        </>
+      )}
     </div>
   )
 }
