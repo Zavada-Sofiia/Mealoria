@@ -22,6 +22,20 @@ type ProfileResponse = {
 }
 
 const DAY_NAMES = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд']
+const MOBILE = '(max-width: 760px)'
+const todayIndex = () => (new Date().getDay() + 6) % 7
+
+function useIsMobile() {
+  const [mobile, setMobile] = useState(() => window.matchMedia(MOBILE).matches)
+  useEffect(() => {
+    const mq = window.matchMedia(MOBILE)
+    const on = () => setMobile(mq.matches)
+    mq.addEventListener('change', on)
+    return () => mq.removeEventListener('change', on)
+  }, [])
+  return mobile
+}
+
 function Draggable({ id, children }: { id: string; children: React.ReactNode }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id })
   return (
@@ -60,6 +74,9 @@ export default function Calendar() {
   const [target, setTarget] = useState<number | null>(null)
   const [hasProfile, setHasProfile] = useState(true)
   const [status, setStatus] = useState('Завантаження…')
+  const mobile = useIsMobile()
+  const [dayIdx, setDayIdx] = useState(todayIndex)
+  const [picking, setPicking] = useState<{ date: string; slot: number } | null>(null)
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
@@ -94,9 +111,31 @@ export default function Calendar() {
     }
   }, [weekStart])
 
-  function goToWeek(date: Date) {
+  function goToWeek(date: Date, day = date.getTime() === mondayOf(new Date()).getTime() ? todayIndex() : 0) {
     setStatus('Завантаження…')
     setWeekStart(date)
+    setDayIdx(day)
+  }
+
+  function shiftDay(delta: number) {
+    const next = dayIdx + delta
+    if (next < 0) goToWeek(addDays(weekStart, -7), 6)
+    else if (next > 6) goToWeek(addDays(weekStart, 7), 0)
+    else setDayIdx(next)
+  }
+
+  async function place(date: string, slot: number, dishId: string) {
+    const json = { 'Content-Type': 'application/json' }
+    try {
+      const created = await apiFetch<Entry>('/api/calendar', {
+        method: 'POST',
+        headers: json,
+        body: JSON.stringify({ date, slot, dish_id: dishId }),
+      })
+      setEntries((es) => [...es, created])
+    } catch {
+      setStatus('Не вдалося зберегти зміну')
+    }
   }
 
   async function onDragEnd(e: DragEndEvent) {
@@ -106,12 +145,7 @@ export default function Calendar() {
     const json = { 'Content-Type': 'application/json' }
     try {
       if (kind === 'dish') {
-        const created = await apiFetch<Entry>('/api/calendar', {
-          method: 'POST',
-          headers: json,
-          body: JSON.stringify({ date, slot: Number(slot), dish_id: id }),
-        })
-        setEntries((es) => [...es, created])
+        await place(date, Number(slot), id)
       } else {
         const moved = await apiFetch<Entry>(`/api/calendar/${id}`, {
           method: 'PUT',
@@ -135,6 +169,7 @@ export default function Calendar() {
   }
 
   const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i))
+  const shown = mobile ? [days[dayIdx]] : days
   const dayCalories = (date: string) =>
     entries.filter((e) => e.date === date).reduce((sum, e) => sum + (e.dish?.calories ?? 0), 0)
 
@@ -146,19 +181,54 @@ export default function Calendar() {
           Кількість прийомів їжі береться з <Link to="/profile">профілю</Link>. Поки що показано 3.
         </p>
       )}
-      <div className="week-nav">
-        <button onClick={() => goToWeek(addDays(weekStart, -7))}>←</button>
-        <strong>
-          {iso(weekStart)} — {iso(addDays(weekStart, 6))}
-        </strong>
-        <button onClick={() => goToWeek(addDays(weekStart, 7))}>→</button>
-        <button onClick={() => goToWeek(mondayOf(new Date()))}>Сьогодні</button>
-      </div>
+      {mobile ? (
+        <>
+          <div className="week-nav day-nav">
+            <button onClick={() => shiftDay(-1)} aria-label="Попередній день">
+              ←
+            </button>
+            <strong>
+              {DAY_NAMES[dayIdx]}, {pad(days[dayIdx].getDate())}.{pad(days[dayIdx].getMonth() + 1)}
+            </strong>
+            <button onClick={() => shiftDay(1)} aria-label="Наступний день">
+              →
+            </button>
+            <button className="secondary" onClick={() => goToWeek(mondayOf(new Date()))}>
+              Сьогодні
+            </button>
+          </div>
+          <div className="day-strip">
+            {days.map((d, i) => {
+              const date = iso(d)
+              return (
+                <button
+                  key={date}
+                  type="button"
+                  className={`${i === dayIdx ? 'on' : ''}${entries.some((e) => e.date === date) ? ' has' : ''}`}
+                  onClick={() => setDayIdx(i)}
+                >
+                  <small>{DAY_NAMES[i]}</small>
+                  {d.getDate()}
+                </button>
+              )
+            })}
+          </div>
+        </>
+      ) : (
+        <div className="week-nav">
+          <button onClick={() => goToWeek(addDays(weekStart, -7))}>←</button>
+          <strong>
+            {iso(weekStart)} — {iso(addDays(weekStart, 6))}
+          </strong>
+          <button onClick={() => goToWeek(addDays(weekStart, 7))}>→</button>
+          <button onClick={() => goToWeek(mondayOf(new Date()))}>Сьогодні</button>
+        </div>
+      )}
       {status && <p className="status">{status}</p>}
 
       <DndContext sensors={sensors} onDragEnd={onDragEnd}>
-        <div>
-          <strong>Мої страви</strong> (перетягніть у клітинку):
+        <div className={mobile ? 'palette-wrap mobile' : 'palette-wrap'}>
+          <strong>Мої страви</strong> {mobile ? '(або натисніть «+» у клітинці)' : '(перетягніть у клітинку):'}
           <div className="palette">
             {dishes.map((d) => (
               <Draggable key={d.id} id={`dish:${d.id}`}>
@@ -173,13 +243,13 @@ export default function Calendar() {
         </div>
 
         <div className="week-scroll">
-          <table className="week">
+          <table className={mobile ? 'week single' : 'week'}>
             <thead>
               <tr>
                 <th />
-                {days.map((d, i) => (
+                {shown.map((d) => (
                   <th key={iso(d)}>
-                    {DAY_NAMES[i]} {pad(d.getDate())}.{pad(d.getMonth() + 1)}
+                    {DAY_NAMES[(d.getDay() + 6) % 7]} {pad(d.getDate())}.{pad(d.getMonth() + 1)}
                   </th>
                 ))}
               </tr>
@@ -188,7 +258,7 @@ export default function Calendar() {
               {Array.from({ length: meals }, (_, slot) => (
                 <tr key={slot}>
                   <th>{mealName(meals, slot)}</th>
-                  {days.map((d) => {
+                  {shown.map((d) => {
                     const date = iso(d)
                     return (
                       <Cell key={date} id={`cell:${date}:${slot}`}>
@@ -208,6 +278,15 @@ export default function Calendar() {
                               </div>
                             </Draggable>
                           ))}
+                        {mobile && dishes.length > 0 && (
+                          <button
+                            type="button"
+                            className="add-entry"
+                            onClick={() => setPicking({ date, slot })}
+                          >
+                            + Додати
+                          </button>
+                        )}
                       </Cell>
                     )
                   })}
@@ -217,7 +296,7 @@ export default function Calendar() {
             <tfoot>
               <tr>
                 <th>Калорії</th>
-                {days.map((d) => {
+                {shown.map((d) => {
                   const total = dayCalories(iso(d))
                   return (
                     <td key={iso(d)}>
@@ -231,6 +310,29 @@ export default function Calendar() {
           </table>
         </div>
       </DndContext>
+
+      {picking && (
+        <>
+          <div className="sheet-backdrop" onClick={() => setPicking(null)} />
+          <div className="sheet" role="dialog" aria-label="Обрати страву">
+            <h3>{mealName(meals, picking.slot)}: обрати страву</h3>
+            {dishes.map((d) => (
+              <button
+                key={d.id}
+                type="button"
+                className="sheet-item"
+                onClick={() => {
+                  void place(picking.date, picking.slot, d.id)
+                  setPicking(null)
+                }}
+              >
+                {d.name}
+                {d.calories != null && <small>{d.calories} ккал</small>}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   )
 }
