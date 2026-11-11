@@ -5,6 +5,7 @@ import { blobToBase64, compressImage, uploadDishPhoto } from '../api/photos'
 import PhotoPicker from '../components/PhotoPicker'
 import { Link } from 'react-router-dom'
 import { usePlan } from '../plan/context'
+import { oneStepPerLine } from '../steps'
 
 type Ingredient = { name: string; amount: string }
 type Idea = {
@@ -278,7 +279,7 @@ function AIPage({ userId }: { userId: string }) {
                 <details>
                   <summary>Рецепт</summary>
                   <div>{i.ingredients.map((x) => `${x.name} (${x.amount})`).join(', ')}</div>
-                  <p style={{ whiteSpace: 'pre-line' }}>{i.recipe}</p>
+                  <p style={{ whiteSpace: 'pre-line' }}>{oneStepPerLine(i.recipe)}</p>
                 </details>
                 <div className="actions" style={{ marginTop: 8 }}>
                   <button onClick={() => saveIdea(i)}>У мої страви</button>

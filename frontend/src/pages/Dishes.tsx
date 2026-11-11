@@ -4,6 +4,7 @@ import { ApiError, apiFetch } from '../api/client'
 import { deleteDishPhoto, uploadDishPhoto } from '../api/photos'
 import PhotoPicker from '../components/PhotoPicker'
 import { usePlan } from '../plan/context'
+import { oneStepPerLine } from '../steps'
 
 type Ingredient = { name: string; amount: string }
 type DishInput = {
@@ -145,7 +146,7 @@ export default function Dishes() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: form.name.trim() }),
       })
-      setForm({ ...form, recipe: r.recipe, ingredients: r.ingredients })
+      setForm({ ...form, recipe: oneStepPerLine(r.recipe), ingredients: r.ingredients })
       setStatus('Рецепт і інгредієнти створено ШІ. Перевірте їх і виправте за потреби')
     } catch (e) {
       setStatus(nutritionError(e, 'ШІ не зміг написати рецепт.', 'Не вдалося створити рецепт'))

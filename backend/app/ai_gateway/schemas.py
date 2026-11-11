@@ -1,8 +1,21 @@
+import re
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from app.dishes.schemas import Ingredient
+
+
+_STEP = re.compile(r"(?:^|\s)(\d{1,2})[.)]\s")
+
+
+def one_step_per_line(text: str) -> str:
+    """Puts every numbered step ("1. … 2. …") of a recipe on its own line."""
+    text = text.strip()
+    numbers = [int(m.group(1)) for m in _STEP.finditer(text)]
+    if len(numbers) < 2 or numbers[:2] != [1, 2]:
+        return text
+    return re.sub(r"[ \t]+(?=(?<!\d)\d{1,2}[.)]\s)", "\n", text)
 
 
 class Quota(BaseModel):
@@ -44,6 +57,8 @@ class RecipeIdea(BaseModel):
     ingredients: list[Ingredient] = Field(max_length=30)
     recipe: str = Field(max_length=5000)
 
+    _steps = field_validator("recipe")(one_step_per_line)
+
 
 class RecipeIdeasOut(BaseModel):
     recipes: list[RecipeIdea]
@@ -79,3 +94,5 @@ class DishRecipeIn(BaseModel):
 class DishRecipeOut(BaseModel):
     recipe: str = Field(max_length=5000)
     ingredients: list[Ingredient] = Field(max_length=30)
+
+    _steps = field_validator("recipe")(one_step_per_line)

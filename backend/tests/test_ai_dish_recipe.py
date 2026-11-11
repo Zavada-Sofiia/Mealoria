@@ -89,3 +89,23 @@ def test_input_validation(env):
 def test_prompt_without_profile_still_works():
     text = prompts.dish_recipe_prompt("Плов", None, "")
     assert "Плов" in text and "СУВОРО" not in text
+
+
+def test_steps_each_go_on_their_own_line(env, monkeypatch):
+    client, _, _ = env
+    answer = {"recipe": "1. Змішайте сир з яйцем. 2. Додайте борошно (2.5 ст. л.). 3) Обсмажте.", "ingredients": []}
+    monkeypatch.setattr(ai_router, "generate_json", lambda *a, **k: answer)
+    text = client.post("/api/ai/dish-recipe", json=BODY).json()["recipe"]
+    assert text.split("\n") == [
+        "1. Змішайте сир з яйцем.",
+        "2. Додайте борошно (2.5 ст. л.).",
+        "3) Обсмажте.",
+    ]
+
+
+def test_text_without_steps_is_left_alone():
+    from app.ai_gateway.schemas import one_step_per_line
+
+    assert one_step_per_line("  Просто змішайте. Додайте 2 яйця.  ") == "Просто змішайте. Додайте 2 яйця."
+    assert one_step_per_line("1. Єдиний крок") == "1. Єдиний крок"
+    assert one_step_per_line("1. Раз\n2. Два") == "1. Раз\n2. Два"

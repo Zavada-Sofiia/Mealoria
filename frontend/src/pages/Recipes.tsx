@@ -3,6 +3,7 @@ import { apiFetch } from '../api/client'
 import { fmtDate } from '../dates'
 import ServingsPicker from '../components/ServingsPicker'
 import { scaleAmount, useServings } from '../servings'
+import { oneStepPerLine } from '../steps'
 
 type Recipe = {
   id: string
@@ -171,7 +172,7 @@ export default function Recipes() {
                 {servings > 1 && <strong>На {servings}: </strong>}
                 {r.ingredients.map((i) => `${i.name} (${scaleAmount(i.amount, servings)})`).join(', ')}
               </div>
-              <p>{r.recipe}</p>
+              <p style={{ whiteSpace: 'pre-line' }}>{oneStepPerLine(r.recipe)}</p>
             </details>
             <div className="actions" style={{ marginTop: 8 }}>
               <button onClick={() => saveToDishes(r)}>У мої страви</button>
