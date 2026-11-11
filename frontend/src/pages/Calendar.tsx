@@ -13,9 +13,18 @@ import { Link } from 'react-router-dom'
 import { apiFetch } from '../api/client'
 import { addDays, fmtDate, iso, mondayOf, pad } from '../dates'
 import { mealName } from '../meals'
+import PrintableWeek from '../components/PrintableWeek'
 import { download, weekToIcs } from '../ics'
 
-type Dish = { id: string; name: string; calories: number | null; favorite?: boolean }
+type Dish = {
+  id: string
+  name: string
+  calories: number | null
+  protein_g?: number | null
+  fat_g?: number | null
+  carbs_g?: number | null
+  favorite?: boolean
+}
 type Entry = { id: string; date: string; slot: number; dish: Dish | null }
 type ProfileResponse = {
   profile: { meals_per_day: number; target_calories: number | null } | null
@@ -340,35 +349,7 @@ export default function Calendar() {
       </div>
       </div>
 
-      <div className="print-only">
-        <h1>
-          Меню на тиждень {fmtDate(iso(weekStart))} — {fmtDate(iso(addDays(weekStart, 6)))}
-        </h1>
-        {days.map((d, i) => {
-          const date = iso(d)
-          const list = planned.filter((e) => e.date === date).sort((a, b) => a.slot - b.slot)
-          return (
-            <section key={date}>
-              <h3>
-                {DAY_NAMES[i]} {pad(d.getDate())}.{pad(d.getMonth() + 1)}
-                {list.length > 0 && ` · ${dayCalories(date)} ккал`}
-              </h3>
-              {list.length === 0 ? (
-                <p>—</p>
-              ) : (
-                <ul>
-                  {list.map((e) => (
-                    <li key={e.id}>
-                      {mealName(meals, e.slot)}: {e.dish?.name}
-                      {e.dish?.calories != null && ` (${e.dish.calories} ккал)`}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </section>
-          )
-        })}
-      </div>
+      <PrintableWeek weekStart={weekStart} entries={entries} meals={meals} target={target} />
 
       {picking && (
         <>
