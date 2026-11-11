@@ -33,3 +33,42 @@ export function registerServiceWorker() {
       .catch(() => {})
   })
 }
+
+// "Install the app" button: browsers that support it fire beforeinstallprompt, we keep the event for later
+type InstallEvent = Event & { prompt: () => Promise<void>; userChoice: Promise<{ outcome: string }> }
+let installEvent: InstallEvent | null = null
+const installListeners = new Set<() => void>()
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault()
+    installEvent = e as InstallEvent
+    installListeners.forEach((fn) => fn())
+  })
+  window.addEventListener('appinstalled', () => {
+    installEvent = null
+    installListeners.forEach((fn) => fn())
+  })
+}
+
+export const canInstall = () => installEvent !== null
+
+export const isInstalled = () =>
+  window.matchMedia('(display-mode: standalone)').matches ||
+  (navigator as Navigator & { standalone?: boolean }).standalone === true
+
+export function onInstallChange(fn: () => void) {
+  installListeners.add(fn)
+  return () => {
+    installListeners.delete(fn)
+  }
+}
+
+export async function promptInstall() {
+  const event = installEvent
+  if (!event) return
+  await event.prompt()
+  await event.userChoice
+  installEvent = null
+  installListeners.forEach((fn) => fn())
+}

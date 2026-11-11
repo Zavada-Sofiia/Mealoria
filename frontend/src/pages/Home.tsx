@@ -1,5 +1,7 @@
 import { Link } from 'react-router-dom'
+import { useEffect, useState } from 'react'
 import { CONTACT_EMAIL } from '../config'
+import { canInstall, isInstalled, onInstallChange, promptInstall } from '../pwa'
 import { t } from '../i18n'
 
 const STEPS = [
@@ -14,6 +16,70 @@ const FEATURES = [
   ['Калорії', 'Порівняння з вашою ціллю на день і калькулятор страви за базою продуктів.'],
   ['ШІ-помічник', 'Підбирає рецепти під ваш профіль і оцінює калорії страви по фото.'],
 ]
+
+const INSTALL_STEPS = [
+  [
+    'iPhone та iPad (Safari)',
+    [
+      'Торкніться кнопки «Поділитися» (квадрат зі стрілкою). У новому Safari вона в меню ≡ ліворуч в адресному полі.',
+      'Прокрутіть вниз і виберіть «На екран "Додому"».',
+      'Натисніть «Додати»: іконка Mealoria з’явиться на головному екрані.',
+    ],
+  ],
+  [
+    'Android (Chrome)',
+    [
+      'Відкрийте меню ⋮ у верхньому правому куті.',
+      'Виберіть «Установити застосунок» (або «Додати на головний екран»).',
+      'Підтвердьте: іконка з’явиться серед ваших застосунків.',
+    ],
+  ],
+  [
+    'Комп’ютер (Chrome, Edge)',
+    [
+      'У правій частині адресного рядка натисніть значок встановлення (екран зі стрілкою вниз).',
+      'Або відкрийте меню браузера й виберіть «Установити Mealoria».',
+      'У Safari на Mac: «Файл» → «Додати в Dock».',
+    ],
+  ],
+] as const
+
+function InstallApp() {
+  const [, refresh] = useState(0)
+  useEffect(() => onInstallChange(() => refresh((n) => n + 1)), [])
+
+  return (
+    <>
+      <h2>{t('Встановіть Mealoria як застосунок')}</h2>
+      <p>
+        {t('Сайт можна додати на головний екран телефона чи в Dock комп’ютера: він відкриватиметься в окремому вікні, як звичайний застосунок, без адресного рядка, і працюватиме швидше.')}
+      </p>
+      {isInstalled() ? (
+        <p className="status">{t('Застосунок уже встановлено на цьому пристрої.')}</p>
+      ) : (
+        canInstall() && (
+          <p>
+            <button type="button" className="big add-dish" onClick={() => void promptInstall()}>
+              {t('Встановити застосунок')}
+            </button>
+          </p>
+        )
+      )}
+      <div className="grid">
+        {INSTALL_STEPS.map(([title, steps]) => (
+          <section key={title} className="card">
+            <h3>{t(title)}</h3>
+            <ol>
+              {steps.map((step) => (
+                <li key={step}>{t(step)}</li>
+              ))}
+            </ol>
+          </section>
+        ))}
+      </div>
+    </>
+  )
+}
 
 export default function Home({ signedIn }: { signedIn: boolean }) {
   return (
@@ -59,6 +125,8 @@ export default function Home({ signedIn }: { signedIn: boolean }) {
           </section>
         ))}
       </div>
+
+      <InstallApp />
 
       <h2>{t('Безкоштовно та преміум')}</h2>
       <p>
