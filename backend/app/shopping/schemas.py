@@ -32,3 +32,17 @@ class PantryBulkIn(BaseModel):
 class PantryItem(BaseModel):
     id: UUID
     name: str
+
+
+class ManualItem(BaseModel):
+    id: UUID
+    name: str
+    checked: bool
+
+
+class ManualBulkIn(BaseModel):
+    names: list[str] = Field(min_length=1, max_length=40)
+
+
+class ManualCheckIn(BaseModel):
+    checked: bool

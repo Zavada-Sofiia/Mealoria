@@ -50,6 +50,7 @@ class FakeStore:
     def __init__(self):
         self.pantry_rows = {}
         self.checked = set()
+        self.manual_rows = {}
 
     def plan(self, start, end):
         return [dish(("Яйця", "3 шт"), ("Сіль", "1 ч. л."))]
@@ -63,6 +64,25 @@ class FakeStore:
     def pantry_add_many(self, user_id, names):
         for n in names:
             self.pantry_add(user_id, n)
+
+    def manual(self):
+        return [{"id": i, "name": r["name"], "checked": r["checked"]} for i, r in self.manual_rows.items()]
+
+    def manual_add_many(self, user_id, names):
+        for n in names:
+            self.manual_rows[str(uuid4())] = {"name": n, "checked": False}
+
+    def manual_set_checked(self, item_id, checked):
+        if item_id not in self.manual_rows:
+            return False
+        self.manual_rows[item_id]["checked"] = checked
+        return True
+
+    def manual_delete(self, item_id):
+        self.manual_rows.pop(item_id, None)
+
+    def manual_clear_checked(self):
+        self.manual_rows = {i: r for i, r in self.manual_rows.items() if not r["checked"]}
 
     def pantry_delete(self, item_id):
         self.pantry_rows.pop(item_id, None)
@@ -129,3 +149,24 @@ def test_several_products_are_added_in_one_request(client):
     data = client.get("/api/shopping?start=2026-11-09").json()
     assert [i["name"] for i in data["items"]] == ["Яйця"] and data["at_home"] == ["Сіль"]
     assert client.post("/api/shopping/pantry/bulk", json={"names": []}).status_code == 422
+
+
+def test_products_can_be_added_to_the_list_without_the_calendar(client):
+    r = client.post("/api/shopping/manual", json={"names": ["  Молоко 2 л ", "Хліб", "", "   "]})
+    assert r.status_code == 201
+    assert [i["name"] for i in r.json()] == ["Молоко 2 л", "Хліб"]
+
+    milk, bread = r.json()
+    assert client.patch(f"/api/shopping/manual/{milk['id']}", json={"checked": True}).status_code == 204
+    assert [(i["name"], i["checked"]) for i in client.get("/api/shopping/manual").json()] == [
+        ("Молоко 2 л", True),
+        ("Хліб", False),
+    ]
+
+    assert client.delete("/api/shopping/manual").status_code == 204  # clears what is bought
+    assert [i["name"] for i in client.get("/api/shopping/manual").json()] == ["Хліб"]
+
+    assert client.delete(f"/api/shopping/manual/{bread['id']}").status_code == 204
+    assert client.get("/api/shopping/manual").json() == []
+    assert client.patch(f"/api/shopping/manual/{uuid4()}", json={"checked": True}).status_code == 404
+    assert client.post("/api/shopping/manual", json={"names": []}).status_code == 422

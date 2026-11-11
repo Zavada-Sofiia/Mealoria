@@ -9,6 +9,7 @@ import { t } from '../i18n'
 type Item = { name: string; amount: string; checked: boolean }
 type ShoppingResponse = { items: Item[]; at_home: string[] }
 type PantryItem = { id: string; name: string }
+type ManualItem = { id: string; name: string; checked: boolean }
 
 const norm = (s: string) => s.toLowerCase().split(/\s+/).filter(Boolean).join(' ')
 // Products that most kitchens already have; the names match the ingredient names of the catalog
@@ -18,6 +19,8 @@ export default function Shopping() {
   const [weekStart, setWeekStart] = useState(() => mondayOf(new Date()))
   const [data, setData] = useState<ShoppingResponse>({ items: [], at_home: [] })
   const [pantry, setPantry] = useState<PantryItem[]>([])
+  const [manual, setManual] = useState<ManualItem[]>([])
+  const [extra, setExtra] = useState('')
   const [newItem, setNewItem] = useState('')
   const [status, setStatus] = useState(t('Завантаження…'))
   const [version, setVersion] = useState(0)
@@ -30,11 +33,13 @@ export default function Shopping() {
     Promise.all([
       apiFetch<ShoppingResponse>(`/api/shopping?start=${start}`),
       apiFetch<PantryItem[]>('/api/shopping/pantry'),
+      apiFetch<ManualItem[]>('/api/shopping/manual').catch(() => [] as ManualItem[]),
     ])
-      .then(([list, home]) => {
+      .then(([list, home, own]) => {
         if (!current) return
         setData(list)
         setPantry(home)
+        setManual(own)
         setStatus('')
       })
       .catch(() => current && setStatus(t('Не вдалося завантажити список')))
@@ -62,6 +67,65 @@ export default function Shopping() {
       })
     } catch {
       setStatus(t('Не вдалося зберегти позначку'))
+    }
+  }
+
+  const json = { 'Content-Type': 'application/json' }
+
+  /** Adds products to the list by hand; they appear at once and are saved in the background. */
+  async function addManual(e: FormEvent) {
+    e.preventDefault()
+    const names = extra.split(/[,;\n]+/).map((n) => n.trim().replace(/\s+/g, ' ')).filter((n) => n && n.length <= 100)
+    if (!names.length) return
+    setExtra('')
+    setManual((m) => [...m, ...names.map((name) => ({ id: `tmp-${name}-${m.length}`, name, checked: false }))])
+    try {
+      setManual(
+        await apiFetch<ManualItem[]>('/api/shopping/manual', {
+          method: 'POST',
+          headers: json,
+          body: JSON.stringify({ names }),
+        }),
+      )
+    } catch {
+      setStatus(t('Не вдалося додати до списку'))
+      setVersion((v) => v + 1)
+    }
+  }
+
+  async function toggleManual(item: ManualItem) {
+    if (item.id.startsWith('tmp-')) return
+    setManual((m) => m.map((x) => (x.id === item.id ? { ...x, checked: !item.checked } : x)))
+    try {
+      await apiFetch<void>(`/api/shopping/manual/${item.id}`, {
+        method: 'PATCH',
+        headers: json,
+        body: JSON.stringify({ checked: !item.checked }),
+      })
+    } catch {
+      setManual((m) => m.map((x) => (x.id === item.id ? { ...x, checked: item.checked } : x)))
+      setStatus(t('Не вдалося оновити позначку'))
+    }
+  }
+
+  async function removeManual(id: string) {
+    if (id.startsWith('tmp-')) return
+    setManual((m) => m.filter((x) => x.id !== id))
+    try {
+      await apiFetch<void>(`/api/shopping/manual/${id}`, { method: 'DELETE' })
+    } catch {
+      setStatus(t('Не вдалося прибрати продукт'))
+      setVersion((v) => v + 1)
+    }
+  }
+
+  async function clearBought() {
+    setManual((m) => m.filter((x) => !x.checked))
+    try {
+      await apiFetch<void>('/api/shopping/manual', { method: 'DELETE' })
+    } catch {
+      setStatus(t('Не вдалося прибрати продукт'))
+      setVersion((v) => v + 1)
     }
   }
 
@@ -125,27 +189,55 @@ export default function Shopping() {
       </div>
       <ServingsPicker value={servings} onChange={setServings} />
       {status && <p className="status">{status}</p>}
-      {!status && data.items.length === 0 && data.at_home.length === 0 && (
+      <form onSubmit={addManual} className="actions" style={{ margin: '4px 0 14px' }}>
+        <input placeholder={t('Додати до списку: молоко 2 л, хліб')} value={extra} maxLength={300} style={{ maxWidth: 360 }}
+          onChange={(e) => setExtra(e.target.value)} />
+        <button type="submit">{t('Додати')}</button>
+      </form>
+      {!status && data.items.length === 0 && manual.length === 0 && data.at_home.length === 0 && (
         <p>
-          {t('Список порожній. Додайте страви з інгредієнтами в')} <Link to="/calendar">{t('календар')}</Link>.
+          {t('Список порожній. Додайте продукт вище або страви з інгредієнтами в')} <Link to="/calendar">{t('календар')}</Link>.
         </p>
       )}
 
       <ul className="cards">
-        {[...todo, ...done].map((i) => (
-          <li key={i.name} style={{ textDecoration: i.checked ? 'line-through' : undefined, opacity: i.checked ? 0.6 : 1 }}>
-            <label className="inline" style={{ margin: 0 }}>
-              <input type="checkbox" checked={i.checked} onChange={() => toggle(i)} /> {i.name}
-              {i.amount && ` — ${scaleAmount(i.amount, servings)}`}
-            </label>
-            {!i.checked && (
-              <button type="button" className="have-it" onClick={() => void addNames([i.name])}>
-                {t('Є вдома')}
+        {[
+          ...todo.map((item) => ({ kind: 'plan' as const, item })),
+          ...manual.filter((m) => !m.checked).map((item) => ({ kind: 'own' as const, item })),
+          ...done.map((item) => ({ kind: 'plan' as const, item })),
+          ...manual.filter((m) => m.checked).map((item) => ({ kind: 'own' as const, item })),
+        ].map((row) =>
+          row.kind === 'plan' ? (
+            <li key={`p-${row.item.name}`} style={{ textDecoration: row.item.checked ? 'line-through' : undefined, opacity: row.item.checked ? 0.6 : 1 }}>
+              <label className="inline" style={{ margin: 0 }}>
+                <input type="checkbox" checked={row.item.checked} onChange={() => toggle(row.item)} /> {row.item.name}
+                {row.item.amount && ` — ${scaleAmount(row.item.amount, servings)}`}
+              </label>
+              {!row.item.checked && (
+                <button type="button" className="have-it" onClick={() => void addNames([row.item.name])}>
+                  {t('Є вдома')}
+                </button>
+              )}
+            </li>
+          ) : (
+            <li key={`m-${row.item.id}`} style={{ textDecoration: row.item.checked ? 'line-through' : undefined, opacity: row.item.checked ? 0.6 : 1 }}>
+              <label className="inline" style={{ margin: 0 }}>
+                <input type="checkbox" checked={row.item.checked} onChange={() => void toggleManual(row.item)} /> {row.item.name}
+              </label>
+              <button type="button" className="have-it" aria-label={t('Прибрати з списку')} title={t('Додано вручну')} onClick={() => void removeManual(row.item.id)}>
+                ×
               </button>
-            )}
-          </li>
-        ))}
+            </li>
+          ),
+        )}
       </ul>
+      {manual.some((m) => m.checked) && (
+        <p>
+          <button type="button" onClick={() => void clearBought()}>
+            {t('Прибрати куплені')}
+          </button>
+        </p>
+      )}
 
       <h2>{t('Вже є вдома')}</h2>
       <p className="muted">

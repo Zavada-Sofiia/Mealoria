@@ -30,11 +30,13 @@ export default function Dashboard() {
       apiFetch<Day>(`/api/calories/day?date=${today}`),
       apiFetch<Profile>('/api/profile'),
       apiFetch<Shopping>(`/api/shopping?start=${iso(mondayOf(new Date()))}`),
+      // products added by hand also count; a failure here must not hide the rest of the page
+      apiFetch<{ checked: boolean }[]>('/api/shopping/manual').catch(() => []),
     ])
-      .then(([d, p, s]) => {
+      .then(([d, p, s, own]) => {
         setDay(d)
         setProfile(p)
-        setToBuy(s.items.filter((i) => !i.checked).length)
+        setToBuy(s.items.filter((i) => !i.checked).length + own.filter((i) => !i.checked).length)
         setStatus('')
       })
       .catch(() => setStatus(t('Не вдалося завантажити дані. Спробуйте оновити сторінку')))

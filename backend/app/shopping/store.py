@@ -79,3 +79,38 @@ class SupabaseShoppingStore:
                 timeout=15,
             )
         r.raise_for_status()
+
+    def manual(self) -> list[dict]:
+        return self._get("shopping_manual", {"select": "id,name,checked", "order": "created_at.asc"})
+
+    def manual_add_many(self, user_id: str, names: list[str]) -> None:
+        r = httpx.post(
+            f"{self.base}/shopping_manual",
+            headers={**self.headers, "Prefer": "return=minimal"},
+            json=[{"user_id": user_id, "name": n} for n in names],
+            timeout=15,
+        )
+        r.raise_for_status()
+
+    def manual_set_checked(self, item_id: str, checked: bool) -> bool:
+        r = httpx.patch(
+            f"{self.base}/shopping_manual",
+            params={"id": f"eq.{item_id}", "select": "id"},
+            headers={**self.headers, "Prefer": "return=representation"},
+            json={"checked": checked},
+            timeout=15,
+        )
+        r.raise_for_status()
+        return bool(r.json())
+
+    def manual_delete(self, item_id: str) -> None:
+        r = httpx.delete(
+            f"{self.base}/shopping_manual", params={"id": f"eq.{item_id}"}, headers=self.headers, timeout=15
+        )
+        r.raise_for_status()
+
+    def manual_clear_checked(self) -> None:
+        r = httpx.delete(
+            f"{self.base}/shopping_manual", params={"checked": "eq.true"}, headers=self.headers, timeout=15
+        )
+        r.raise_for_status()

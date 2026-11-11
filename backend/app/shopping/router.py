@@ -1,12 +1,21 @@
 import datetime as dt
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Response
+from fastapi import APIRouter, Depends, HTTPException, Response
 from fastapi.security import HTTPAuthorizationCredentials
 
 from app.auth import bearer, current_user_id
 from app.shopping.aggregate import build_items, norm
-from app.shopping.schemas import CheckIn, PantryBulkIn, PantryIn, PantryItem, ShoppingOut
+from app.shopping.schemas import (
+    CheckIn,
+    ManualBulkIn,
+    ManualCheckIn,
+    ManualItem,
+    PantryBulkIn,
+    PantryIn,
+    PantryItem,
+    ShoppingOut,
+)
 from app.shopping.store import SupabaseShoppingStore
 
 router = APIRouter(prefix="/api/shopping", tags=["shopping"])
@@ -79,4 +88,57 @@ def delete_pantry(
     store: SupabaseShoppingStore = Depends(get_store),
 ):
     store.pantry_delete(str(item_id))
+    return Response(status_code=204)
+
+
+@router.get("/manual", response_model=list[ManualItem])
+def list_manual(
+    _: str = Depends(current_user_id),
+    store: SupabaseShoppingStore = Depends(get_store),
+):
+    """Products added by hand; they stay on the list in every week until removed."""
+    return store.manual()
+
+
+@router.post("/manual", response_model=list[ManualItem], status_code=201)
+def add_manual(
+    body: ManualBulkIn,
+    user_id: str = Depends(current_user_id),
+    store: SupabaseShoppingStore = Depends(get_store),
+):
+    names = [n for n in (" ".join(x.split()) for x in body.names) if 0 < len(n) <= 100]
+    if names:
+        store.manual_add_many(user_id, names)
+    return store.manual()
+
+
+@router.delete("/manual", status_code=204)
+def clear_bought_manual(
+    _: str = Depends(current_user_id),
+    store: SupabaseShoppingStore = Depends(get_store),
+):
+    """Removes the manual products that are already ticked off."""
+    store.manual_clear_checked()
+    return Response(status_code=204)
+
+
+@router.patch("/manual/{item_id}", status_code=204)
+def check_manual(
+    item_id: UUID,
+    body: ManualCheckIn,
+    _: str = Depends(current_user_id),
+    store: SupabaseShoppingStore = Depends(get_store),
+):
+    if not store.manual_set_checked(str(item_id), body.checked):
+        raise HTTPException(status_code=404, detail="Item not found")
+    return Response(status_code=204)
+
+
+@router.delete("/manual/{item_id}", status_code=204)
+def delete_manual(
+    item_id: UUID,
+    _: str = Depends(current_user_id),
+    store: SupabaseShoppingStore = Depends(get_store),
+):
+    store.manual_delete(str(item_id))
     return Response(status_code=204)
