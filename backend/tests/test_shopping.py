@@ -60,6 +60,10 @@ class FakeStore:
     def pantry_add(self, user_id, name):
         self.pantry_rows[str(uuid4())] = name
 
+    def pantry_add_many(self, user_id, names):
+        for n in names:
+            self.pantry_add(user_id, n)
+
     def pantry_delete(self, item_id):
         self.pantry_rows.pop(item_id, None)
 
@@ -116,3 +120,12 @@ def test_each_entry_is_one_serving_so_a_part_of_the_pot_is_listed():
 def test_servings_missing_or_one_changes_nothing():
     plan = [dish(("Картопля", "2 шт")), pot(1, ("Картопля", "1 шт"))]
     assert build_items(plan, set(), set())[0][0]["amount"] == "3 шт"
+
+
+def test_several_products_are_added_in_one_request(client):
+    r = client.post("/api/shopping/pantry/bulk", json={"names": ["Сіль", " цукор ", "сіль", "", "   "]})
+    assert r.status_code == 201
+    assert sorted(p["name"] for p in r.json()) == ["сіль", "цукор"]
+    data = client.get("/api/shopping?start=2026-11-09").json()
+    assert [i["name"] for i in data["items"]] == ["Яйця"] and data["at_home"] == ["Сіль"]
+    assert client.post("/api/shopping/pantry/bulk", json={"names": []}).status_code == 422

@@ -6,7 +6,7 @@ from fastapi.security import HTTPAuthorizationCredentials
 
 from app.auth import bearer, current_user_id
 from app.shopping.aggregate import build_items, norm
-from app.shopping.schemas import CheckIn, PantryIn, PantryItem, ShoppingOut
+from app.shopping.schemas import CheckIn, PantryBulkIn, PantryIn, PantryItem, ShoppingOut
 from app.shopping.store import SupabaseShoppingStore
 
 router = APIRouter(prefix="/api/shopping", tags=["shopping"])
@@ -56,6 +56,19 @@ def add_pantry(
     store: SupabaseShoppingStore = Depends(get_store),
 ):
     store.pantry_add(user_id, norm(body.name))
+    return store.pantry()
+
+
+@router.post("/pantry/bulk", response_model=list[PantryItem], status_code=201)
+def add_pantry_many(
+    body: PantryBulkIn,
+    user_id: str = Depends(current_user_id),
+    store: SupabaseShoppingStore = Depends(get_store),
+):
+    """Adds several products at once (one request); empty, too long and repeated names are skipped."""
+    names = list(dict.fromkeys(n for n in (norm(x) for x in body.names) if 0 < len(n) <= 100))
+    if names:
+        store.pantry_add_many(user_id, names)
     return store.pantry()
 
 

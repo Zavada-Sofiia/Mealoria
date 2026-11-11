@@ -10,6 +10,10 @@ type Item = { name: string; amount: string; checked: boolean }
 type ShoppingResponse = { items: Item[]; at_home: string[] }
 type PantryItem = { id: string; name: string }
 
+const norm = (s: string) => s.toLowerCase().split(/\s+/).filter(Boolean).join(' ')
+// Products that most kitchens already have; the names match the ingredient names of the catalog
+const QUICK = ['сіль', 'цукор', 'олія', 'борошно', 'перець', 'яйця', 'молоко', 'масло вершкове', 'цибуля', 'часник', 'картопля', 'рис', 'гречка', 'макарони']
+
 export default function Shopping() {
   const [weekStart, setWeekStart] = useState(() => mondayOf(new Date()))
   const [data, setData] = useState<ShoppingResponse>({ items: [], at_home: [] })
@@ -61,28 +65,47 @@ export default function Shopping() {
     }
   }
 
-  async function addPantry(e: FormEvent) {
-    e.preventDefault()
-    if (!newItem.trim()) return
+  /** Adds products to "already at home": the screen updates at once, the server catches up. */
+  async function addNames(raw: string[]) {
+    const have = new Set(pantry.map((p) => norm(p.name)))
+    const names = [...new Set(raw.map(norm).filter((n) => n && n.length <= 100 && !have.has(n)))]
+    if (!names.length) return
+    setData((d) => ({
+      items: d.items.filter((i) => !names.includes(norm(i.name))),
+      at_home: [...d.at_home, ...d.items.filter((i) => names.includes(norm(i.name))).map((i) => i.name)],
+    }))
+    setPantry((p) =>
+      [...p, ...names.map((name) => ({ id: `tmp-${name}`, name }))].sort((a, b) => a.name.localeCompare(b.name)),
+    )
     try {
-      await apiFetch<PantryItem[]>('/api/shopping/pantry', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: newItem }),
-      })
-      setNewItem('')
-      setVersion((v) => v + 1)
+      setPantry(
+        await apiFetch<PantryItem[]>('/api/shopping/pantry/bulk', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ names }),
+        }),
+      )
     } catch {
       setStatus(t('Не вдалося додати продукт'))
+      setVersion((v) => v + 1)
     }
   }
 
+  function addPantry(e: FormEvent) {
+    e.preventDefault()
+    void addNames(newItem.split(/[,;\n]+/))
+    setNewItem('')
+  }
+
   async function removePantry(id: string) {
+    if (id.startsWith('tmp-')) return // still being saved
+    setPantry((p) => p.filter((x) => x.id !== id))
     try {
       await apiFetch<void>(`/api/shopping/pantry/${id}`, { method: 'DELETE' })
-      setVersion((v) => v + 1)
+      setVersion((v) => v + 1) // the product comes back into the list
     } catch {
       setStatus(t('Не вдалося прибрати продукт'))
+      setVersion((v) => v + 1)
     }
   }
 
@@ -115,24 +138,44 @@ export default function Shopping() {
               <input type="checkbox" checked={i.checked} onChange={() => toggle(i)} /> {i.name}
               {i.amount && ` — ${scaleAmount(i.amount, servings)}`}
             </label>
+            {!i.checked && (
+              <button type="button" className="have-it" onClick={() => void addNames([i.name])}>
+                {t('Є вдома')}
+              </button>
+            )}
           </li>
         ))}
       </ul>
 
       <h2>{t('Вже є вдома')}</h2>
-      <p className="muted">{t('Ці продукти не потраплять до списку.')}</p>
+      <p className="muted">
+        {t('Додайте те, що вже є в холодильнику й на кухні: ці продукти не потраплять до списку. Можна кілька через кому або одним дотиком нижче.')}
+      </p>
       <form onSubmit={addPantry} className="actions" style={{ marginBottom: 12 }}>
-        <input placeholder={t('Наприклад, сіль')} value={newItem} maxLength={100} style={{ maxWidth: 280 }}
+        <input placeholder={t('Кілька через кому: сіль, цукор, олія')} value={newItem} maxLength={300} style={{ maxWidth: 360 }}
           onChange={(e) => setNewItem(e.target.value)} />
         <button type="submit">{t('Додати')}</button>
       </form>
-      <ul className="cards">
+      {QUICK.some((q) => !pantry.some((p) => norm(p.name) === q)) && (
+        <div className="quick">
+          <small className="muted">{t('Швидко додати:')}</small>
+          {QUICK.filter((q) => !pantry.some((p) => norm(p.name) === q)).map((q) => (
+            <button key={q} type="button" className="chip-btn" onClick={() => void addNames([q])}>
+              + {q}
+            </button>
+          ))}
+        </div>
+      )}
+      <div className="pantry">
         {pantry.map((p) => (
-          <li key={p.id}>
-            {p.name} <button onClick={() => removePantry(p.id)}>×</button>
-          </li>
+          <span key={p.id} className="chip">
+            {p.name}{' '}
+            <button type="button" aria-label={t('Прибрати зі списку «вже є вдома»')} onClick={() => removePantry(p.id)}>
+              ×
+            </button>
+          </span>
         ))}
-      </ul>
+      </div>
       {data.at_home.length > 0 && <p>{t('У цьому тижні вже є вдома: {list}.', { list: data.at_home.join(', ') })}</p>}
     </div>
   )

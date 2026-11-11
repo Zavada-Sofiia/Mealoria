@@ -25,6 +25,10 @@ class PantryIn(BaseModel):
     name: str = Field(min_length=1, max_length=100)
 
 
+class PantryBulkIn(BaseModel):
+    names: list[str] = Field(min_length=1, max_length=40)
+
+
 class PantryItem(BaseModel):
     id: UUID
     name: str

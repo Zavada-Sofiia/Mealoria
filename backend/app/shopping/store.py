@@ -42,6 +42,16 @@ class SupabaseShoppingStore:
         )
         r.raise_for_status()
 
+    def pantry_add_many(self, user_id: str, names: list[str]) -> None:
+        r = httpx.post(
+            f"{self.base}/pantry",
+            params={"on_conflict": "user_id,name"},
+            headers={**self.headers, "Prefer": "resolution=ignore-duplicates"},
+            json=[{"user_id": user_id, "name": n} for n in names],
+            timeout=15,
+        )
+        r.raise_for_status()
+
     def pantry_delete(self, item_id: str) -> None:
         r = httpx.delete(
             f"{self.base}/pantry", params={"id": f"eq.{item_id}"}, headers=self.headers, timeout=15
