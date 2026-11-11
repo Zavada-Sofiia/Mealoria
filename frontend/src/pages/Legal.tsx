@@ -36,7 +36,7 @@ function PrivacyUk() {
         <li>Cloudflare: хостинг сайту та створення ШІ-зображень страв (для преміуму).</li>
         <li>Render: сервер застосунку.</li>
         <li>
-          Google (Gemini): ШІ-помічник. Для підбору рецептів йому надсилаються ваші вподобання й алергени, для
+          Google (Gemini): ШІ-помічник. Для підбору рецептів йому надсилаються ваші вподобання й алергени (а для рецептів із холодильника ще й список продуктів, який ви вводите), для
           «калорій по фото» — саме фото страви. Email і ім’я не надсилаються.
         </li>
         <li>Open Food Facts: тільки назва продукту, яку ви шукаєте в калькуляторі.</li>
@@ -164,7 +164,7 @@ function PrivacyEn() {
         <li>Cloudflare: website hosting and AI dish images (Premium).</li>
         <li>Render: the application server.</li>
         <li>
-          Google (Gemini): the AI assistant. For recipe suggestions it receives your preferences and allergens;
+          Google (Gemini): the AI assistant. For recipe suggestions it receives your preferences and allergens (and, for fridge recipes, the list of products you enter);
           for “calories from a photo” it receives the photo of the dish. Your email and name are not sent.
         </li>
         <li>Open Food Facts: only the product name you search for in the calculator.</li>

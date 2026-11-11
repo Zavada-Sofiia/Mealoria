@@ -14,6 +14,8 @@ from app.ai_gateway.schemas import (
     DishNutritionIn,
     DishRecipeIn,
     DishRecipeOut,
+    FridgeIn,
+    FridgeOut,
     MealPhotoIn,
     MealPhotoOut,
     NutritionOut,
@@ -251,3 +253,29 @@ def dish_recipe(
         return result
     except Exception as e:  # any failure must become a JSON 502 the browser can read
         raise _failure("AI could not write the recipe", e, quota)
+
+
+@router.post("/fridge-recipes", response_model=FridgeOut)
+def fridge_recipes(
+    body: FridgeIn,
+    user_id: str = Depends(current_user_id),
+    quota: SupabaseQuotaStore = Depends(get_quota_store),
+    profiles: SupabaseProfileStore = Depends(get_profile_store),
+    plans: SupabasePlanStore = Depends(get_plan_store),
+    lang: str = Header(default="uk", alias="X-Lang"),
+):
+    """Recipes from the products the user already has (one AI request, like the usual recipe ideas)."""
+    limit = _daily_limit(plans)
+    _check_quota(quota, limit)
+    try:
+        prompt = prompts.with_language(
+            prompts.fridge_prompt(
+                profiles.get(user_id), body.ingredients, body.category, body.strict, body.note.strip()
+            ),
+            lang,
+        )
+        result = FridgeOut(**generate_json(prompt, prompts.FRIDGE_SCHEMA))
+        _charge(quota, limit)
+        return result
+    except Exception as e:  # any failure must become a JSON 502 the browser can read
+        raise _failure("AI could not suggest recipes from the fridge", e, quota)

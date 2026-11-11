@@ -101,3 +101,27 @@ class DishRecipeOut(BaseModel):
     ingredients: list[Ingredient] = Field(max_length=30)
 
     _steps = field_validator("recipe")(one_step_per_line)
+
+
+class FridgeIn(BaseModel):
+    ingredients: list[str] = Field(min_length=1, max_length=30)
+    category: Literal["сніданок", "обід", "вечеря", "перекус"] | None = None
+    strict: bool = False  # only the listed products, nothing to buy
+    note: str = Field(default="", max_length=200)
+
+    @field_validator("ingredients")
+    @classmethod
+    def clean(cls, v: list[str]) -> list[str]:
+        names = [" ".join(x.split())[:60] for x in v]
+        unique = list(dict.fromkeys(n for n in names if n))
+        if not unique:
+            raise ValueError("no products")
+        return unique
+
+
+class FridgeIdea(RecipeIdea):
+    missing: list[str] = Field(default_factory=list, max_length=10)
+
+
+class FridgeOut(BaseModel):
+    recipes: list[FridgeIdea]

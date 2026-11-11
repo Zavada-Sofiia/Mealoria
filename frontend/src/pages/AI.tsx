@@ -20,6 +20,7 @@ type Idea = {
   cook_minutes: number
   ingredients: Ingredient[]
   recipe: string
+  missing?: string[]
 }
 type MealPhoto = {
   is_food: boolean
@@ -69,10 +70,13 @@ type Saved = {
   category: string
   note: string
   ideas: Idea[]
+  fridge: string
+  fridgeStrict: boolean
+  fridgeIdeas: Idea[]
   meal: MealPhoto | null
   mealPhoto: string | null // compressed photo as a data URL
 }
-const EMPTY_SAVED: Saved = { category: '', note: '', ideas: [], meal: null, mealPhoto: null }
+const EMPTY_SAVED: Saved = { category: '', note: '', ideas: [], fridge: '', fridgeStrict: false, fridgeIdeas: [], meal: null, mealPhoto: null }
 const storageKey = (userId: string) => `mealoria.ai.v1.${userId}`
 
 function loadSaved(userId: string): Saved {
@@ -82,6 +86,30 @@ function loadSaved(userId: string): Saved {
   } catch {
     return EMPTY_SAVED
   }
+}
+
+function IdeaList({ ideas, onSave }: { ideas: Idea[]; onSave: (i: Idea) => void }) {
+  return (
+    <ul className="cards" style={{ marginTop: 16 }}>
+      {ideas.map((i) => (
+        <li key={i.name}>
+          <strong>{i.name}</strong> · {t(i.category)} · {t('{n} хв', { n: i.cook_minutes })}
+          <div className="muted">{macros(i)}</div>
+          {i.missing && i.missing.length > 0 && (
+            <div className="muted">{t('Докупити: {list}', { list: i.missing.join(', ') })}</div>
+          )}
+          <details>
+            <summary>{t('Рецепт')}</summary>
+            <div>{i.ingredients.map((x) => `${x.name} (${x.amount})`).join(', ')}</div>
+            <p style={{ whiteSpace: 'pre-line' }}>{oneStepPerLine(i.recipe)}</p>
+          </details>
+          <div className="actions" style={{ marginTop: 8 }}>
+            <button onClick={() => onSave(i)}>{t('У мої страви')}</button>
+          </div>
+        </li>
+      ))}
+    </ul>
+  )
 }
 
 export default function AI() {
@@ -104,7 +132,10 @@ function AIPage({ userId }: { userId: string }) {
   const [ideas, setIdeas] = useState<Idea[]>(saved.ideas)
   const [meal, setMeal] = useState<MealPhoto | null>(saved.meal)
   const [mealPhoto, setMealPhoto] = useState<string | null>(saved.mealPhoto)
-  const [busy, setBusy] = useState<'ideas' | 'photo' | null>(null)
+  const [fridge, setFridge] = useState(saved.fridge)
+  const [fridgeStrict, setFridgeStrict] = useState(saved.fridgeStrict)
+  const [fridgeIdeas, setFridgeIdeas] = useState<Idea[]>(saved.fridgeIdeas)
+  const [busy, setBusy] = useState<'ideas' | 'fridge' | 'photo' | null>(null)
   const [status, setStatus] = useState('')
 
   useEffect(() => {
@@ -112,12 +143,12 @@ function AIPage({ userId }: { userId: string }) {
     try {
       localStorage.setItem(
         storageKey(userId),
-        JSON.stringify({ category, note, ideas, meal, mealPhoto }),
+        JSON.stringify({ category, note, ideas, fridge, fridgeStrict, fridgeIdeas, meal, mealPhoto }),
       )
     } catch {
       // storage full or blocked: the results just will not survive leaving the page
     }
-  }, [userId, category, note, ideas, meal, mealPhoto])
+  }, [userId, category, note, ideas, fridge, fridgeStrict, fridgeIdeas, meal, mealPhoto])
 
   useEffect(() => {
     apiFetch<Quota>('/api/ai/quota')
@@ -140,6 +171,41 @@ function AIPage({ userId }: { userId: string }) {
         body: JSON.stringify({ category: category || null, note }),
       })
       setIdeas(r.recipes)
+    } catch (err) {
+      setStatus(errorText(err))
+    } finally {
+      setBusy(null)
+      void refreshQuota()
+    }
+  }
+
+  const fridgeProducts = () =>
+    [...new Set(fridge.split(/[,;\n]+/).map((x) => x.trim().replace(/\s+/g, ' ')).filter(Boolean))]
+
+  async function loadPantry() {
+    try {
+      const rows = await apiFetch<{ name: string }[]>('/api/shopping/pantry')
+      if (!rows.length) return setStatus(t('У «Вже є вдома» ще нічого немає'))
+      setFridge([...new Set([...fridgeProducts(), ...rows.map((r) => r.name)])].join(', '))
+      setStatus('')
+    } catch {
+      setStatus(t('Не вдалося завантажити «Вже є вдома»'))
+    }
+  }
+
+  async function suggestFromFridge(e: FormEvent) {
+    e.preventDefault()
+    const products = fridgeProducts()
+    if (!products.length) return setStatus(t('Додайте хоча б один продукт'))
+    setBusy('fridge')
+    setStatus('')
+    try {
+      const r = await apiFetch<{ recipes: Idea[] }>('/api/ai/fridge-recipes', {
+        method: 'POST',
+        headers: json,
+        body: JSON.stringify({ ingredients: products, strict: fridgeStrict }),
+      })
+      setFridgeIdeas(r.recipes)
     } catch (err) {
       setStatus(errorText(err))
     } finally {
@@ -221,10 +287,11 @@ function AIPage({ userId }: { userId: string }) {
   }
 
   const left = quota ? Math.max(0, quota.limit - quota.used) : null
-  const hasResults = ideas.length > 0 || meal !== null
+  const hasResults = ideas.length > 0 || fridgeIdeas.length > 0 || meal !== null
 
   function clearResults() {
     setIdeas([])
+    setFridgeIdeas([])
     setMeal(null)
     setMealPhoto(null)
     setStatus('')
@@ -282,24 +349,34 @@ function AIPage({ userId }: { userId: string }) {
           </button>
         </form>
 
-        {ideas.length > 0 && (
-          <ul className="cards" style={{ marginTop: 16 }}>
-            {ideas.map((i) => (
-              <li key={i.name}>
-                <strong>{i.name}</strong> · {t(i.category)} · {t('{n} хв', { n: i.cook_minutes })}
-                <div className="muted">{macros(i)}</div>
-                <details>
-                  <summary>{t('Рецепт')}</summary>
-                  <div>{i.ingredients.map((x) => `${x.name} (${x.amount})`).join(', ')}</div>
-                  <p style={{ whiteSpace: 'pre-line' }}>{oneStepPerLine(i.recipe)}</p>
-                </details>
-                <div className="actions" style={{ marginTop: 8 }}>
-                  <button onClick={() => saveIdea(i)}>{t('У мої страви')}</button>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
+        {ideas.length > 0 && <IdeaList ideas={ideas} onSave={saveIdea} />}
+      </section>
+
+      <section className="card">
+        <h2>{t('Рецепти з того, що є в холодильнику')}</h2>
+        <p className="muted">
+          {t('Напишіть продукти, які у вас є, і ШІ запропонує, що з них приготувати. Це окрема функція: звичайний підбір рецептів вище працює як і раніше.')}
+        </p>
+        <form onSubmit={suggestFromFridge}>
+          <label>
+            {t('Що є в холодильнику')}
+            <textarea value={fridge} maxLength={1000} placeholder={t('яйця, молоко, сир, цибуля')}
+              onChange={(e) => setFridge(e.target.value)} />
+          </label>
+          <p>
+            <button type="button" onClick={() => void loadPantry()}>{t('Взяти з «Вже є вдома»')}</button>
+          </p>
+          <p>
+            <label className="inline">
+              <input type="checkbox" checked={fridgeStrict} onChange={(e) => setFridgeStrict(e.target.checked)} />{' '}
+              {t('Лише з цих продуктів, нічого не докуповувати')}
+            </label>
+          </p>
+          <button type="submit" disabled={busy !== null || left === 0}>
+            {busy === 'fridge' ? t('Думаємо…') : t('Підібрати з холодильника')}
+          </button>
+        </form>
+        {fridgeIdeas.length > 0 && <IdeaList ideas={fridgeIdeas} onSave={saveIdea} />}
       </section>
 
       <section className="card red">
