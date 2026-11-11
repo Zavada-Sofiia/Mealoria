@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+# private pages of the signed-in app
+Disallow: /staff
+Disallow: /reset
+Disallow: /auth
+
+Sitemap: https://mealoria.mealoria.workers.dev/sitemap.xml

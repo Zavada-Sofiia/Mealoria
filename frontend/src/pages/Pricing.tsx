@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import type { Session } from '@supabase/supabase-js'
 import { apiFetch } from '../api/client'
+import { usePageMeta } from '../seo'
 import { formatDate, limitLines, usePlan } from '../plan/context'
 import { t } from '../i18n'
 
@@ -25,6 +26,10 @@ const PREMIUM_EXTRAS = [
 ]
 
 export default function Pricing({ session }: { session: Session | null }) {
+  usePageMeta(
+    t('Тарифи Mealoria: безкоштовний і преміум'),
+    t('Що входить у безкоштовний тариф Mealoria і що додає преміум: ліміти страв і ШІ-запитів, планування на рік, ШІ-фото та автоматичні калорії.'),
+  )
   const { me, table } = usePlan()
   const [preordered, setPreordered] = useState(false)
   const [status, setStatus] = useState('')

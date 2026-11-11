@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { CONTACT_EMAIL } from '../config'
+import { usePageMeta } from '../seo'
 import { canInstall, isInstalled, onInstallChange, promptInstall } from '../pwa'
 import { t } from '../i18n'
 
@@ -85,6 +86,10 @@ function InstallApp() {
 }
 
 export default function Home({ signedIn }: { signedIn: boolean }) {
+  usePageMeta(
+    t('Mealoria: тижневе меню, калорії та список продуктів'),
+    t('Плануйте харчування на тиждень у календарі, рахуйте калорії, БЖВ і клітковину та отримуйте список продуктів автоматично. Безкоштовно, з ШІ-помічником для рецептів.'),
+  )
   return (
     <div>
       <section className="hero">

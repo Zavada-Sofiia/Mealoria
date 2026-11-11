@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { CONTACT_EMAIL } from '../config'
-import { getLang } from '../i18n'
+import { getLang, t } from '../i18n'
+import { usePageMeta } from '../seo'
 
 const UPDATED = '11 листопада 2026'
 const UPDATED_EN = '11 November 2026'
@@ -260,5 +261,12 @@ function TermsEn() {
   )
 }
 
-export const Privacy = () => (getLang() === 'en' ? <PrivacyEn /> : <PrivacyUk />)
-export const Terms = () => (getLang() === 'en' ? <TermsEn /> : <TermsUk />)
+export function Privacy() {
+  usePageMeta(t('Політика конфіденційності Mealoria'), t('Які дані зберігає Mealoria, кому їх передає та як ви можете їх видалити.'))
+  return getLang() === 'en' ? <PrivacyEn /> : <PrivacyUk />
+}
+
+export function Terms() {
+  usePageMeta(t('Умови користування Mealoria'), t('Умови користування сервісом Mealoria: акаунт, ваш вміст, тарифи та відповідальність.'))
+  return getLang() === 'en' ? <TermsEn /> : <TermsUk />
+}

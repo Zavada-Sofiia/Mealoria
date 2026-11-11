@@ -1,4 +1,5 @@
 import { CONTACT_EMAIL } from '../config'
+import { usePageMeta } from '../seo'
 import { t } from '../i18n'
 
 // A public monobank jar link. VITE_DONATION_URL overrides it without a code change.
@@ -6,6 +7,10 @@ const DONATION_URL =
   (import.meta.env.VITE_DONATION_URL as string | undefined) || 'https://send.monobank.ua/jar/AeUzaYD5jJ'
 
 export default function Support() {
+  usePageMeta(
+    t('Підтримати Mealoria'),
+    t('Mealoria робить невелика команда. Підтримайте проєкт добровільним донатом у будь-якій сумі.'),
+  )
   return (
     <div className="narrow">
       <h1>{t('Підтримати проєкт')}</h1>
