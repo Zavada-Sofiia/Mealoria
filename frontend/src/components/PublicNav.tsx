@@ -1,4 +1,5 @@
 import { NavLink } from 'react-router-dom'
+import ThemeToggle from './ThemeToggle'
 
 export default function PublicNav() {
   return (
@@ -12,6 +13,7 @@ export default function PublicNav() {
           <NavLink to="/pricing">Тарифи</NavLink>
           <NavLink to="/support">Підтримати</NavLink>
         </nav>
+        <ThemeToggle />
         <NavLink to="/auth">
           <button>Увійти</button>
         </NavLink>

@@ -2,6 +2,7 @@ import { NavLink, useLocation } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { supabase } from '../api/supabase'
 import { usePlan } from '../plan/context'
+import ThemeToggle from './ThemeToggle'
 
 const ICONS: Record<string, string> = {
   '/today': 'M3 11.5 12 4l9 7.5M5.5 10v9.5h13V10',
@@ -75,6 +76,7 @@ export default function Nav() {
               </NavLink>
             ))}
           </nav>
+          <ThemeToggle />
           {me && (
             <NavLink to="/pricing" className={`plan-badge${me.plan === 'premium' ? ' premium' : ''}`}>
               {me.plan === 'premium' ? 'Преміум' : 'Безкоштовний'}
