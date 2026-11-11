@@ -48,7 +48,7 @@ variable "supabase_project_ref" {
 variable "site_url" {
   description = "Public address of the website; used for Supabase redirects and backend CORS."
   type        = string
-  default     = "https://mealoria.zavada-sofia.workers.dev"
+  default     = "https://mealoria.mealoria.workers.dev"
 }
 
 variable "render_region" {

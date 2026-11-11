@@ -24,7 +24,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=os.environ.get(
         "CORS_ORIGINS",
-        "https://mealoria.zavada-sofia.workers.dev,http://localhost:5173",
+        "https://mealoria.mealoria.workers.dev,http://localhost:5173",
     ).split(","),
     allow_headers=["Authorization", "Content-Type"],
     allow_methods=["*"],
