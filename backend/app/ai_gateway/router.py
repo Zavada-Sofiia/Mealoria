@@ -1,3 +1,5 @@
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials
 from pydantic import ValidationError
@@ -17,6 +19,7 @@ from app.profile.router import get_store as get_profile_store
 from app.profile.store import SupabaseProfileStore
 
 router = APIRouter(prefix="/api/ai", tags=["ai"])
+log = logging.getLogger(__name__)
 
 
 def get_quota_store(
@@ -53,7 +56,8 @@ def meal_photo(
             prompts.MEAL_PHOTO_PROMPT, prompts.MEAL_PHOTO_SCHEMA, body.image_base64, body.mime_type
         )
         return MealPhotoOut(**data)
-    except (AIError, ValidationError, TypeError):
+    except (AIError, ValidationError, TypeError) as e:
+        log.warning("AI photo analysis failed: %s", e)
         raise HTTPException(status_code=502, detail="AI could not analyse the photo")
 
 
@@ -68,5 +72,6 @@ def recipe_ideas(
     prompt = prompts.recipe_prompt(profiles.get(user_id), body.category, body.note.strip())
     try:
         return RecipeIdeasOut(**generate_json(prompt, prompts.RECIPES_SCHEMA))
-    except (AIError, ValidationError, TypeError):
+    except (AIError, ValidationError, TypeError) as e:
+        log.warning("AI recipe suggestion failed: %s", e)
         raise HTTPException(status_code=502, detail="AI could not suggest recipes")

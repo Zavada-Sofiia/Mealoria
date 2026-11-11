@@ -43,5 +43,8 @@ def generate_json(
         )
         r.raise_for_status()
         return json.loads(r.json()["candidates"][0]["content"]["parts"][0]["text"])
+    except httpx.HTTPStatusError as e:
+        # Gemini explains problems (bad key, unknown model, quota) in the response body
+        raise AIError(f"Gemini returned {e.response.status_code}: {e.response.text[:300]}") from e
     except (httpx.HTTPError, KeyError, IndexError, ValueError) as e:
-        raise AIError(str(e)) from e
+        raise AIError(f"{type(e).__name__}: {e}") from e

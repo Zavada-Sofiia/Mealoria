@@ -150,3 +150,16 @@ def test_generate_json_wraps_failures(monkeypatch):
     monkeypatch.delenv("GEMINI_API_KEY")
     with pytest.raises(gemini.AIError):
         gemini.generate_json("hi", {})
+
+
+def test_gemini_error_body_is_kept_for_the_logs(monkeypatch):
+    monkeypatch.setenv("GEMINI_API_KEY", "k")
+
+    def bad_model(url, headers, json, timeout):
+        return httpx.Response(
+            404, request=httpx.Request("POST", url), text='{"error": {"message": "model not found"}}'
+        )
+
+    monkeypatch.setattr(gemini.httpx, "post", bad_model)
+    with pytest.raises(gemini.AIError, match="404.*model not found"):
+        gemini.generate_json("hi", {})
