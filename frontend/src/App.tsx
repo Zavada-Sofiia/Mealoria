@@ -4,6 +4,7 @@ import type { Session } from '@supabase/supabase-js'
 import { supabase } from './api/supabase'
 import Nav from './components/Nav'
 import PublicNav from './components/PublicNav'
+import AI from './pages/AI'
 import Auth from './pages/Auth'
 import Calendar from './pages/Calendar'
 import Calories from './pages/Calories'
@@ -41,6 +42,7 @@ function App() {
           path="/today"
           element={session ? <Dashboard /> : <Navigate to="/auth" />}
         />
+        <Route path="/ai" element={session ? <AI /> : <Navigate to="/auth" />} />
         <Route
           path="/calendar"
           element={session ? <Calendar /> : <Navigate to="/auth" />}

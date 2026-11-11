@@ -122,6 +122,9 @@ export default function Dashboard() {
         <Link to="/calendar">
           <button>Спланувати тиждень</button>
         </Link>
+        <Link to="/ai">
+          <button>ШІ-помічник</button>
+        </Link>
       </div>
     </div>
   )

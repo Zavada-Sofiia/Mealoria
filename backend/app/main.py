@@ -3,6 +3,7 @@ import os
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.ai_gateway.router import router as ai_router
 from app.auth import current_user_id
 from app.calendar.router import router as calendar_router
 from app.calories.router import router as calories_router
@@ -31,6 +32,7 @@ app.include_router(calendar_router)
 app.include_router(shopping_router)
 app.include_router(calories_router)
 app.include_router(limits_router)
+app.include_router(ai_router)
 
 
 @app.get("/api/health")

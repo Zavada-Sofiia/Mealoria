@@ -16,6 +16,7 @@ const MAIN = [
   ['/recipes', 'Рецепти'],
   ['/shopping', 'Список продуктів'],
   ['/calories', 'Калорії'],
+  ['/ai', 'ШІ-помічник'],
 ]
 const RIGHT = [
   ['/profile', 'Профіль'],
