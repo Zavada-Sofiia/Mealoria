@@ -503,6 +503,12 @@ progress.over::-moz-progress-bar {
   letter-spacing: -0.02em;
 }
 
+.auto-value {
+  color: var(--teal-dark);
+  font-weight: 700;
+  background: var(--teal-soft);
+}
+
 /* ---------- number + slider field ---------- */
 input[type='number'] {
   -moz-appearance: textfield;

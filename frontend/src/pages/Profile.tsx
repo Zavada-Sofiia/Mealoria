@@ -134,11 +134,16 @@ function Multi({
 export default function Profile() {
   const [form, setForm] = useState<ProfileData>(EMPTY)
   const [status, setStatus] = useState('Завантаження…')
+  // null = follow the live recommendation; a string = the user's own target
+  const [targetText, setTargetText] = useState<string | null>(null)
 
   useEffect(() => {
     apiFetch<ProfileResponse>('/api/profile')
       .then((r) => {
-        if (r.profile) setForm(r.profile)
+        if (r.profile) {
+          setForm(r.profile)
+          setTargetText(r.profile.target_calories ? String(r.profile.target_calories) : null)
+        }
         setStatus('')
       })
       .catch(() => setStatus('Не вдалося завантажити профіль'))
@@ -150,7 +155,8 @@ export default function Profile() {
 
   const estimate = estimateCalories(form)
   const recommended = estimate?.recommended ?? null
-  const customTarget = form.target_calories !== null && form.target_calories !== recommended
+  const ownTarget = targetText === null || targetText === '' ? null : Number(targetText)
+  const customTarget = ownTarget !== null && ownTarget !== recommended
 
   async function save(e: FormEvent) {
     e.preventDefault()
@@ -158,12 +164,16 @@ export default function Profile() {
       setStatus('Вкажіть вік, зріст і вагу')
       return
     }
+    if (ownTarget !== null && (ownTarget < 800 || ownTarget > 6000)) {
+      setStatus('Бажаний калораж має бути від 800 до 6000 ккал')
+      return
+    }
     setStatus('Зберігаємо…')
     try {
       await apiFetch<ProfileResponse>('/api/profile', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...form, target_calories: ownTarget }),
       })
       setStatus('Збережено')
     } catch {
@@ -215,7 +225,7 @@ export default function Profile() {
         {estimate ? (
           <>
             <div className="calc-main">
-              <span className="calc-num">{form.target_calories ?? estimate.recommended}</span>
+              <span className="calc-num">{ownTarget ?? estimate.recommended}</span>
               <span>ккал на добу{customTarget ? ' (ваша ціль)' : ''}</span>
             </div>
             <p className="muted" style={{ margin: '6px 0 0' }}>
@@ -226,7 +236,7 @@ export default function Profile() {
             </p>
             {customTarget && (
               <button type="button" style={{ marginTop: 10 }}
-                onClick={() => set('target_calories', null)}>
+                onClick={() => setTargetText(null)}>
                 Повернути рекомендований ({estimate.recommended})
               </button>
             )}
@@ -238,12 +248,21 @@ export default function Profile() {
         )}
       </div>
       <label>
-        Своя ціль, ккал (необов'язково)
+        Бажаний калораж, ккал на добу
         <input type="number" inputMode="numeric" min={800} max={6000}
-          value={form.target_calories ?? ''}
-          placeholder={recommended ? `Зараз використовується ${recommended}` : 'Автоматично'}
-          onChange={(e) => set('target_calories', e.target.value ? Number(e.target.value) : null)} />
+          className={customTarget ? undefined : 'auto-value'}
+          value={targetText ?? (recommended ?? '')}
+          placeholder="Автоматично"
+          onChange={(e) => setTargetText(e.target.value)}
+          onBlur={() => targetText === '' && setTargetText(null)} />
       </label>
+      <p className="muted" style={{ marginTop: -6 }}>
+        <small>
+          {customTarget
+            ? 'Це ваша власна ціль. Збережемо саме її.'
+            : 'Підставлено автоматично за розрахунком вище і змінюється разом із вашими даними. Змініть число, якщо хочете свою ціль.'}
+        </small>
+      </p>
       </section>
 
       <section className="card red">
