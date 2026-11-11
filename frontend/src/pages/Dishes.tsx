@@ -274,8 +274,21 @@ export default function Dishes() {
 
   const atLimit = me !== null && !editingId && dishes.length >= me.dishes
 
+  const [saving, setSaving] = useState(false)
+
+  // a second tap on "Add" while the first save is still running must not create a second dish
   async function save(e: FormEvent) {
     e.preventDefault()
+    if (saving) return
+    setSaving(true)
+    try {
+      await submit()
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function submit() {
     let data = form
     let estimated = false
     let failureNote = ''
@@ -545,7 +558,7 @@ export default function Dishes() {
             onChange={(e) => setForm({ ...form, recipe: e.target.value })} />
         </label>
         <div className="actions">
-        <button type="submit" disabled={atLimit}>
+        <button type="submit" disabled={atLimit || saving}>
           {editingId ? t('Зберегти зміни') : t('Додати')}
         </button>
         {atLimit && (

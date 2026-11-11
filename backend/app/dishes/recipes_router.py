@@ -47,6 +47,12 @@ def save_to_my_dishes(
     recipe = recipes.get(str(recipe_id))
     if recipe is None:
         raise HTTPException(status_code=404, detail="Recipe not found")
+    # saving the same recipe again (for example "To calendar" after "To my dishes") must not
+    # create a second copy: hand back the dish the user already has
+    wanted = (recipe.get("name") or "").strip().casefold()
+    for existing in dishes.list():
+        if (existing.get("name") or "").strip().casefold() == wanted:
+            return existing
     fields = ("name", "recipe", "ingredients", "calories", "protein_g", "fat_g", "carbs_g", "fiber_g", "photo_url")
     data = {k: recipe.get(k) for k in fields}
     if recipe.get("category") in ("сніданок", "обід", "вечеря", "перекус"):

@@ -88,11 +88,16 @@ export default function Recipes() {
 
   const json = { 'Content-Type': 'application/json' }
 
+  const [savedIds, setSavedIds] = useState<string[]>([])
+
   async function saveToDishes(r: Recipe) {
+    if (savedIds.includes(r.id)) return
+    setSavedIds((ids) => [...ids, r.id])
     try {
       await apiFetch<Dish>(`/api/recipes/${r.id}/save`, { method: 'POST' })
       setStatus(t('«{name}» додано до моїх страв', { name: r.name }))
     } catch {
+      setSavedIds((ids) => ids.filter((x) => x !== r.id))
       setStatus(t('Не вдалося додати страву'))
     }
   }
@@ -177,7 +182,9 @@ export default function Recipes() {
               <p style={{ whiteSpace: 'pre-line' }}>{oneStepPerLine(r.recipe)}</p>
             </details>
             <div className="actions" style={{ marginTop: 8 }}>
-              <button onClick={() => saveToDishes(r)}>{t('У мої страви')}</button>
+              <button onClick={() => saveToDishes(r)} disabled={savedIds.includes(r.id)}>
+                {savedIds.includes(r.id) ? t('Додано ✓') : t('У мої страви')}
+              </button>
               <button onClick={() => setPlanning(planning === r.id ? null : r.id)}>{t('В календар')}</button>
             </div>
             {planning === r.id && (

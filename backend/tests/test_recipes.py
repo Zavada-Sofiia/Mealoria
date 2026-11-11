@@ -47,9 +47,13 @@ class FakeDishes:
     def __init__(self):
         self.created = []
 
+    def list(self):
+        return [row for _, row in self.created]
+
     def create(self, user_id, data):
-        self.created.append((user_id, data))
-        return {**data, "id": str(uuid4())}
+        row = {**data, "id": str(uuid4())}
+        self.created.append((user_id, row))
+        return row
 
 
 @pytest.fixture
@@ -76,7 +80,7 @@ def test_save_copies_recipe_into_my_dishes(client_and_dishes):
     assert r.json()["name"] == "Борщ"
     user_id, data = dishes.created[0]
     assert user_id == "user-1"
-    assert "id" not in data and "category" not in data
+    assert data["id"] and "category" not in data
     assert data["categories"] == ["обід"]  # the recipe's category becomes the dish's meal type
 
 
@@ -93,3 +97,11 @@ def test_for_me_filters_by_profile(client_and_dishes):
     app.dependency_overrides[get_profile_store] = lambda: profiles
     assert client.get("/api/recipes?for_me=true").json() == []
     assert len(client.get("/api/recipes").json()) == 1
+
+
+def test_saving_the_same_recipe_twice_does_not_make_a_second_dish(client_and_dishes):
+    client, dishes = client_and_dishes
+    first = client.post(f"/api/recipes/{RECIPE_ID}/save").json()
+    second = client.post(f"/api/recipes/{RECIPE_ID}/save").json()
+    assert second["id"] == first["id"]
+    assert len(dishes.created) == 1

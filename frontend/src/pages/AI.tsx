@@ -88,7 +88,7 @@ function loadSaved(userId: string): Saved {
   }
 }
 
-function IdeaList({ ideas, onSave }: { ideas: Idea[]; onSave: (i: Idea) => void }) {
+function IdeaList({ ideas, saved, onSave }: { ideas: Idea[]; saved: string[]; onSave: (i: Idea) => void }) {
   return (
     <ul className="cards" style={{ marginTop: 16 }}>
       {ideas.map((i) => (
@@ -104,7 +104,9 @@ function IdeaList({ ideas, onSave }: { ideas: Idea[]; onSave: (i: Idea) => void 
             <p style={{ whiteSpace: 'pre-line' }}>{oneStepPerLine(i.recipe)}</p>
           </details>
           <div className="actions" style={{ marginTop: 8 }}>
-            <button onClick={() => onSave(i)}>{t('У мої страви')}</button>
+            <button onClick={() => onSave(i)} disabled={saved.includes(i.name)}>
+              {saved.includes(i.name) ? t('Додано ✓') : t('У мої страви')}
+            </button>
           </div>
         </li>
       ))}
@@ -136,6 +138,8 @@ function AIPage({ userId }: { userId: string }) {
   const [fridgeStrict, setFridgeStrict] = useState(saved.fridgeStrict)
   const [fridgeIdeas, setFridgeIdeas] = useState<Idea[]>(saved.fridgeIdeas)
   const [busy, setBusy] = useState<'ideas' | 'fridge' | 'photo' | null>(null)
+  const [savedNames, setSavedNames] = useState<string[]>([])
+  const [mealSaved, setMealSaved] = useState(false)
   const [status, setStatus] = useState('')
 
   useEffect(() => {
@@ -215,6 +219,8 @@ function AIPage({ userId }: { userId: string }) {
   }
 
   async function saveIdea(i: Idea) {
+    if (savedNames.includes(i.name)) return
+    setSavedNames((n) => [...n, i.name])
     try {
       await apiFetch('/api/dishes', {
         method: 'POST',
@@ -233,6 +239,7 @@ function AIPage({ userId }: { userId: string }) {
       })
       setStatus(t('«{name}» додано до моїх страв', { name: i.name }))
     } catch {
+      setSavedNames((n) => n.filter((x) => x !== i.name))
       setStatus(t('Не вдалося зберегти страву'))
     }
   }
@@ -242,6 +249,7 @@ function AIPage({ userId }: { userId: string }) {
     setBusy('photo')
     setStatus('')
     setMeal(null)
+    setMealSaved(false)
     try {
       const image_base64 = await blobToBase64(await compressImage(file))
       setMealPhoto(`data:image/jpeg;base64,${image_base64}`)
@@ -261,7 +269,8 @@ function AIPage({ userId }: { userId: string }) {
   }
 
   async function saveMeal() {
-    if (!meal || !mealPhoto) return
+    if (!meal || !mealPhoto || mealSaved) return
+    setMealSaved(true)
     try {
       const photo_url = await uploadDishPhoto(await (await fetch(mealPhoto)).blob())
       await apiFetch('/api/dishes', {
@@ -281,7 +290,9 @@ function AIPage({ userId }: { userId: string }) {
       setStatus(t('«{name}» додано до моїх страв', { name: meal.name }))
       setMeal(null)
       setMealPhoto(null)
+      setMealSaved(false)
     } catch {
+      setMealSaved(false)
       setStatus(t('Не вдалося зберегти страву'))
     }
   }
@@ -349,7 +360,7 @@ function AIPage({ userId }: { userId: string }) {
           </button>
         </form>
 
-        {ideas.length > 0 && <IdeaList ideas={ideas} onSave={saveIdea} />}
+        {ideas.length > 0 && <IdeaList ideas={ideas} saved={savedNames} onSave={saveIdea} />}
       </section>
 
       <section className="card">
@@ -376,7 +387,7 @@ function AIPage({ userId }: { userId: string }) {
             {busy === 'fridge' ? t('Думаємо…') : t('Підібрати з холодильника')}
           </button>
         </form>
-        {fridgeIdeas.length > 0 && <IdeaList ideas={fridgeIdeas} onSave={saveIdea} />}
+        {fridgeIdeas.length > 0 && <IdeaList ideas={fridgeIdeas} saved={savedNames} onSave={saveIdea} />}
       </section>
 
       <section className="card red">
@@ -410,7 +421,9 @@ function AIPage({ userId }: { userId: string }) {
             <p>
               <small>{t('Це лише оцінка, реальні значення можуть відрізнятися.')}</small>
             </p>
-            <button onClick={saveMeal}>{t('Зберегти як страву')}</button>
+            <button onClick={saveMeal} disabled={mealSaved}>
+              {mealSaved ? t('Додано ✓') : t('Зберегти як страву')}
+            </button>
           </div>
         )}
       </section>

@@ -126,6 +126,7 @@ export const en: Record<string, string> = {
   "Додайте хоча б один продукт": "Add at least one product",
   "Додайте ще один запис, щоб побачити графік.": "Add one more entry to see the chart.",
   "Додано вручну": "Added by hand",
+  "Додано ✓": "Added ✓",
   "Додати": "Add",
   "Додати в Google/Apple Календар (.ics)": "Add to Google/Apple Calendar (.ics)",
   "Додати до списку: молоко 2 л, хліб": "Add to the list: молоко 2 л, хліб",
