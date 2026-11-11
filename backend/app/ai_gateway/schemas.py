@@ -8,6 +8,8 @@ from app.dishes.schemas import Ingredient
 class Quota(BaseModel):
     used: int
     limit: int
+    images_used: int = 0
+    images_limit: int = 0  # 0 = AI dish photos are not part of this plan
 
 
 class MealPhotoIn(BaseModel):
@@ -45,3 +47,12 @@ class RecipeIdea(BaseModel):
 
 class RecipeIdeasOut(BaseModel):
     recipes: list[RecipeIdea]
+
+
+class DishImageIn(BaseModel):
+    name: str = Field(min_length=1, max_length=100)
+    ingredients: list[Ingredient] = Field(default_factory=list, max_length=30)
+
+
+class DishImageOut(BaseModel):
+    image_base64: str

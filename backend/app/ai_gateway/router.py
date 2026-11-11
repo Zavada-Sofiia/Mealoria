@@ -6,8 +6,11 @@ from fastapi.security import HTTPAuthorizationCredentials
 
 from app.ai_gateway import prompts
 from app.ai_gateway.gemini import AIBusy, generate_json, is_configured
+from app.ai_gateway.images import ImageBusy, generate_image, is_image_configured
 from app.ai_gateway.quota import SupabaseQuotaStore
 from app.ai_gateway.schemas import (
+    DishImageIn,
+    DishImageOut,
     MealPhotoIn,
     MealPhotoOut,
     Quota,
@@ -34,13 +37,28 @@ def get_plan_store(creds: HTTPAuthorizationCredentials = Depends(bearer)) -> Sup
     return SupabasePlanStore(creds.credentials)
 
 
-def _daily_limit(plans: SupabasePlanStore) -> int:
-    """Requests per day for the user's plan (free or premium)."""
+def get_image_quota_store(
+    creds: HTTPAuthorizationCredentials = Depends(bearer),
+) -> SupabaseQuotaStore:
+    return SupabaseQuotaStore(creds.credentials, counter="image_quota")
+
+
+def _limits(plans: SupabasePlanStore) -> dict:
     try:
-        return int(plans.my_limits()["ai_per_day"])
+        return plans.my_limits()
     except (httpx.HTTPError, KeyError, ValueError, TypeError):
-        log.exception("Could not read the plan, using the free limit")
-        return FREE_FALLBACK_LIMIT
+        log.exception("Could not read the plan, using the free limits")
+        return {"plan": "free", "ai_per_day": FREE_FALLBACK_LIMIT, "photos_per_day": 0}
+
+
+def _daily_limit(plans: SupabasePlanStore) -> int:
+    """Text/photo-analysis requests per day for the user's plan (free or premium)."""
+    return int(_limits(plans)["ai_per_day"])
+
+
+def _photos_limit(plans: SupabasePlanStore) -> int:
+    """AI-generated dish photos per day; 0 means the plan does not include them."""
+    return int(_limits(plans).get("photos_per_day", 0))
 
 
 def _failure(message: str, error: Exception, quota: SupabaseQuotaStore) -> HTTPException:
@@ -49,7 +67,7 @@ def _failure(message: str, error: Exception, quota: SupabaseQuotaStore) -> HTTPE
     A request that failed is not charged to the daily limit.
     """
     log.warning("%s: %r", message, error, exc_info=error)
-    if isinstance(error, AIBusy):
+    if isinstance(error, (AIBusy, ImageBusy)):
         message = "AI is busy"  # the site shows a friendly "try again in a few minutes"
     reason = f"{type(error).__name__}: {error}"[:300]
     detail = f"{message}: {reason}" if quota.is_admin() else message
@@ -77,9 +95,18 @@ def get_quota(
     _: str = Depends(current_user_id),
     quota: SupabaseQuotaStore = Depends(get_quota_store),
     plans: SupabasePlanStore = Depends(get_plan_store),
+    images: SupabaseQuotaStore = Depends(get_image_quota_store),
 ):
     status = quota.status(_daily_limit(plans))
-    return Quota(used=status["used"], limit=status["limit"])
+    images_used, images_limit = 0, _photos_limit(plans)
+    if images_limit > 0:
+        try:
+            images_used = images.status(images_limit)["used"]
+        except (httpx.HTTPError, KeyError, ValueError):
+            log.exception("Could not read the AI photo counter")
+    return Quota(
+        used=status["used"], limit=status["limit"], images_used=images_used, images_limit=images_limit
+    )
 
 
 @router.post("/meal-photo", response_model=MealPhotoOut)
@@ -119,3 +146,42 @@ def recipe_ideas(
         return result
     except Exception as e:  # any failure must become a JSON 502 the browser can read
         raise _failure("AI could not suggest recipes", e, quota)
+
+
+def _english_description(body: DishImageIn) -> str:
+    """The image model understands English far better, so Gemini describes the dish in English."""
+    try:
+        data = generate_json(
+            prompts.image_description_prompt(body.name, [i.name for i in body.ingredients]),
+            prompts.IMAGE_DESCRIPTION_SCHEMA,
+        )
+        text = str(data.get("description", "")).strip()
+        if text:
+            return text[:300]
+    except Exception as e:
+        log.warning("Could not describe the dish in English, using its name: %r", e)
+    return body.name
+
+
+@router.post("/dish-image", response_model=DishImageOut)
+def dish_image(
+    body: DishImageIn,
+    _: str = Depends(current_user_id),
+    images: SupabaseQuotaStore = Depends(get_image_quota_store),
+    plans: SupabasePlanStore = Depends(get_plan_store),
+):
+    """Premium: draw a photo of a dish. The browser shows a preview and uploads it if accepted."""
+    limit = _photos_limit(plans)
+    if limit <= 0:
+        raise HTTPException(status_code=403, detail="premium_required")
+    if not is_image_configured():
+        raise HTTPException(status_code=503, detail="AI is not configured")
+    status = images.status(limit)
+    if status["used"] >= status["limit"]:
+        raise HTTPException(status_code=429, detail="Daily AI photo limit reached")
+    try:
+        image = generate_image(_english_description(body))
+        _charge(images, limit)
+        return DishImageOut(image_base64=image)
+    except Exception as e:  # any failure must become a JSON 502 the browser can read
+        raise _failure("AI could not draw the dish", e, images)

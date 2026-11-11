@@ -80,6 +80,15 @@ def recipe_prompt(profile: dict | None, category: str | None, note: str) -> str:
     return "\n".join(lines)
 
 
+def image_description_prompt(name: str, ingredient_names: list[str]) -> str:
+    items = ", ".join(ingredient_names[:12])
+    return (
+        "Write a short English description (max 25 words) of how this dish looks, for an image "
+        "generator. Name only the visible food, plate and garnish; no text, no brands. "
+        f"Dish name (Ukrainian): «{name}». Ingredients: {items or 'not specified'}."
+    )
+
+
 def _obj(props: dict, required: list[str]) -> dict:
     return {"type": "OBJECT", "properties": props, "required": required}
 
@@ -131,3 +140,5 @@ RECIPES_SCHEMA = _obj(
     },
     ["recipes"],
 )
+
+IMAGE_DESCRIPTION_SCHEMA = _obj({"description": {"type": "STRING"}}, ["description"])

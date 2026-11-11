@@ -1,6 +1,11 @@
 import { createContext, useContext } from 'react'
 
-export type Limits = { dishes: number; ai_per_day: number; plan_days_ahead: number }
+export type Limits = {
+  dishes: number
+  ai_per_day: number
+  plan_days_ahead: number
+  photos_per_day: number
+}
 export type PlanTable = { free: Limits; premium: Limits }
 export type MyPlan = Limits & {
   plan: 'free' | 'premium'
@@ -25,5 +30,6 @@ export function limitLines(l: Limits, premium: boolean): string[] {
     premium
       ? 'Планування в календарі на рік уперед'
       : `Планування в календарі на ${l.plan_days_ahead} днів уперед`,
+    ...(l.photos_per_day > 0 ? [`До ${l.photos_per_day} ШІ-фото власних страв щодня`] : []),
   ]
 }

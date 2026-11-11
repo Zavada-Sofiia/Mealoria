@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
-import { apiFetch } from '../api/client'
+import { ApiError, apiFetch } from '../api/client'
 import { deleteDishPhoto, uploadDishPhoto } from '../api/photos'
 import PhotoPicker from '../components/PhotoPicker'
 import { usePlan } from '../plan/context'
@@ -27,6 +27,9 @@ export default function Dishes() {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [status, setStatus] = useState('Завантаження…')
   const [uploading, setUploading] = useState(false)
+  const [drawing, setDrawing] = useState<string | null>(null)
+  const [proposal, setProposal] = useState<{ dishId: string; base64: string } | null>(null)
+  const [photoQuota, setPhotoQuota] = useState<{ used: number; limit: number } | null>(null)
   const editedPhoto = editingId ? (dishes.find((d) => d.id === editingId)?.photo_url ?? null) : null
 
   useEffect(() => {
@@ -43,6 +46,76 @@ export default function Dishes() {
       ...f,
       ingredients: f.ingredients.map((ing, j) => (j === i ? { ...ing, ...patch } : ing)),
     }))
+  }
+
+  const premium = me?.plan === 'premium'
+
+  useEffect(() => {
+    if (!premium) return
+    apiFetch<{ images_used: number; images_limit: number }>('/api/ai/quota')
+      .then((q) => setPhotoQuota({ used: q.images_used, limit: q.images_limit }))
+      .catch(() => {})
+  }, [premium])
+
+  function drawError(e: unknown): string {
+    if (e instanceof ApiError) {
+      if (e.status === 429) return 'Ліміт ШІ-фото на сьогодні вичерпано. Спробуйте завтра'
+      if (e.status === 503) return 'Генерацію фото ще не налаштовано на сервері'
+      if (e.status === 502 && e.detail.startsWith('AI is busy')) {
+        return 'ШІ зараз перевантажений. Спробуйте за кілька хвилин, цей запит не списано з ліміту'
+      }
+      if (e.status === 502) {
+        const reason = e.detail.includes(': ') ? e.detail.slice(e.detail.indexOf(': ') + 2) : ''
+        return `Не вдалося створити фото.${reason ? ` Технічна причина: ${reason}` : ''}`
+      }
+    }
+    return 'Щось пішло не так. Спробуйте ще раз'
+  }
+
+  async function drawPhoto(d: Dish) {
+    if (!premium) {
+      window.dispatchEvent(new CustomEvent('plan-limit', { detail: 'premium_required' }))
+      return
+    }
+    setDrawing(d.id)
+    setProposal(null)
+    setStatus('')
+    try {
+      const r = await apiFetch<{ image_base64: string }>('/api/ai/dish-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: d.name, ingredients: d.ingredients }),
+      })
+      setProposal({ dishId: d.id, base64: r.image_base64 })
+    } catch (e) {
+      setStatus(drawError(e))
+    } finally {
+      setDrawing(null)
+      apiFetch<{ images_used: number; images_limit: number }>('/api/ai/quota')
+        .then((q) => setPhotoQuota({ used: q.images_used, limit: q.images_limit }))
+        .catch(() => {})
+    }
+  }
+
+  async function acceptPhoto(d: Dish) {
+    if (!proposal) return
+    setStatus('Зберігаємо фото…')
+    try {
+      const blob = await (await fetch(`data:image/jpeg;base64,${proposal.base64}`)).blob()
+      const url = await uploadDishPhoto(blob)
+      const { id: _id, ...rest } = d
+      const updated = await apiFetch<Dish>(`/api/dishes/${d.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...rest, photo_url: url }),
+      })
+      setDishes((ds) => ds.map((x) => (x.id === d.id ? updated : x)))
+      void deleteDishPhoto(d.photo_url)
+      setProposal(null)
+      setStatus('Фото додано до страви')
+    } catch {
+      setStatus('Не вдалося зберегти фото')
+    }
   }
 
   async function pickPhoto(file: File | undefined) {
@@ -124,6 +197,11 @@ export default function Dishes() {
             Страв: <strong>{dishes.length}</strong> з {me.dishes}
           </span>
           {me.plan === 'free' && <Link to="/pricing">У преміумі до 500</Link>}
+          {premium && photoQuota && photoQuota.limit > 0 && (
+            <span>
+              ШІ-фото сьогодні: <strong>{photoQuota.used}</strong> з {photoQuota.limit}
+            </span>
+          )}
         </p>
       )}
       <p>
@@ -255,11 +333,32 @@ export default function Dishes() {
               <div>{d.ingredients.map((i) => `${i.name}${i.amount ? ` (${i.amount})` : ''}`).join(', ')}</div>
             )}
             <div className="actions" style={{ marginTop: 8 }}>
+            <button onClick={() => drawPhoto(d)} disabled={drawing !== null}>
+              {drawing === d.id ? 'Малюємо…' : 'Фото від ШІ'}
+              {!premium && <span className="badge paid" style={{ marginLeft: 8 }}>преміум</span>}
+            </button>
             <button onClick={() => edit(d)}>Редагувати</button>
             <button className="danger" onClick={() => remove(d.id)}>
               Видалити
             </button>
             </div>
+            {drawing === d.id && (
+              <p className="muted" style={{ margin: '8px 0 0' }}>
+                Малюємо фото, це може зайняти до пів хвилини…
+              </p>
+            )}
+            {proposal?.dishId === d.id && (
+              <div className="proposal">
+                <img src={`data:image/jpeg;base64,${proposal.base64}`} alt="Фото від ШІ" />
+                <div className="actions">
+                  <button onClick={() => acceptPhoto(d)}>Використати це фото</button>
+                  <button onClick={() => drawPhoto(d)} disabled={drawing !== null}>
+                    Ще раз
+                  </button>
+                  <button onClick={() => setProposal(null)}>Скасувати</button>
+                </div>
+              </div>
+            )}
               </div>
             </div>
           </li>

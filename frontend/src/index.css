@@ -771,6 +771,23 @@ input[type='number']::-webkit-outer-spin-button {
   color: var(--muted);
 }
 
+.proposal {
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: var(--radius);
+  background: var(--teal-soft);
+  border: 1px solid #cfe3e6;
+}
+.proposal img {
+  display: block;
+  width: 100%;
+  max-width: 320px;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: var(--radius);
+  margin-bottom: 10px;
+}
+
 /* ---------- developer stats ---------- */
 table.data {
   border-collapse: collapse;

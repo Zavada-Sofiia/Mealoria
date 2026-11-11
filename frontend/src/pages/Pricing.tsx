@@ -13,7 +13,7 @@ const FREE_FEATURES = [
   'Каталог рецептів і калькулятор калорій',
   'Список продуктів з календаря',
 ]
-const PREMIUM_EXTRAS = ['Фото до власної страви від ШІ', 'Меню на сьогодні на головному екрані телефона']
+const PREMIUM_EXTRAS = ['Меню на сьогодні на головному екрані телефона (скоро)']
 
 export default function Pricing({ session }: { session: Session | null }) {
   const { me, table } = usePlan()

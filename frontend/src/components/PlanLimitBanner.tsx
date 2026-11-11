@@ -16,7 +16,9 @@ export default function PlanLimitBanner() {
   if (!reason) return null
   const free = table?.free
   const text =
-    reason === 'plan_limit:dishes'
+    reason === 'premium_required'
+      ? 'Створення фото страв від ШІ доступне в преміум-тарифі.'
+      : reason === 'plan_limit:dishes'
       ? `Досягнуто ліміт безкоштовного тарифу${free ? `: ${free.dishes} власних страв` : ''}. Видаліть зайві страви або перейдіть на преміум.`
       : reason === 'plan_limit:plan_days'
         ? `Безкоштовний тариф дозволяє планувати лише${free ? ` на ${free.plan_days_ahead} днів` : ''} уперед. У преміумі можна планувати на рік.`
