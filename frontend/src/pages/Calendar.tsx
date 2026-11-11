@@ -11,7 +11,7 @@ import {
 } from '@dnd-kit/core'
 import { Link } from 'react-router-dom'
 import { apiFetch } from '../api/client'
-import { addDays, iso, mondayOf, pad } from '../dates'
+import { addDays, fmtDate, iso, mondayOf, pad } from '../dates'
 import { mealName } from '../meals'
 import { download, weekToIcs } from '../ics'
 
@@ -233,7 +233,7 @@ export default function Calendar() {
         <div className="week-nav">
           <button onClick={() => goToWeek(addDays(weekStart, -7))}>←</button>
           <strong>
-            {iso(weekStart)} — {iso(addDays(weekStart, 6))}
+            {fmtDate(iso(weekStart))} — {fmtDate(iso(addDays(weekStart, 6)))}
           </strong>
           <button onClick={() => goToWeek(addDays(weekStart, 7))}>→</button>
           <button onClick={() => goToWeek(mondayOf(new Date()))}>Сьогодні</button>
@@ -342,7 +342,7 @@ export default function Calendar() {
 
       <div className="print-only">
         <h1>
-          Меню на тиждень {iso(weekStart)} — {iso(addDays(weekStart, 6))}
+          Меню на тиждень {fmtDate(iso(weekStart))} — {fmtDate(iso(addDays(weekStart, 6)))}
         </h1>
         {days.map((d, i) => {
           const date = iso(d)

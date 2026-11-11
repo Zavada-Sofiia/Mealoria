@@ -2,7 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { apiFetch } from '../api/client'
 import ServingsPicker from '../components/ServingsPicker'
-import { addDays, iso, mondayOf } from '../dates'
+import { addDays, fmtDate, iso, mondayOf } from '../dates'
 import { scaleAmount, useServings } from '../servings'
 
 type Item = { name: string; amount: string; checked: boolean }
@@ -94,7 +94,7 @@ export default function Shopping() {
       <div className="week-nav">
         <button onClick={() => goToWeek(addDays(weekStart, -7))}>←</button>
         <strong>
-          {start} — {iso(addDays(weekStart, 6))}
+          {fmtDate(start)} — {fmtDate(iso(addDays(weekStart, 6)))}
         </strong>
         <button onClick={() => goToWeek(addDays(weekStart, 7))}>→</button>
         <button onClick={() => goToWeek(mondayOf(new Date()))}>Сьогодні</button>

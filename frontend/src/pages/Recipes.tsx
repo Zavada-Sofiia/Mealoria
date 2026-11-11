@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { apiFetch } from '../api/client'
+import { fmtDate } from '../dates'
 import ServingsPicker from '../components/ServingsPicker'
 import { scaleAmount, useServings } from '../servings'
 
@@ -101,7 +102,7 @@ export default function Recipes() {
         body: JSON.stringify({ date, slot, dish_id: dish.id }),
       })
       setPlanning(null)
-      setStatus(`«${r.name}» додано в календар на ${date}`)
+      setStatus(`«${r.name}» додано в календар на ${fmtDate(date)}`)
     } catch {
       setStatus('Не вдалося додати в календар')
     }

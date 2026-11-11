@@ -41,7 +41,7 @@ function Bars({ days, field, title }: { days: Day[]; field: 'signups' | 'preorde
       <h3>{title}</h3>
       <div className="bars">
         {days.map((d) => (
-          <div key={d.day} className="bar-col" title={`${d.day}: ${d[field]}`}>
+          <div key={d.day} className="bar-col" title={`${d.day.split('-').reverse().join('.')}: ${d[field]}`}>
             <span className="bar-num">{d[field] || ''}</span>
             <div className="bar" style={{ height: `${(d[field] / max) * 100}%` }} />
             <span className="bar-day">{d.day.slice(8)}</span>

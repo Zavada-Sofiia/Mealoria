@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { apiFetch } from '../api/client'
 import { BarChart, LineChart } from '../components/Charts'
-import { addDays, iso } from '../dates'
+import { addDays, fmtDate, iso } from '../dates'
 
 type Macros = { kcal: number; protein_g: number; fat_g: number; carbs_g: number }
 type DayResponse = {
@@ -315,7 +315,7 @@ function WeightJournal() {
       {points.length === 1 && <p className="muted">Додайте ще один запис, щоб побачити графік.</p>}
       {change !== null && (
         <p className="muted">
-          Зміна з {first.day.split('-').reverse().join('.')}: {change > 0 ? '+' : ''}
+          Зміна з {fmtDate(first.day)}: {change > 0 ? '+' : ''}
           {change} кг
         </p>
       )}
@@ -325,7 +325,7 @@ function WeightJournal() {
           <ul className="cards">
             {[...points].reverse().map((p) => (
               <li key={p.day}>
-                {p.day.split('-').reverse().join('.')}: <strong>{p.weight_kg} кг</strong>{' '}
+                {fmtDate(p.day)}: <strong>{p.weight_kg} кг</strong>{' '}
                 <button type="button" onClick={() => remove(p.day)} aria-label="Видалити запис">
                   ×
                 </button>
