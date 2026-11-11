@@ -30,6 +30,15 @@ class SupabaseQuotaStore:
         r.raise_for_status()
         return r.json()
 
+    def is_admin(self) -> bool:
+        try:
+            r = httpx.post(
+                self.url.replace("ai_quota", "is_admin"), headers=self.headers, json={}, timeout=15
+            )
+            return r.status_code == 200 and r.json() is True
+        except (httpx.HTTPError, ValueError):
+            return False
+
     def status(self, limit: int) -> dict:
         return self._call(limit, consume=False)
 

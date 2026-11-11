@@ -2,10 +2,12 @@ import { supabase } from './supabase'
 
 export class ApiError extends Error {
   status: number
+  detail: string
 
-  constructor(status: number) {
+  constructor(status: number, detail = '') {
     super(`API ${status}`)
     this.status = status
+    this.detail = detail
   }
 }
 
@@ -20,7 +22,16 @@ export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise
       Authorization: `Bearer ${data.session?.access_token}`,
     },
   })
-  if (!res.ok) throw new ApiError(res.status)
+  if (!res.ok) {
+    let detail = ''
+    try {
+      const body = await res.json()
+      if (typeof body?.detail === 'string') detail = body.detail
+    } catch {
+      // no JSON body
+    }
+    throw new ApiError(res.status, detail)
+  }
   if (res.status === 204) return undefined as T
   return res.json() as Promise<T>
 }

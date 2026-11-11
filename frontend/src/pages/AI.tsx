@@ -34,7 +34,11 @@ function errorText(e: unknown): string {
   if (e instanceof ApiError) {
     if (e.status === 429) return 'Ліміт запитів до ШІ на сьогодні вичерпано. Спробуйте завтра'
     if (e.status === 503) return 'ШІ ще не налаштований на сервері'
-    if (e.status === 502) return 'ШІ не зміг відповісти. Спробуйте ще раз або інше фото'
+    if (e.status === 502) {
+      // admins get "message: technical reason" from the backend
+      const reason = e.detail.includes(': ') ? e.detail.slice(e.detail.indexOf(': ') + 2) : ''
+      return `ШІ не зміг відповісти. Спробуйте ще раз або інше фото.${reason ? ` Технічна причина: ${reason}` : ''}`
+    }
   }
   return 'Щось пішло не так. Спробуйте ще раз'
 }

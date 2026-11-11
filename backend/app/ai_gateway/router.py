@@ -28,6 +28,13 @@ def get_quota_store(
     return SupabaseQuotaStore(creds.credentials)
 
 
+def _failure(message: str, error: Exception, quota: SupabaseQuotaStore) -> HTTPException:
+    """502 for the user; developers (public.admins) also get the technical reason."""
+    log.warning("%s: %s", message, error)
+    detail = f"{message}: {str(error)[:300]}" if quota.is_admin() else message
+    return HTTPException(status_code=502, detail=detail)
+
+
 def _use_quota(quota: SupabaseQuotaStore) -> None:
     if not is_configured():
         raise HTTPException(status_code=503, detail="AI is not configured")
@@ -57,8 +64,7 @@ def meal_photo(
         )
         return MealPhotoOut(**data)
     except (AIError, ValidationError, TypeError) as e:
-        log.warning("AI photo analysis failed: %s", e)
-        raise HTTPException(status_code=502, detail="AI could not analyse the photo")
+        raise _failure("AI could not analyse the photo", e, quota)
 
 
 @router.post("/recipes", response_model=RecipeIdeasOut)
@@ -73,5 +79,4 @@ def recipe_ideas(
     try:
         return RecipeIdeasOut(**generate_json(prompt, prompts.RECIPES_SCHEMA))
     except (AIError, ValidationError, TypeError) as e:
-        log.warning("AI recipe suggestion failed: %s", e)
-        raise HTTPException(status_code=502, detail="AI could not suggest recipes")
+        raise _failure("AI could not suggest recipes", e, quota)

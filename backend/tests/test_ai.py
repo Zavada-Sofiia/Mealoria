@@ -22,8 +22,13 @@ IDEAS = {"recipes": [{
 
 
 class FakeQuota:
+    admin = False
+
     def __init__(self, used=0):
         self.used = used
+
+    def is_admin(self):
+        return self.admin
 
     def status(self, limit):
         return {"used": self.used, "limit": limit}
@@ -163,3 +168,16 @@ def test_gemini_error_body_is_kept_for_the_logs(monkeypatch):
     monkeypatch.setattr(gemini.httpx, "post", bad_model)
     with pytest.raises(gemini.AIError, match="404.*model not found"):
         gemini.generate_json("hi", {})
+
+
+def test_only_admins_see_the_technical_reason(env, monkeypatch):
+    client, quota, _, _ = env
+
+    def boom(*a, **k):
+        raise gemini.AIError("Gemini returned 429: quota")
+
+    monkeypatch.setattr(ai_router, "generate_json", boom)
+    assert client.post("/api/ai/recipes", json={}).json()["detail"] == "AI could not suggest recipes"
+    quota.admin = True
+    detail = client.post("/api/ai/recipes", json={}).json()["detail"]
+    assert detail == "AI could not suggest recipes: Gemini returned 429: quota"
