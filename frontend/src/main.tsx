@@ -4,14 +4,11 @@ import './index.css'
 import App from './App.tsx'
 import ErrorBoundary from './components/ErrorBoundary.tsx'
 import { initMonitoring } from './monitoring.ts'
+import { registerServiceWorker } from './pwa.ts'
 
 void initMonitoring()
 
-if ('serviceWorker' in navigator && import.meta.env.PROD) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').catch(() => {})
-  })
-}
+registerServiceWorker()
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

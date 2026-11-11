@@ -1,5 +1,7 @@
 // Keeps the app shell available offline. API calls and other sites are never cached.
-const CACHE = 'mealoria-shell-v1'
+// The build id below is stamped in at build time, so every release is a new worker that replaces the old one
+const BUILD = '__BUILD_ID__'
+const CACHE = `mealoria-shell-${BUILD}`
 
 self.addEventListener('install', () => self.skipWaiting())
 
@@ -20,7 +22,7 @@ self.addEventListener('fetch', (event) => {
   if (req.mode === 'navigate') {
     // always try the network first so a new release shows up immediately
     event.respondWith(
-      fetch(req)
+      fetch(req, { cache: 'no-store' })
         .then((res) => {
           const copy = res.clone()
           caches.open(CACHE).then((c) => c.put('/', copy))
