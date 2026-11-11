@@ -1,3 +1,4 @@
+import re
 import time
 
 import httpx
@@ -22,12 +23,36 @@ class FoodSearchError(Exception):
     pass
 
 
+CYRILLIC = re.compile(r"[А-Яа-яІіЇїЄєҐґ]")
+LATIN = re.compile(r"[A-Za-z]")
+# Letters that do not exist in Ukrainian, and the standalone words "с" and "и"
+# (Ukrainian says "з/із" and "і/й/та").
+RUSSIAN_ONLY = re.compile(
+    r"[ыэёъЫЭЁЪ]|(?<![А-Яа-яІіЇїЄєҐґ])[сСиИ](?![А-Яа-яІіЇїЄєҐґ])"
+)
+
+
+def is_ukrainian(name: str) -> bool:
+    """Cyrillic, mostly not Latin, and without letters that do not exist in Ukrainian."""
+    cyrillic, latin = len(CYRILLIC.findall(name)), len(LATIN.findall(name))
+    return cyrillic > 0 and cyrillic >= latin and not RUSSIAN_ONLY.search(name)
+
+
+def ukrainian_name(product: dict) -> str | None:
+    """The explicit Ukrainian name if there is one, otherwise the default name when it is Ukrainian."""
+    for key in ("product_name_uk", "product_name"):
+        name = (product.get(key) or "").strip()
+        if name and is_ukrainian(name):
+            return name
+    return None
+
+
 def parse_products(products: list[dict]) -> list[FoodItem]:
-    """Keep products that have a name and calories per 100 g; drop duplicate names."""
+    """Keep products with a Ukrainian name and calories per 100 g; drop duplicate names."""
     seen, items = set(), []
     for p in products:
         n = p.get("nutriments") or {}
-        name = (p.get("product_name") or "").strip()
+        name = ukrainian_name(p)
         kcal = n.get("energy-kcal_100g")
         if not name or kcal is None or name.lower() in seen:
             continue
@@ -54,8 +79,8 @@ def search_food(query: str) -> list[FoodItem]:
         "search_simple": 1,
         "action": "process",
         "json": 1,
-        "page_size": 20,
-        "fields": "product_name,nutriments",
+        "page_size": 60,  # many results are not Ukrainian, so ask for more and filter
+        "fields": "product_name,product_name_uk,nutriments",
     }
     for attempt in range(2):
         try:

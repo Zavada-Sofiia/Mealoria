@@ -105,7 +105,7 @@ function DishCalculator() {
     try {
       const r = await apiFetch<Food[]>(`/api/calories/food?q=${encodeURIComponent(query)}`)
       setResults(r)
-      setStatus(r.length ? '' : 'Нічого не знайдено')
+      setStatus(r.length ? '' : 'Нічого не знайдено. Спробуйте іншу назву українською')
     } catch {
       setStatus('База продуктів зараз недоступна, спробуйте за хвилину')
     }
@@ -192,7 +192,10 @@ function DishCalculator() {
         </>
       )}
       <p>
-        <small>Дані про продукти з Open Food Facts, значення можуть бути неточними.</small>
+        <small>
+          Дані про продукти з Open Food Facts, показуємо лише українські назви. Значення можуть бути
+          неточними.
+        </small>
       </p>
     </section>
   )

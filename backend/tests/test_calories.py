@@ -5,7 +5,7 @@ from app.auth import current_user_id
 from app.calendar.router import get_store as get_calendar_store
 from app.calories import router as calories_router
 from app.calories.day import summarize
-from app.calories.food import FoodSearchError, parse_products
+from app.calories.food import FoodSearchError, is_ukrainian, parse_products
 from app.main import app
 from app.profile.router import get_store as get_profile_store
 
@@ -20,6 +20,37 @@ def test_parse_products_filters_and_dedupes():
     items = parse_products(products)
     assert [i.name for i in items] == ["Гречка"]
     assert items[0].protein_100g == 12.6 and items[0].fat_100g == 0
+
+
+@pytest.mark.parametrize(
+    "name,expected",
+    [
+        ("Яблуко Персик Пюре", True),
+        ("Сік яблуко, манго, персик", True),
+        ("Пюре «Gerber» яблуко", True),  # brand in Latin, text mostly Cyrillic
+        ("Chicken Breast Fillets", False),
+        ("Blanc de Poulet", False),
+        ("Гречка в томатном соусе с киноа", False),  # Russian: standalone "с"
+        ("Сыр плавленый", False),  # Russian: has "ы"
+        ("Яблоко и груша, пюре", False),  # Russian: standalone "и"
+        ("Пюре яблуко і груша", True),
+        ("Healthy breakfast груша яблуко", False),  # more Latin than Cyrillic
+        ("", False),
+    ],
+)
+def test_is_ukrainian(name, expected):
+    assert is_ukrainian(name) is expected
+
+
+def test_only_ukrainian_names_are_returned_and_the_uk_field_wins():
+    products = [
+        {"product_name": "Chicken Breast", "nutriments": {"energy-kcal_100g": 115}},
+        {"product_name": "Chicken Breast", "product_name_uk": "Куряче філе",
+         "nutriments": {"energy-kcal_100g": 110}},
+        {"product_name": "Куряча грудка", "nutriments": {"energy-kcal_100g": 120}},
+        {"product_name": "Гречка с мясом", "nutriments": {"energy-kcal_100g": 150}},
+    ]
+    assert [i.name for i in parse_products(products)] == ["Куряче філе", "Куряча грудка"]
 
 
 def test_summarize_totals_and_meals():
