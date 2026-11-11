@@ -22,8 +22,15 @@ import ResetPassword from './pages/ResetPassword'
 import Profile from './pages/Profile'
 import Recipes from './pages/Recipes'
 import Shopping from './pages/Shopping'
+import { getLang, setLang, type Lang } from './i18n'
+import { LangContext } from './i18n/context'
 
 function App() {
+  const [lang, setLangState] = useState(getLang)
+  const changeLang = (l: Lang) => {
+    setLang(l)
+    setLangState(l)
+  }
   const [session, setSession] = useState<Session | null | undefined>(undefined)
 
   useEffect(() => {
@@ -35,7 +42,8 @@ function App() {
   if (session === undefined) return null
 
   return (
-    <BrowserRouter>
+    <LangContext.Provider value={{ lang, changeLang }}>
+    <BrowserRouter key={lang}>
       <PlanProvider signedIn={!!session}>
       {session ? <Nav /> : <PublicNav />}
       <main className="page">
@@ -86,6 +94,7 @@ function App() {
       </main>
       </PlanProvider>
     </BrowserRouter>
+    </LangContext.Provider>
   )
 }
 

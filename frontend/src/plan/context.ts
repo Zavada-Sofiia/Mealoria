@@ -1,4 +1,5 @@
 import { createContext, useContext } from 'react'
+import { locale, t } from '../i18n'
 
 export type Limits = {
   dishes: number
@@ -20,16 +21,16 @@ export const PlanContext = createContext<PlanValue>({ me: null, table: null, ref
 export const usePlan = () => useContext(PlanContext)
 
 export function formatDate(iso: string | null): string {
-  return iso ? new Date(iso).toLocaleDateString('uk-UA', { dateStyle: 'long' }) : ''
+  return iso ? new Date(iso).toLocaleDateString(locale(), { dateStyle: 'long' }) : ''
 }
 
 export function limitLines(l: Limits, premium: boolean): string[] {
   return [
-    `До ${l.dishes} власних страв`,
-    `${l.ai_per_day} ${premium ? 'запитів' : 'запити'} до ШІ-помічника щодня`,
+    t('До {n} власних страв', { n: l.dishes }),
+    t(premium ? '{n} запитів до ШІ-помічника щодня' : '{n} запити до ШІ-помічника щодня', { n: l.ai_per_day }),
     premium
-      ? 'Планування в календарі на рік уперед'
-      : `Планування в календарі на ${l.plan_days_ahead} днів уперед`,
-    ...(l.photos_per_day > 0 ? [`До ${l.photos_per_day} ШІ-фото власних страв щодня`] : []),
+      ? t('Планування в календарі на рік уперед')
+      : t('Планування в календарі на {n} днів уперед', { n: l.plan_days_ahead }),
+    ...(l.photos_per_day > 0 ? [t('До {n} ШІ-фото власних страв щодня', { n: l.photos_per_day })] : []),
   ]
 }

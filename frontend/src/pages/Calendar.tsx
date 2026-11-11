@@ -15,6 +15,7 @@ import { addDays, fmtDate, iso, mondayOf, pad } from '../dates'
 import { mealName } from '../meals'
 import PrintableWeek from '../components/PrintableWeek'
 import { download, weekToIcs } from '../ics'
+import { t } from '../i18n'
 
 type Dish = {
   id: string
@@ -83,7 +84,7 @@ export default function Calendar() {
   const [meals, setMeals] = useState(3)
   const [target, setTarget] = useState<number | null>(null)
   const [hasProfile, setHasProfile] = useState(true)
-  const [status, setStatus] = useState('Завантаження…')
+  const [status, setStatus] = useState(t('Завантаження…'))
   const mobile = useIsMobile()
   const [dayIdx, setDayIdx] = useState(todayIndex)
   const [picking, setPicking] = useState<{ date: string; slot: number } | null>(null)
@@ -104,7 +105,7 @@ export default function Calendar() {
         setMeals(p.profile?.meals_per_day ?? 3)
         setTarget(p.profile?.target_calories ?? p.recommended_calories)
       })
-      .catch(() => setStatus('Не вдалося завантажити дані'))
+      .catch(() => setStatus(t('Не вдалося завантажити дані')))
   }, [])
 
   useEffect(() => {
@@ -115,14 +116,14 @@ export default function Calendar() {
         setEntries(e)
         setStatus('')
       })
-      .catch(() => current && setStatus('Не вдалося завантажити тиждень'))
+      .catch(() => current && setStatus(t('Не вдалося завантажити тиждень')))
     return () => {
       current = false
     }
   }, [weekStart])
 
   function goToWeek(date: Date, day = date.getTime() === mondayOf(new Date()).getTime() ? todayIndex() : 0) {
-    setStatus('Завантаження…')
+    setStatus(t('Завантаження…'))
     setWeekStart(date)
     setDayIdx(day)
   }
@@ -135,12 +136,12 @@ export default function Calendar() {
   }
 
   async function copyPreviousWeek() {
-    setStatus('Копіюємо минулий тиждень…')
+    setStatus(t('Копіюємо минулий тиждень…'))
     try {
       setEntries(await apiFetch<Entry[]>(`/api/calendar/copy-week?start=${iso(weekStart)}`, { method: 'POST' }))
       setStatus('')
     } catch {
-      setStatus('Не вдалося скопіювати тиждень')
+      setStatus(t('Не вдалося скопіювати тиждень'))
     }
   }
 
@@ -154,7 +155,7 @@ export default function Calendar() {
       })
       setEntries((es) => [...es, created])
     } catch {
-      setStatus('Не вдалося зберегти зміну')
+      setStatus(t('Не вдалося зберегти зміну'))
     }
   }
 
@@ -175,7 +176,7 @@ export default function Calendar() {
         setEntries((es) => es.map((x) => (x.id === id ? moved : x)))
       }
     } catch {
-      setStatus('Не вдалося зберегти зміну')
+      setStatus(t('Не вдалося зберегти зміну'))
     }
   }
 
@@ -184,7 +185,7 @@ export default function Calendar() {
       await apiFetch<void>(`/api/calendar/${id}`, { method: 'DELETE' })
       setEntries((es) => es.filter((x) => x.id !== id))
     } catch {
-      setStatus('Не вдалося видалити')
+      setStatus(t('Не вдалося видалити'))
     }
   }
 
@@ -199,26 +200,26 @@ export default function Calendar() {
   return (
     <div>
       <div className="no-print">
-      <h1>Календар</h1>
+      <h1>{t('Календар')}</h1>
       {!hasProfile && (
         <p>
-          Кількість прийомів їжі береться з <Link to="/profile">профілю</Link>. Поки що показано 3.
+          {t('Кількість прийомів їжі береться з')} <Link to="/profile">{t('профілю')}</Link>. {t('Поки що показано 3.')}
         </p>
       )}
       {mobile ? (
         <>
           <div className="week-nav day-nav">
-            <button onClick={() => shiftDay(-1)} aria-label="Попередній день">
+            <button onClick={() => shiftDay(-1)} aria-label={t('Попередній день')}>
               ←
             </button>
             <strong>
-              {DAY_NAMES[dayIdx]}, {pad(days[dayIdx].getDate())}.{pad(days[dayIdx].getMonth() + 1)}
+              {t(DAY_NAMES[dayIdx])}, {pad(days[dayIdx].getDate())}.{pad(days[dayIdx].getMonth() + 1)}
             </strong>
-            <button onClick={() => shiftDay(1)} aria-label="Наступний день">
+            <button onClick={() => shiftDay(1)} aria-label={t('Наступний день')}>
               →
             </button>
             <button className="secondary" onClick={() => goToWeek(mondayOf(new Date()))}>
-              Сьогодні
+              {t('Сьогодні')}
             </button>
           </div>
           <div className="day-strip">
@@ -231,7 +232,7 @@ export default function Calendar() {
                   className={`${i === dayIdx ? 'on' : ''}${entries.some((e) => e.date === date) ? ' has' : ''}`}
                   onClick={() => setDayIdx(i)}
                 >
-                  <small>{DAY_NAMES[i]}</small>
+                  <small>{t(DAY_NAMES[i])}</small>
                   {d.getDate()}
                 </button>
               )
@@ -245,14 +246,14 @@ export default function Calendar() {
             {fmtDate(iso(weekStart))} — {fmtDate(iso(addDays(weekStart, 6)))}
           </strong>
           <button onClick={() => goToWeek(addDays(weekStart, 7))}>→</button>
-          <button onClick={() => goToWeek(mondayOf(new Date()))}>Сьогодні</button>
+          <button onClick={() => goToWeek(mondayOf(new Date()))}>{t('Сьогодні')}</button>
         </div>
       )}
       {status && <p className="status">{status}</p>}
 
       <DndContext sensors={sensors} onDragEnd={onDragEnd}>
         <div className={mobile ? 'palette-wrap mobile' : 'palette-wrap'}>
-          <strong>Мої страви</strong> {mobile ? '(або натисніть «+» у клітинці)' : '(перетягніть у клітинку):'}
+          <strong>{t('Мої страви')}</strong> {mobile ? t('(або натисніть «+» у клітинці)') : t('(перетягніть у клітинку):')}
           <div className="palette">
             {dishes.map((d) => (
               <Draggable key={d.id} id={`dish:${d.id}`}>
@@ -263,7 +264,7 @@ export default function Calendar() {
                 </span>
               </Draggable>
             ))}
-            {dishes.length === 0 && <Link to="/dishes">Додайте першу страву</Link>}
+            {dishes.length === 0 && <Link to="/dishes">{t('Додайте першу страву')}</Link>}
           </div>
         </div>
 
@@ -274,7 +275,7 @@ export default function Calendar() {
                 <th />
                 {shown.map((d) => (
                   <th key={iso(d)}>
-                    {DAY_NAMES[(d.getDay() + 6) % 7]} {pad(d.getDate())}.{pad(d.getMonth() + 1)}
+                    {t(DAY_NAMES[(d.getDay() + 6) % 7])} {pad(d.getDate())}.{pad(d.getMonth() + 1)}
                   </th>
                 ))}
               </tr>
@@ -296,7 +297,7 @@ export default function Calendar() {
                                 <button
                                   onPointerDown={(ev) => ev.stopPropagation()}
                                   onClick={() => remove(e.id)}
-                                  aria-label="Прибрати"
+                                  aria-label={t('Прибрати')}
                                 >
                                   ×
                                 </button>
@@ -309,7 +310,7 @@ export default function Calendar() {
                             className="add-entry"
                             onClick={() => setPicking({ date, slot })}
                           >
-                            + Додати
+                            {t('+ Додати')}
                           </button>
                         )}
                       </Cell>
@@ -320,7 +321,7 @@ export default function Calendar() {
             </tbody>
             <tfoot>
               <tr>
-                <th>Калорії</th>
+                <th>{t('Калорії')}</th>
                 {shown.map((d) => {
                   const total = dayCalories(iso(d))
                   return (
@@ -338,13 +339,13 @@ export default function Calendar() {
 
       <div className="actions" style={{ marginTop: 16 }}>
         <button type="button" onClick={copyPreviousWeek}>
-          Повторити минулий тиждень
+          {t('Повторити минулий тиждень')}
         </button>
         <button type="button" onClick={() => window.print()} disabled={planned.length === 0}>
-          Друк / PDF
+          {t('Друк / PDF')}
         </button>
         <button type="button" onClick={exportIcs} disabled={planned.length === 0}>
-          Додати в Google/Apple Календар (.ics)
+          {t('Додати в Google/Apple Календар (.ics)')}
         </button>
       </div>
       </div>
@@ -354,8 +355,8 @@ export default function Calendar() {
       {picking && (
         <>
           <div className="sheet-backdrop" onClick={() => setPicking(null)} />
-          <div className="sheet" role="dialog" aria-label="Обрати страву">
-            <h3>{mealName(meals, picking.slot)}: обрати страву</h3>
+          <div className="sheet" role="dialog" aria-label={t('Обрати страву')}>
+            <h3>{t('{meal}: обрати страву', { meal: mealName(meals, picking.slot) })}</h3>
             {dishes.map((d) => (
               <button
                 key={d.id}
@@ -368,7 +369,7 @@ export default function Calendar() {
               >
                 {d.favorite && '★ '}
                 {d.name}
-                {d.calories != null && <small>{d.calories} ккал</small>}
+                {d.calories != null && <small>{d.calories} {t('ккал')}</small>}
               </button>
             ))}
           </div>

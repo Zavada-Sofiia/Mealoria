@@ -4,6 +4,7 @@ import { apiFetch } from '../api/client'
 import ServingsPicker from '../components/ServingsPicker'
 import { addDays, fmtDate, iso, mondayOf } from '../dates'
 import { scaleAmount, useServings } from '../servings'
+import { t } from '../i18n'
 
 type Item = { name: string; amount: string; checked: boolean }
 type ShoppingResponse = { items: Item[]; at_home: string[] }
@@ -14,7 +15,7 @@ export default function Shopping() {
   const [data, setData] = useState<ShoppingResponse>({ items: [], at_home: [] })
   const [pantry, setPantry] = useState<PantryItem[]>([])
   const [newItem, setNewItem] = useState('')
-  const [status, setStatus] = useState('Завантаження…')
+  const [status, setStatus] = useState(t('Завантаження…'))
   const [version, setVersion] = useState(0)
   const [servings, setServings] = useServings()
 
@@ -32,14 +33,14 @@ export default function Shopping() {
         setPantry(home)
         setStatus('')
       })
-      .catch(() => current && setStatus('Не вдалося завантажити список'))
+      .catch(() => current && setStatus(t('Не вдалося завантажити список')))
     return () => {
       current = false
     }
   }, [start, version])
 
   function goToWeek(date: Date) {
-    setStatus('Завантаження…')
+    setStatus(t('Завантаження…'))
     setWeekStart(date)
   }
 
@@ -56,7 +57,7 @@ export default function Shopping() {
         body: JSON.stringify({ start, name: item.name, checked }),
       })
     } catch {
-      setStatus('Не вдалося зберегти позначку')
+      setStatus(t('Не вдалося зберегти позначку'))
     }
   }
 
@@ -72,7 +73,7 @@ export default function Shopping() {
       setNewItem('')
       setVersion((v) => v + 1)
     } catch {
-      setStatus('Не вдалося додати продукт')
+      setStatus(t('Не вдалося додати продукт'))
     }
   }
 
@@ -81,7 +82,7 @@ export default function Shopping() {
       await apiFetch<void>(`/api/shopping/pantry/${id}`, { method: 'DELETE' })
       setVersion((v) => v + 1)
     } catch {
-      setStatus('Не вдалося прибрати продукт')
+      setStatus(t('Не вдалося прибрати продукт'))
     }
   }
 
@@ -90,20 +91,20 @@ export default function Shopping() {
 
   return (
     <div>
-      <h1>Список продуктів</h1>
+      <h1>{t('Список продуктів')}</h1>
       <div className="week-nav">
         <button onClick={() => goToWeek(addDays(weekStart, -7))}>←</button>
         <strong>
           {fmtDate(start)} — {fmtDate(iso(addDays(weekStart, 6)))}
         </strong>
         <button onClick={() => goToWeek(addDays(weekStart, 7))}>→</button>
-        <button onClick={() => goToWeek(mondayOf(new Date()))}>Сьогодні</button>
+        <button onClick={() => goToWeek(mondayOf(new Date()))}>{t('Сьогодні')}</button>
       </div>
       <ServingsPicker value={servings} onChange={setServings} />
       {status && <p className="status">{status}</p>}
       {!status && data.items.length === 0 && data.at_home.length === 0 && (
         <p>
-          Список порожній. Додайте страви з інгредієнтами в <Link to="/calendar">календар</Link>.
+          {t('Список порожній. Додайте страви з інгредієнтами в')} <Link to="/calendar">{t('календар')}</Link>.
         </p>
       )}
 
@@ -118,12 +119,12 @@ export default function Shopping() {
         ))}
       </ul>
 
-      <h2>Вже є вдома</h2>
-      <p className="muted">Ці продукти не потраплять до списку.</p>
+      <h2>{t('Вже є вдома')}</h2>
+      <p className="muted">{t('Ці продукти не потраплять до списку.')}</p>
       <form onSubmit={addPantry} className="actions" style={{ marginBottom: 12 }}>
-        <input placeholder="Наприклад, сіль" value={newItem} maxLength={100} style={{ maxWidth: 280 }}
+        <input placeholder={t('Наприклад, сіль')} value={newItem} maxLength={100} style={{ maxWidth: 280 }}
           onChange={(e) => setNewItem(e.target.value)} />
-        <button type="submit">Додати</button>
+        <button type="submit">{t('Додати')}</button>
       </form>
       <ul className="cards">
         {pantry.map((p) => (
@@ -132,7 +133,7 @@ export default function Shopping() {
           </li>
         ))}
       </ul>
-      {data.at_home.length > 0 && <p>У цьому тижні вже є вдома: {data.at_home.join(', ')}.</p>}
+      {data.at_home.length > 0 && <p>{t('У цьому тижні вже є вдома: {list}.', { list: data.at_home.join(', ') })}</p>}
     </div>
   )
 }

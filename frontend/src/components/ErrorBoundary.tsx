@@ -1,5 +1,6 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react'
 import { reportError } from '../monitoring'
+import { t } from '../i18n'
 
 type State = { failed: boolean }
 
@@ -19,11 +20,11 @@ export default class ErrorBoundary extends Component<{ children: ReactNode }, St
     if (!this.state.failed) return this.props.children
     return (
       <div className="page narrow">
-        <h1>Щось пішло не так</h1>
+        <h1>{t('Щось пішло не так')}</h1>
         <p className="muted">
-          Сторінка зламалася. Ми вже отримали звіт про помилку. Спробуйте оновити сторінку.
+          {t('Сторінка зламалася. Ми вже отримали звіт про помилку. Спробуйте оновити сторінку.')}
         </p>
-        <button onClick={() => window.location.reload()}>Оновити сторінку</button>
+        <button onClick={() => window.location.reload()}>{t('Оновити сторінку')}</button>
       </div>
     )
   }

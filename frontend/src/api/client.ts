@@ -1,3 +1,4 @@
+import { getLang } from '../i18n'
 import { supabase } from './supabase'
 
 export class ApiError extends Error {
@@ -20,6 +21,7 @@ export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise
     headers: {
       ...init.headers,
       Authorization: `Bearer ${data.session?.access_token}`,
+      'X-Lang': getLang(),
     },
   })
   if (!res.ok) {

@@ -28,7 +28,7 @@ app.add_middleware(
         "CORS_ORIGINS",
         "https://mealoria.mealoria.workers.dev,http://localhost:5173",
     ).split(","),
-    allow_headers=["Authorization", "Content-Type"],
+    allow_headers=["Authorization", "Content-Type", "X-Lang"],
     allow_methods=["*"],
 )
 

@@ -2,6 +2,8 @@ import { NavLink, useLocation } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { supabase } from '../api/supabase'
 import { usePlan } from '../plan/context'
+import { t } from '../i18n'
+import LangToggle from './LangToggle'
 import ThemeToggle from './ThemeToggle'
 
 const ICONS: Record<string, string> = {
@@ -66,25 +68,26 @@ export default function Nav() {
             Mealoria<span>.</span>
           </NavLink>
           <NavLink to="/" end className="about-link desktop-only">
-            Про сайт
+            {t('Про сайт')}
           </NavLink>
           <span style={{ flex: 1 }} />
           <nav className="nav-links right desktop-only">
             {RIGHT.map(([to, label]) => (
               <NavLink key={to} to={to}>
-                {label}
+                {t(label)}
               </NavLink>
             ))}
           </nav>
+          <LangToggle />
           <ThemeToggle />
           {me && (
             <NavLink to="/pricing" className={`plan-badge${me.plan === 'premium' ? ' premium' : ''}`}>
-              {me.plan === 'premium' ? 'Преміум' : 'Безкоштовний'}
-              <span className="desktop-only">{me.plan === 'premium' ? '' : ' тариф'}</span>
+              {me.plan === 'premium' ? t('Преміум') : t('Безкоштовний')}
+              <span className="desktop-only">{me.plan === 'premium' ? '' : ` ${t('тариф')}`}</span>
             </NavLink>
           )}
           <button className="secondary desktop-only" onClick={() => supabase.auth.signOut()}>
-            Вийти
+            {t('Вийти')}
           </button>
         </div>
       </header>
@@ -92,7 +95,7 @@ export default function Nav() {
         <nav>
           {MAIN.map(([to, label]) => (
             <NavLink key={to} to={to}>
-              {label}
+              {t(label)}
             </NavLink>
           ))}
         </nav>
@@ -101,7 +104,7 @@ export default function Nav() {
         {TABS.map(([to, label]) => (
           <NavLink key={to} to={to}>
             <Icon name={to} />
-            {label}
+            {t(label)}
           </NavLink>
         ))}
         <button
@@ -111,23 +114,23 @@ export default function Nav() {
           aria-expanded={moreOpen}
         >
           <Icon name="more" />
-          Ще
+          {t('Ще')}
         </button>
       </nav>
       {moreOpen && (
         <>
           <div className="sheet-backdrop" onClick={() => setMoreOpen(false)} />
-          <div className="sheet more-sheet" role="dialog" aria-label="Меню" onClick={() => setMoreOpen(false)}>
+          <div className="sheet more-sheet" role="dialog" aria-label={t('Меню')} onClick={() => setMoreOpen(false)}>
             {MORE.map(([to, label]) => (
               <NavLink key={to} to={to}>
-                {label}
+                {t(label)}
               </NavLink>
             ))}
             <button type="button" className="secondary" onClick={() => supabase.auth.signOut()}>
-              Вийти
+              {t('Вийти')}
             </button>
             <p className="sheet-legal">
-              <NavLink to="/terms">Умови</NavLink> · <NavLink to="/privacy">Конфіденційність</NavLink>
+              <NavLink to="/terms">{t('Умови')}</NavLink> · <NavLink to="/privacy">{t('Конфіденційність')}</NavLink>
             </p>
           </div>
         </>

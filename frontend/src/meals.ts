@@ -1,3 +1,5 @@
+import { t } from './i18n'
+
 const MEAL_NAMES: Record<number, string[]> = {
   1: ['Їжа'],
   2: ['Сніданок', 'Вечеря'],
@@ -7,4 +9,4 @@ const MEAL_NAMES: Record<number, string[]> = {
 }
 
 export const mealName = (count: number, slot: number) =>
-  MEAL_NAMES[count]?.[slot] ?? `Прийом ${slot + 1}`
+  t(MEAL_NAMES[count]?.[slot] ?? 'Прийом {n}', { n: slot + 1 })

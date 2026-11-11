@@ -1,4 +1,5 @@
 import { mealName } from './meals'
+import { t } from './i18n'
 
 export type ExportEntry = { date: string; slot: number; dish: { name: string; calories: number | null } | null }
 
@@ -21,7 +22,7 @@ export function weekToIcs(entries: ExportEntry[], meals: number): string {
     .filter((e) => e.dish)
     .map((e, i) => {
       const hour = hours[e.slot] ?? 12
-      const kcal = e.dish!.calories != null ? ` (${e.dish!.calories} ккал)` : ''
+      const kcal = e.dish!.calories != null ? ` (${e.dish!.calories} ${t('ккал')})` : ''
       return [
         'BEGIN:VEVENT',
         `UID:mealoria-${e.date}-${e.slot}-${i}@mealoria`,

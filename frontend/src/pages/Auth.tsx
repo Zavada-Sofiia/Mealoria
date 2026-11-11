@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../api/supabase'
 import { passwordProblems } from '../password'
+import { t } from '../i18n'
 
 export default function Auth() {
   const navigate = useNavigate()
@@ -15,10 +16,10 @@ export default function Auth() {
     e.preventDefault()
     setMessage('')
     if (mode === 'signup') {
-      if (problems.length) return setMessage('Придумайте надійніший пароль: ' + problems.join('; ').toLowerCase() + '.')
+      if (problems.length) return setMessage(t('Придумайте надійніший пароль: {list}.', { list: problems.join('; ').toLowerCase() }))
       const { data, error } = await supabase.auth.signUp({ email, password })
       if (error) return setMessage(error.message)
-      if (!data.session) return setMessage('Перевірте пошту, щоб підтвердити email.')
+      if (!data.session) return setMessage(t('Перевірте пошту, щоб підтвердити email.'))
       return navigate('/profile')
     }
     const { error } = await supabase.auth.signInWithPassword({ email, password })
@@ -28,11 +29,11 @@ export default function Auth() {
 
   async function forgotPassword() {
     setMessage('')
-    if (!email.trim()) return setMessage('Спочатку введіть email у поле вище.')
+    if (!email.trim()) return setMessage(t('Спочатку введіть email у поле вище.'))
     const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
       redirectTo: `${window.location.origin}/reset`,
     })
-    setMessage(error ? error.message : 'Якщо такий акаунт є, ми надіслали лист із посиланням для нового пароля.')
+    setMessage(error ? error.message : t('Якщо такий акаунт є, ми надіслали лист із посиланням для нового пароля.'))
   }
 
   async function signInWithGoogle() {
@@ -46,7 +47,7 @@ export default function Auth() {
 
   return (
     <form onSubmit={submit} className="card narrow">
-      <h1>{mode === 'signin' ? 'Вхід' : 'Реєстрація'}</h1>
+      <h1>{mode === 'signin' ? t('Вхід') : t('Реєстрація')}</h1>
       <label>
         Email
         <input
@@ -58,7 +59,7 @@ export default function Auth() {
         />
       </label>
       <label>
-        Пароль
+        {t('Пароль')}
         <input
           type="password"
           autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
@@ -74,27 +75,27 @@ export default function Auth() {
           ))}
         </ul>
       )}
-      {mode === 'signup' && !problems.length && password && <p className="pw-ok">Пароль надійний</p>}
+      {mode === 'signup' && !problems.length && password && <p className="pw-ok">{t('Пароль надійний')}</p>}
       {mode === 'signin' && (
         <p style={{ margin: '-4px 0 12px' }}>
           <a href="#forgot" onClick={(e) => { e.preventDefault(); void forgotPassword() }}>
-            Забули пароль?
+            {t('Забули пароль?')}
           </a>
         </p>
       )}
       <div className="actions">
-        <button type="submit">{mode === 'signin' ? 'Увійти' : 'Зареєструватися'}</button>
+        <button type="submit">{mode === 'signin' ? t('Увійти') : t('Зареєструватися')}</button>
         <button type="button" onClick={() => setMode(mode === 'signin' ? 'signup' : 'signin')}>
-          {mode === 'signin' ? 'Створити акаунт' : 'Вже є акаунт'}
+          {mode === 'signin' ? t('Створити акаунт') : t('Вже є акаунт')}
         </button>
       </div>
       <hr />
       <button type="button" onClick={signInWithGoogle} style={{ width: '100%' }}>
-        Увійти через Google
+        {t('Увійти через Google')}
       </button>
       <p className="muted" style={{ marginTop: 16, fontSize: '0.85rem' }}>
-        Продовжуючи, ви погоджуєтесь з <Link to="/terms">Умовами</Link> і{' '}
-        <Link to="/privacy">Політикою конфіденційності</Link>.
+        {t('Продовжуючи, ви погоджуєтесь з')} <Link to="/terms">{t('Умовами')}</Link> {t('і')}{' '}
+        <Link to="/privacy">{t('Політикою конфіденційності')}</Link>.
       </p>
       {message && <p className="status" style={{ marginTop: 16 }}>{message}</p>}
     </form>

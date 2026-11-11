@@ -1,7 +1,7 @@
 import logging
 
 import httpx
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, Header, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials
 
 from app.ai_gateway import prompts
@@ -123,12 +123,16 @@ def meal_photo(
     _: str = Depends(current_user_id),
     quota: SupabaseQuotaStore = Depends(get_quota_store),
     plans: SupabasePlanStore = Depends(get_plan_store),
+    lang: str = Header(default="uk", alias="X-Lang"),
 ):
     limit = _daily_limit(plans)
     _check_quota(quota, limit)
     try:
         data = generate_json(
-            prompts.MEAL_PHOTO_PROMPT, prompts.MEAL_PHOTO_SCHEMA, body.image_base64, body.mime_type
+            prompts.with_language(prompts.MEAL_PHOTO_PROMPT, lang),
+            prompts.MEAL_PHOTO_SCHEMA,
+            body.image_base64,
+            body.mime_type,
         )
         result = MealPhotoOut(**data)
         _charge(quota, limit)
@@ -144,11 +148,14 @@ def recipe_ideas(
     quota: SupabaseQuotaStore = Depends(get_quota_store),
     profiles: SupabaseProfileStore = Depends(get_profile_store),
     plans: SupabasePlanStore = Depends(get_plan_store),
+    lang: str = Header(default="uk", alias="X-Lang"),
 ):
     limit = _daily_limit(plans)
     _check_quota(quota, limit)
     try:
-        prompt = prompts.recipe_prompt(profiles.get(user_id), body.category, body.note.strip())
+        prompt = prompts.with_language(
+            prompts.recipe_prompt(profiles.get(user_id), body.category, body.note.strip()), lang
+        )
         result = RecipeIdeasOut(**generate_json(prompt, prompts.RECIPES_SCHEMA))
         _charge(quota, limit)
         return result
@@ -225,6 +232,7 @@ def dish_recipe(
     quota: SupabaseQuotaStore = Depends(get_quota_store),
     profiles: SupabaseProfileStore = Depends(get_profile_store),
     plans: SupabasePlanStore = Depends(get_plan_store),
+    lang: str = Header(default="uk", alias="X-Lang"),
 ):
     """Premium: write a recipe and the ingredients for a dish from its name (respects the user's profile)."""
     if not _is_premium(plans):
@@ -232,7 +240,9 @@ def dish_recipe(
     limit = _daily_limit(plans)
     _check_quota(quota, limit)
     try:
-        prompt = prompts.dish_recipe_prompt(body.name.strip(), profiles.get(user_id), body.note.strip())
+        prompt = prompts.with_language(
+            prompts.dish_recipe_prompt(body.name.strip(), profiles.get(user_id), body.note.strip()), lang
+        )
         result = DishRecipeOut(**generate_json(prompt, prompts.DISH_RECIPE_SCHEMA))
         _charge(quota, limit)
         return result

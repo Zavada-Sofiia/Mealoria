@@ -1,4 +1,6 @@
 import { NavLink } from 'react-router-dom'
+import { t } from '../i18n'
+import LangToggle from './LangToggle'
 import ThemeToggle from './ThemeToggle'
 
 export default function PublicNav() {
@@ -10,12 +12,13 @@ export default function PublicNav() {
         </NavLink>
         <span style={{ flex: 1 }} />
         <nav className="nav-links right desktop-only">
-          <NavLink to="/pricing">Тарифи</NavLink>
-          <NavLink to="/support">Підтримати</NavLink>
+          <NavLink to="/pricing">{t('Тарифи')}</NavLink>
+          <NavLink to="/support">{t('Підтримати')}</NavLink>
         </nav>
+        <LangToggle />
         <ThemeToggle />
         <NavLink to="/auth">
-          <button>Увійти</button>
+          <button>{t('Увійти')}</button>
         </NavLink>
       </div>
     </header>

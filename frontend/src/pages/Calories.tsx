@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { apiFetch } from '../api/client'
 import { BarChart, LineChart } from '../components/Charts'
 import { addDays, fmtDate, iso } from '../dates'
+import { t } from '../i18n'
 
 type Macros = { kcal: number; protein_g: number; fat_g: number; carbs_g: number }
 type DayResponse = {
@@ -23,7 +24,7 @@ const round = (n: number) => Math.round(n * 10) / 10
 function DaySummary() {
   const [date, setDate] = useState(() => new Date())
   const [data, setData] = useState<DayResponse | null>(null)
-  const [status, setStatus] = useState('Завантаження…')
+  const [status, setStatus] = useState(t('Завантаження…'))
   const day = iso(date)
 
   useEffect(() => {
@@ -34,14 +35,14 @@ function DaySummary() {
         setData(r)
         setStatus('')
       })
-      .catch(() => current && setStatus('Не вдалося завантажити день'))
+      .catch(() => current && setStatus(t('Не вдалося завантажити день')))
     return () => {
       current = false
     }
   }, [day])
 
   function goTo(d: Date) {
-    setStatus('Завантаження…')
+    setStatus(t('Завантаження…'))
     setDate(d)
   }
 
@@ -51,7 +52,7 @@ function DaySummary() {
 
   return (
     <section className="card">
-      <h2 style={{ marginTop: 0 }}>День</h2>
+      <h2 style={{ marginTop: 0 }}>{t('День')}</h2>
       <div className="week-nav">
         <button onClick={() => goTo(addDays(date, -1))}>←</button>
         <input type="date" value={day} onChange={(e) => e.target.value && goTo(new Date(e.target.value + 'T00:00'))} />
@@ -62,25 +63,24 @@ function DaySummary() {
         <>
           <p>
             <strong>{Math.round(total)}</strong>
-            {target ? ` / ${target} ккал` : ' ккал (задайте ціль у профілі)'}
+            {target ? ` / ${target} ${t('ккал')}` : t(' ккал (задайте ціль у профілі)')}
           </p>
           {target ? (
             <progress className={total > target ? 'over' : undefined} value={Math.min(total, target)} max={target} />
           ) : null}
           {diff !== null && (
-            <p>{diff > 0 ? `Перевищення на ${diff} ккал` : `Залишилось ${-diff} ккал`}</p>
+            <p>{diff > 0 ? t('Перевищення на {n} ккал', { n: diff }) : t('Залишилось {n} ккал', { n: -diff })}</p>
           )}
           <p>
-            Білки {data.total.protein_g} г · Жири {data.total.fat_g} г · Вуглеводи{' '}
-            {data.total.carbs_g} г
+            {t('Білки {p} г · Жири {f} г · Вуглеводи {c} г', { p: data.total.protein_g, f: data.total.fat_g, c: data.total.carbs_g })}
           </p>
           {data.meals.length === 0 ? (
-            <p>На цей день у календарі немає страв.</p>
+            <p>{t('На цей день у календарі немає страв.')}</p>
           ) : (
             <ul>
               {data.meals.map((m) => (
                 <li key={m.slot}>
-                  Прийом {m.slot + 1}: {Math.round(m.kcal)} ккал — {m.dishes.join(', ')}
+                  {t('{n}: {kcal} ккал — {dishes}', { n: t('Прийом {n}', { n: m.slot + 1 }), kcal: Math.round(m.kcal), dishes: m.dishes.join(', ') })}
                 </li>
               ))}
             </ul>
@@ -102,13 +102,13 @@ function DishCalculator() {
   async function search(e: FormEvent) {
     e.preventDefault()
     if (query.trim().length < 2) return
-    setStatus('Шукаємо…')
+    setStatus(t('Шукаємо…'))
     try {
       const r = await apiFetch<Food[]>(`/api/calories/food?q=${encodeURIComponent(query)}`)
       setResults(r)
-      setStatus(r.length ? '' : 'Нічого не знайдено. Спробуйте іншу назву українською')
+      setStatus(r.length ? '' : t('Нічого не знайдено. Спробуйте іншу назву українською'))
     } catch {
-      setStatus('База продуктів зараз недоступна, спробуйте за хвилину')
+      setStatus(t('База продуктів зараз недоступна, спробуйте за хвилину'))
     }
   }
 
@@ -131,40 +131,40 @@ function DishCalculator() {
           protein_g: protein,
           fat_g: fat,
           carbs_g: carbs,
-          ingredients: lines.map((l) => ({ name: l.name.slice(0, 100), amount: `${l.grams} г` })),
+          ingredients: lines.map((l) => ({ name: l.name.slice(0, 100), amount: `${l.grams} ${t('г')}` })),
         }),
       })
       setLines([])
       setName('')
       setServings(1)
-      setStatus('Страву збережено в «Мої страви»')
+      setStatus(t('Страву збережено в «Мої страви»'))
     } catch {
-      setStatus('Не вдалося зберегти страву')
+      setStatus(t('Не вдалося зберегти страву'))
     }
   }
 
   return (
     <section className="card red">
-      <h2 style={{ marginTop: 0 }}>Калькулятор страви</h2>
+      <h2 style={{ marginTop: 0 }}>{t('Калькулятор страви')}</h2>
       <form onSubmit={search} className="actions" style={{ marginBottom: 12 }}>
-        <input placeholder="Продукт, наприклад гречка" value={query} style={{ maxWidth: 320 }}
+        <input placeholder={t('Продукт, наприклад гречка')} value={query} style={{ maxWidth: 320 }}
           onChange={(e) => setQuery(e.target.value)} />
-        <button type="submit">Знайти</button>
+        <button type="submit">{t('Знайти')}</button>
       </form>
       {status && <p className="status">{status}</p>}
 
       <ul className="cards">
         {results.map((f) => (
           <li key={f.name}>
-            {f.name} · {f.kcal_100g} ккал / 100 г{' '}
-            <button onClick={() => setLines([...lines, { ...f, grams: 100 }])}>Додати</button>
+            {t('{name} · {n} ккал / 100 г', { name: f.name, n: f.kcal_100g })}{' '}
+            <button onClick={() => setLines([...lines, { ...f, grams: 100 }])}>{t('Додати')}</button>
           </li>
         ))}
       </ul>
 
       {lines.length > 0 && (
         <>
-          <h3>Склад</h3>
+          <h3>{t('Склад')}</h3>
           <ul className="cards">
             {lines.map((l, i) => (
               <li key={i}>
@@ -173,29 +173,28 @@ function DishCalculator() {
                   onChange={(e) =>
                     setLines(lines.map((x, j) => (j === i ? { ...x, grams: Number(e.target.value) } : x)))
                   } />{' '}
-                г <button onClick={() => setLines(lines.filter((_, j) => j !== i))}>×</button>
+                {t('г')} <button onClick={() => setLines(lines.filter((_, j) => j !== i))}>×</button>
               </li>
             ))}
           </ul>
           <p>
-            Порцій:{' '}
+            {t('Порцій:')}{' '}
             <input type="number" min={1} max={50} value={servings} style={{ width: 60 }}
               onChange={(e) => setServings(Math.max(1, Number(e.target.value)))} />
           </p>
           <p>
-            На порцію: <strong>{kcal} ккал</strong> · Б {protein} / Ж {fat} / В {carbs} г
+            {t('На порцію:')} <strong>{kcal} {t('ккал')}</strong> · {t('Б {p} · Ж {f} · В {c} г', { p: protein, f: fat, c: carbs })}
           </p>
           <p>
-            <input placeholder="Назва страви" value={name} maxLength={100}
+            <input placeholder={t('Назва страви')} value={name} maxLength={100}
               onChange={(e) => setName(e.target.value)} />{' '}
-            <button onClick={saveDish}>Зберегти як страву</button>
+            <button onClick={saveDish}>{t('Зберегти як страву')}</button>
           </p>
         </>
       )}
       <p>
         <small>
-          Дані про продукти з Open Food Facts, показуємо лише українські назви. Значення можуть бути
-          неточними.
+          {t('Дані про продукти з Open Food Facts, показуємо лише українські назви. Значення можуть бути неточними.')}
         </small>
       </p>
     </section>
@@ -226,15 +225,15 @@ function Trends() {
 
   return (
     <section className="card">
-      <h2 style={{ marginTop: 0 }}>Динаміка калорій</h2>
+      <h2 style={{ marginTop: 0 }}>{t('Динаміка калорій')}</h2>
       <div className="seg">
         {[7, 30].map((n) => (
           <button key={n} type="button" className={span === n ? 'on' : ''} onClick={() => setSpan(n)}>
-            {n} днів
+            {t('{n} днів', { n })}
           </button>
         ))}
       </div>
-      {failed && <p className="status">Не вдалося завантажити дані</p>}
+      {failed && <p className="status">{t('Не вдалося завантажити дані')}</p>}
       {data && (
         <>
           <BarChart
@@ -243,9 +242,9 @@ function Trends() {
           />
           <p className="muted">
             {planned.length
-              ? `У середньому ${average} ккал на день із запланованих (${planned.length} дн.)`
-              : 'У цьому періоді немає запланованих страв.'}
-            {data.target ? ` Пунктир: ваша норма ${data.target} ккал.` : ''}
+              ? t('У середньому {avg} ккал на день із запланованих ({days} дн.)', { avg: average, days: planned.length })
+              : t('У цьому періоді немає запланованих страв.')}
+            {data.target ? t(' Пунктир: ваша норма {n} ккал.', { n: data.target }) : ''}
           </p>
         </>
       )}
@@ -265,13 +264,13 @@ function WeightJournal() {
   useEffect(() => {
     apiFetch<WeightPoint[]>('/api/weight')
       .then(setPoints)
-      .catch(() => setStatus('Не вдалося завантажити журнал ваги'))
+      .catch(() => setStatus(t('Не вдалося завантажити журнал ваги')))
   }, [])
 
   async function save(e: FormEvent) {
     e.preventDefault()
     const value = Number(weight.replace(',', '.'))
-    if (!(value >= 20 && value <= 400)) return setStatus('Вкажіть вагу від 20 до 400 кг')
+    if (!(value >= 20 && value <= 400)) return setStatus(t('Вкажіть вагу від 20 до 400 кг'))
     try {
       const saved = await apiFetch<WeightPoint>('/api/weight', {
         method: 'PUT',
@@ -280,9 +279,9 @@ function WeightJournal() {
       })
       setPoints((ps) => [...ps.filter((p) => p.day !== saved.day), saved].sort((a, b) => a.day.localeCompare(b.day)))
       setWeight('')
-      setStatus('Збережено')
+      setStatus(t('Збережено'))
     } catch {
-      setStatus('Не вдалося зберегти')
+      setStatus(t('Не вдалося зберегти'))
     }
   }
 
@@ -291,7 +290,7 @@ function WeightJournal() {
       await apiFetch<void>(`/api/weight/${d}`, { method: 'DELETE' })
       setPoints((ps) => ps.filter((p) => p.day !== d))
     } catch {
-      setStatus('Не вдалося видалити')
+      setStatus(t('Не вдалося видалити'))
     }
   }
 
@@ -301,32 +300,32 @@ function WeightJournal() {
 
   return (
     <section className="card red">
-      <h2 style={{ marginTop: 0 }}>Журнал ваги</h2>
+      <h2 style={{ marginTop: 0 }}>{t('Журнал ваги')}</h2>
       <form onSubmit={save} className="actions" style={{ marginBottom: 12 }}>
         <input type="date" value={day} max={today} onChange={(e) => e.target.value && setDay(e.target.value)} />
-        <input inputMode="decimal" placeholder="Вага, кг" value={weight} style={{ maxWidth: 120 }}
+        <input inputMode="decimal" placeholder={t('Вага, кг')} value={weight} style={{ maxWidth: 120 }}
           onChange={(e) => setWeight(e.target.value)} />
-        <button type="submit">Записати</button>
+        <button type="submit">{t('Записати')}</button>
       </form>
       {status && <p className="status">{status}</p>}
       {points.length >= 2 && (
         <LineChart points={points.map((p) => ({ label: shortDate(p.day), value: p.weight_kg }))} />
       )}
-      {points.length === 1 && <p className="muted">Додайте ще один запис, щоб побачити графік.</p>}
+      {points.length === 1 && <p className="muted">{t('Додайте ще один запис, щоб побачити графік.')}</p>}
       {change !== null && (
         <p className="muted">
-          Зміна з {fmtDate(first.day)}: {change > 0 ? '+' : ''}
-          {change} кг
+          {t('Зміна з {date}:', { date: fmtDate(first.day) })} {change > 0 ? '+' : ''}
+          {change} {t('кг')}
         </p>
       )}
       {points.length > 0 && (
         <details>
-          <summary>Усі записи ({points.length})</summary>
+          <summary>{t('Усі записи ({n})', { n: points.length })}</summary>
           <ul className="cards">
             {[...points].reverse().map((p) => (
               <li key={p.day}>
-                {fmtDate(p.day)}: <strong>{p.weight_kg} кг</strong>{' '}
-                <button type="button" onClick={() => remove(p.day)} aria-label="Видалити запис">
+                {fmtDate(p.day)}: <strong>{p.weight_kg} {t('кг')}</strong>{' '}
+                <button type="button" onClick={() => remove(p.day)} aria-label={t('Видалити запис')}>
                   ×
                 </button>
               </li>
@@ -341,7 +340,7 @@ function WeightJournal() {
 export default function Calories() {
   return (
     <div>
-      <h1>Калорії</h1>
+      <h1>{t('Калорії')}</h1>
       <DaySummary />
       <Trends />
       <WeightJournal />

@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { CONTACT_EMAIL } from '../config'
+import { t } from '../i18n'
 
 const STEPS = [
   ['1', 'Розкажіть про себе', 'Вік, зріст, вага, мета й вподобання. Ми порахуємо ваш калораж і врахуємо дієту та алергії.'],
@@ -19,68 +20,64 @@ export default function Home({ signedIn }: { signedIn: boolean }) {
     <div>
       <section className="hero">
         <h1>
-          Тижневе меню без клопоту<span className="dot">.</span>
+          {t('Тижневе меню без клопоту')}<span className="dot">.</span>
         </h1>
         <p className="lead">
-          Mealoria допомагає планувати харчування на тиждень: складайте меню в календарі, рахуйте
-          калорії й отримуйте список продуктів автоматично. Для тих, хто готує для себе або
-          невеликої родини.
+          {t('Mealoria допомагає планувати харчування на тиждень: складайте меню в календарі, рахуйте калорії й отримуйте список продуктів автоматично. Для тих, хто готує для себе або невеликої родини.')}
         </p>
         <div className="actions">
           {signedIn ? (
             <Link to="/today">
-              <button className="big">Відкрити застосунок</button>
+              <button className="big">{t('Відкрити застосунок')}</button>
             </Link>
           ) : (
             <Link to="/auth">
-              <button className="big">Спробувати безкоштовно</button>
+              <button className="big">{t('Спробувати безкоштовно')}</button>
             </Link>
           )}
-          <Link to="/pricing">Тарифи</Link>
+          <Link to="/pricing">{t('Тарифи')}</Link>
         </div>
       </section>
 
-      <h2>Як це працює</h2>
+      <h2>{t('Як це працює')}</h2>
       <div className="grid">
         {STEPS.map(([n, title, text]) => (
           <section key={n} className="card">
-            <span className="badge">Крок {n}</span>
-            <h3 style={{ marginTop: 10 }}>{title}</h3>
-            <p className="muted">{text}</p>
+            <span className="badge">{t('Крок {n}', { n })}</span>
+            <h3 style={{ marginTop: 10 }}>{t(title)}</h3>
+            <p className="muted">{t(text)}</p>
           </section>
         ))}
       </div>
 
-      <h2>Що всередині</h2>
+      <h2>{t('Що всередині')}</h2>
       <div className="grid">
         {FEATURES.map(([title, text]) => (
           <section key={title} className="card red">
-            <h3>{title}</h3>
-            <p className="muted">{text}</p>
+            <h3>{t(title)}</h3>
+            <p className="muted">{t(text)}</p>
           </section>
         ))}
       </div>
 
-      <h2>Безкоштовно та преміум</h2>
+      <h2>{t('Безкоштовно та преміум')}</h2>
       <p>
-        Планування, свої страви, каталог рецептів і список продуктів безкоштовні. Розумний помічник на
-        штучному інтелекті (підбір рецептів за вашим профілем, калорії по фото) доступний безкоштовно з денним
-        лімітом, а для більшого ліміту готуємо преміум.{' '}
-        <Link to="/pricing">Докладніше про тарифи</Link>
+        {t('Планування, свої страви, каталог рецептів і список продуктів безкоштовні. Розумний помічник на штучному інтелекті (підбір рецептів за вашим профілем, калорії по фото) доступний безкоштовно з денним лімітом, а для більшого ліміту готуємо преміум.')}{' '}
+        <Link to="/pricing">{t('Докладніше про тарифи')}</Link>
       </p>
 
       <footer className="site-footer">
-        <Link to="/pricing">Тарифи</Link> · <Link to="/support">Підтримати проєкт</Link>
+        <Link to="/pricing">{t('Тарифи')}</Link> · <Link to="/support">{t('Підтримати проєкт')}</Link>
         {!signedIn && (
           <>
             {' '}
-            · <Link to="/auth">Увійти</Link>
+            · <Link to="/auth">{t('Увійти')}</Link>
           </>
         )}
         <br />
-        <Link to="/terms">Умови</Link> · <Link to="/privacy">Конфіденційність</Link>
+        <Link to="/terms">{t('Умови')}</Link> · <Link to="/privacy">{t('Конфіденційність')}</Link>
         <br />
-        Питання й відгуки: <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
+        {t('Питання й відгуки:')} <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
       </footer>
     </div>
   )

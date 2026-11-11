@@ -4,6 +4,7 @@ import { fmtDate } from '../dates'
 import ServingsPicker from '../components/ServingsPicker'
 import { scaleAmount, useServings } from '../servings'
 import { oneStepPerLine } from '../steps'
+import { t } from '../i18n'
 
 type Recipe = {
   id: string
@@ -61,7 +62,7 @@ export default function Recipes() {
   const [query, setQuery] = useState('')
   const [category, setCategory] = useState('')
   const [forMe, setForMe] = useState(false)
-  const [status, setStatus] = useState('Завантаження…')
+  const [status, setStatus] = useState(t('Завантаження…'))
   const [planning, setPlanning] = useState<string | null>(null)
   const [date, setDate] = useState(today())
   const [slot, setSlot] = useState(0)
@@ -75,7 +76,7 @@ export default function Recipes() {
           setRecipes(r)
           setStatus('')
         })
-        .catch(() => current && setStatus('Не вдалося завантажити рецепти'))
+        .catch(() => current && setStatus(t('Не вдалося завантажити рецепти')))
     }, 250)
     return () => {
       current = false
@@ -88,9 +89,9 @@ export default function Recipes() {
   async function saveToDishes(r: Recipe) {
     try {
       await apiFetch<Dish>(`/api/recipes/${r.id}/save`, { method: 'POST' })
-      setStatus(`«${r.name}» додано до моїх страв`)
+      setStatus(t('«{name}» додано до моїх страв', { name: r.name }))
     } catch {
-      setStatus('Не вдалося додати страву')
+      setStatus(t('Не вдалося додати страву'))
     }
   }
 
@@ -103,9 +104,9 @@ export default function Recipes() {
         body: JSON.stringify({ date, slot, dish_id: dish.id }),
       })
       setPlanning(null)
-      setStatus(`«${r.name}» додано в календар на ${fmtDate(date)}`)
+      setStatus(t('«{name}» додано в календар на {date}', { name: r.name, date: fmtDate(date) }))
     } catch {
-      setStatus('Не вдалося додати в календар')
+      setStatus(t('Не вдалося додати в календар'))
     }
   }
 
@@ -116,16 +117,16 @@ export default function Recipes() {
 
   return (
     <div>
-      <h1>Рецепти</h1>
+      <h1>{t('Рецепти')}</h1>
       <ServingsPicker value={servings} onChange={setServings} />
       <div className="actions" style={{ marginBottom: 12 }}>
-        <input placeholder="Пошук за назвою" value={query} style={{ maxWidth: 320 }}
+        <input placeholder={t('Пошук за назвою')} value={query} style={{ maxWidth: 320 }}
           onChange={(e) => setQuery(e.target.value)} />
         <select value={category} style={{ width: 'auto' }} onChange={(e) => setCategory(e.target.value)}>
-          <option value="">Усі категорії</option>
+          <option value="">{t('Усі категорії')}</option>
           {CATEGORIES.map((c) => (
             <option key={c} value={c}>
-              {c}
+              {t(c)}
             </option>
           ))}
         </select>
@@ -133,14 +134,13 @@ export default function Recipes() {
       <p>
         <label className="inline">
           <input type="checkbox" checked={forMe} onChange={(e) => setForMe(e.target.checked)} />{' '}
-          Враховувати мої вподобання (дієта, алергени, час, бюджет)
+          {t('Враховувати мої вподобання (дієта, алергени, час, бюджет)')}
         </label>
       </p>
       {forMe && (
         <p>
           <small>
-            Фільтр працює за відповідями з профілю. Інші алергії, вписані текстом, не враховуються,
-            тому завжди перевіряйте склад самостійно.
+            {t('Фільтр працює за відповідями з профілю. Інші алергії, вписані текстом, не враховуються, тому завжди перевіряйте склад самостійно.')}
           </small>
         </p>
       )}
@@ -156,27 +156,27 @@ export default function Recipes() {
                 <div className="thumb empty">🍽</div>
               )}
               <div>
-            <strong>{r.name}</strong> · {r.category} · {r.calories} ккал · Б {r.protein_g} / Ж{' '}
-            {r.fat_g} / В {r.carbs_g} г
+            <strong>{r.name}</strong> · {t(r.category)} · {r.calories} {t('ккал')} ·{' '}
+            {t('Б {p} · Ж {f} · В {c} г', { p: r.protein_g, f: r.fat_g, c: r.carbs_g })}
             <div>
               <small>
-                {r.cook_minutes} хв
-                {r.diet !== 'any' && ` · ${DIET_LABEL[r.diet]}`}
+                {t('{n} хв', { n: r.cook_minutes })}
+                {r.diet !== 'any' && ` · ${t(DIET_LABEL[r.diet])}`}
                 {r.allergens.length > 0 &&
-                  ` · містить: ${r.allergens.map((a) => ALLERGEN_LABEL[a] ?? a).join(', ')}`}
+                  t(' · містить: {list}', { list: r.allergens.map((a) => t(ALLERGEN_LABEL[a] ?? a)).join(', ') })}
               </small>
             </div>
             <details>
-              <summary>Рецепт</summary>
+              <summary>{t('Рецепт')}</summary>
               <div>
-                {servings > 1 && <strong>На {servings}: </strong>}
+                {servings > 1 && <strong>{t('На {n}: ', { n: servings })}</strong>}
                 {r.ingredients.map((i) => `${i.name} (${scaleAmount(i.amount, servings)})`).join(', ')}
               </div>
               <p style={{ whiteSpace: 'pre-line' }}>{oneStepPerLine(r.recipe)}</p>
             </details>
             <div className="actions" style={{ marginTop: 8 }}>
-              <button onClick={() => saveToDishes(r)}>У мої страви</button>
-              <button onClick={() => setPlanning(planning === r.id ? null : r.id)}>В календар</button>
+              <button onClick={() => saveToDishes(r)}>{t('У мої страви')}</button>
+              <button onClick={() => setPlanning(planning === r.id ? null : r.id)}>{t('В календар')}</button>
             </div>
             {planning === r.id && (
               <div className="actions" style={{ marginTop: 8 }}>
@@ -184,11 +184,11 @@ export default function Recipes() {
                 <select value={slot} style={{ width: 'auto' }} onChange={(e) => setSlot(Number(e.target.value))}>
                   {[0, 1, 2, 3, 4, 5, 6, 7].map((s) => (
                     <option key={s} value={s}>
-                      Прийом {s + 1}
+                      {t('Прийом {n}', { n: s + 1 })}
                     </option>
                   ))}
                 </select>{' '}
-                <button onClick={() => addToCalendar(r)}>Додати</button>
+                <button onClick={() => addToCalendar(r)}>{t('Додати')}</button>
               </div>
             )}
               </div>
@@ -196,9 +196,9 @@ export default function Recipes() {
           </li>
         ))}
       </ul>
-      {!status && shown.length === 0 && <p>Нічого не знайдено.</p>}
+      {!status && shown.length === 0 && <p>{t('Нічого не знайдено.')}</p>}
       <p>
-        <small>Фото в каталозі створені штучним інтелектом і мають ілюстративний характер.</small>
+        <small>{t('Фото в каталозі створені штучним інтелектом і мають ілюстративний характер.')}</small>
       </p>
     </div>
   )

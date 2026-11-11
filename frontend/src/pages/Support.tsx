@@ -1,4 +1,5 @@
 import { CONTACT_EMAIL } from '../config'
+import { t } from '../i18n'
 
 // A public monobank jar link. VITE_DONATION_URL overrides it without a code change.
 const DONATION_URL =
@@ -7,22 +8,21 @@ const DONATION_URL =
 export default function Support() {
   return (
     <div className="narrow">
-      <h1>Підтримати проєкт</h1>
+      <h1>{t('Підтримати проєкт')}</h1>
       <section className="card red">
         <p>
-          Mealoria робить невелика команда. Якщо сервіс став вам у пригоді, ви можете підтримати
-          його добровільним донатом у будь-якій сумі.
+          {t('Mealoria робить невелика команда. Якщо сервіс став вам у пригоді, ви можете підтримати його добровільним донатом у будь-якій сумі.')}
         </p>
         {DONATION_URL ? (
           <a href={DONATION_URL} target="_blank" rel="noreferrer">
-            <button className="big">Підтримати</button>
+            <button className="big">{t('Підтримати')}</button>
           </a>
         ) : (
-          <p className="status">Посилання для донатів скоро з'явиться.</p>
+          <p className="status">{t("Посилання для донатів скоро з'явиться.")}</p>
         )}
       </section>
       <p className="muted">
-        Питання, ідеї чи знайшли помилку? Напишіть нам:{' '}
+        {t('Питання, ідеї чи знайшли помилку? Напишіть нам:')}{' '}
         <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
       </p>
     </div>

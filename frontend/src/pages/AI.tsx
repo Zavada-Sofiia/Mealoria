@@ -6,6 +6,7 @@ import PhotoPicker from '../components/PhotoPicker'
 import { Link } from 'react-router-dom'
 import { usePlan } from '../plan/context'
 import { oneStepPerLine } from '../steps'
+import { t } from '../i18n'
 
 type Ingredient = { name: string; amount: string }
 type Idea = {
@@ -36,23 +37,23 @@ const json = { 'Content-Type': 'application/json' }
 
 function errorText(e: unknown): string {
   if (e instanceof ApiError) {
-    if (e.status === 429) return 'Ліміт запитів до ШІ на сьогодні вичерпано. Спробуйте завтра'
-    if (e.status === 503) return 'ШІ ще не налаштований на сервері'
+    if (e.status === 429) return t('Ліміт запитів до ШІ на сьогодні вичерпано. Спробуйте завтра')
+    if (e.status === 503) return t('ШІ ще не налаштований на сервері')
     if (e.status === 502 && e.detail.startsWith('AI is busy')) {
       const reason = e.detail.includes(': ') ? e.detail.slice(e.detail.indexOf(': ') + 2) : ''
-      return `ШІ зараз перевантажений. Спробуйте за кілька хвилин, цей запит не списано з ліміту.${reason ? ` Технічна причина: ${reason}` : ''}`
+      return `${t('ШІ зараз перевантажений. Спробуйте за кілька хвилин, цей запит не списано з ліміту.')}${reason ? t(' Технічна причина: {reason}', { reason }) : ''}`
     }
     if (e.status === 502) {
       // admins get "message: technical reason" from the backend
       const reason = e.detail.includes(': ') ? e.detail.slice(e.detail.indexOf(': ') + 2) : ''
-      return `ШІ не зміг відповісти. Спробуйте ще раз або інше фото.${reason ? ` Технічна причина: ${reason}` : ''}`
+      return `${t('ШІ не зміг відповісти. Спробуйте ще раз або інше фото.')}${reason ? t(' Технічна причина: {reason}', { reason }) : ''}`
     }
   }
-  return 'Щось пішло не так. Спробуйте ще раз'
+  return t('Щось пішло не так. Спробуйте ще раз')
 }
 
 function macros(x: { calories: number; protein_g: number; fat_g: number; carbs_g: number }) {
-  return `${x.calories} ккал · Б ${x.protein_g} / Ж ${x.fat_g} / В ${x.carbs_g} г`
+  return t('{kcal} ккал · Б {p} / Ж {f} / В {c} г', { kcal: x.calories, p: x.protein_g, f: x.fat_g, c: x.carbs_g })
 }
 
 // Results stay in this browser (per account) until cleared, so leaving the page does not lose them.
@@ -113,7 +114,7 @@ function AIPage({ userId }: { userId: string }) {
   useEffect(() => {
     apiFetch<Quota>('/api/ai/quota')
       .then(setQuota)
-      .catch(() => setStatus('Не вдалося перевірити ліміт ШІ'))
+      .catch(() => setStatus(t('Не вдалося перевірити ліміт ШІ')))
   }, [])
 
   async function refreshQuota() {
@@ -154,9 +155,9 @@ function AIPage({ userId }: { userId: string }) {
           carbs_g: i.carbs_g,
         }),
       })
-      setStatus(`«${i.name}» додано до моїх страв`)
+      setStatus(t('«{name}» додано до моїх страв', { name: i.name }))
     } catch {
-      setStatus('Не вдалося зберегти страву')
+      setStatus(t('Не вдалося зберегти страву'))
     }
   }
 
@@ -176,7 +177,7 @@ function AIPage({ userId }: { userId: string }) {
         }),
       )
     } catch (err) {
-      setStatus(err instanceof ApiError ? errorText(err) : 'Не вдалося обробити фото')
+      setStatus(err instanceof ApiError ? errorText(err) : t('Не вдалося обробити фото'))
     } finally {
       setBusy(null)
       void refreshQuota()
@@ -191,7 +192,7 @@ function AIPage({ userId }: { userId: string }) {
         method: 'POST',
         headers: json,
         body: JSON.stringify({
-          name: meal.name || 'Страва',
+          name: meal.name || t('Страва'),
           calories: meal.calories,
           protein_g: meal.protein_g,
           fat_g: meal.fat_g,
@@ -200,11 +201,11 @@ function AIPage({ userId }: { userId: string }) {
           photo_url,
         }),
       })
-      setStatus(`«${meal.name}» додано до моїх страв`)
+      setStatus(t('«{name}» додано до моїх страв', { name: meal.name }))
       setMeal(null)
       setMealPhoto(null)
     } catch {
-      setStatus('Не вдалося зберегти страву')
+      setStatus(t('Не вдалося зберегти страву'))
     }
   }
 
@@ -221,52 +222,52 @@ function AIPage({ userId }: { userId: string }) {
   return (
     <div>
       <h1>
-        ШІ-помічник <span className="badge paid">ШІ</span>
+        {t('ШІ-помічник')} <span className="badge paid">{t('ШІ')}</span>
       </h1>
       <p className="muted">
         {quota
-          ? `Сьогодні використано ${quota.used} з ${quota.limit} запитів${left === 0 ? '. Ліміт вичерпано' : ''}.`
-          : 'Перевіряємо ліміт…'}{' '}
+          ? `${t('Сьогодні використано {used} з {limit} запитів', { used: quota.used, limit: quota.limit })}${left === 0 ? t('. Ліміт вичерпано') : ''}.`
+          : t('Перевіряємо ліміт…')}{' '}
         {me?.plan === 'free' && table && (
           <>
-            У преміумі {table.premium.ai_per_day} запитів на добу. <Link to="/pricing">Тарифи</Link>
+            {t('У преміумі {n} запитів на добу.', { n: table.premium.ai_per_day })} <Link to="/pricing">{t('Тарифи')}</Link>
           </>
         )}
       </p>
       {status && <p className="status">{status}</p>}
       {hasResults && (
         <p>
-          <small className="muted">Результати збережено в цьому браузері. </small>
-          <button type="button" onClick={clearResults}>Очистити результати</button>
+          <small className="muted">{t('Результати збережено в цьому браузері.')} </small>
+          <button type="button" onClick={clearResults}>{t('Очистити результати')}</button>
         </p>
       )}
 
       <section className="card">
-        <h2>Підібрати рецепти</h2>
+        <h2>{t('Підібрати рецепти')}</h2>
         <p className="muted">
-          Ураховуємо ваш профіль: тип харчування, алергени, кухні, час, бюджет і калораж. Відповідь може займати до півхвилини.
+          {t('Ураховуємо ваш профіль: тип харчування, алергени, кухні, час, бюджет і калораж. Відповідь може займати до півхвилини.')}
         </p>
         <form onSubmit={suggest}>
           <div className="row">
             <label>
-              Категорія
+              {t('Категорія')}
               <select value={category} onChange={(e) => setCategory(e.target.value)}>
-                <option value="">Будь-яка</option>
+                <option value="">{t('Будь-яка')}</option>
                 {CATEGORIES.map((c) => (
                   <option key={c} value={c}>
-                    {c}
+                    {t(c)}
                   </option>
                 ))}
               </select>
             </label>
             <label>
-              Побажання (необов'язково)
-              <input value={note} maxLength={200} placeholder="Наприклад, щось із гречкою"
+              {t("Побажання (необов'язково)")}
+              <input value={note} maxLength={200} placeholder={t('Наприклад, щось із гречкою')}
                 onChange={(e) => setNote(e.target.value)} />
             </label>
           </div>
           <button type="submit" disabled={busy !== null || left === 0}>
-            {busy === 'ideas' ? 'Думаємо…' : 'Підібрати'}
+            {busy === 'ideas' ? t('Думаємо…') : t('Підібрати')}
           </button>
         </form>
 
@@ -274,15 +275,15 @@ function AIPage({ userId }: { userId: string }) {
           <ul className="cards" style={{ marginTop: 16 }}>
             {ideas.map((i) => (
               <li key={i.name}>
-                <strong>{i.name}</strong> · {i.category} · {i.cook_minutes} хв
+                <strong>{i.name}</strong> · {t(i.category)} · {t('{n} хв', { n: i.cook_minutes })}
                 <div className="muted">{macros(i)}</div>
                 <details>
-                  <summary>Рецепт</summary>
+                  <summary>{t('Рецепт')}</summary>
                   <div>{i.ingredients.map((x) => `${x.name} (${x.amount})`).join(', ')}</div>
                   <p style={{ whiteSpace: 'pre-line' }}>{oneStepPerLine(i.recipe)}</p>
                 </details>
                 <div className="actions" style={{ marginTop: 8 }}>
-                  <button onClick={() => saveIdea(i)}>У мої страви</button>
+                  <button onClick={() => saveIdea(i)}>{t('У мої страви')}</button>
                 </div>
               </li>
             ))}
@@ -291,24 +292,24 @@ function AIPage({ userId }: { userId: string }) {
       </section>
 
       <section className="card red">
-        <h2>Калорії по фото</h2>
-        <p className="muted">Сфотографуйте страву, і ШІ оцінить калорії, БЖВ та інгредієнти.</p>
+        <h2>{t('Калорії по фото')}</h2>
+        <p className="muted">{t('Сфотографуйте страву, і ШІ оцінить калорії, БЖВ та інгредієнти.')}</p>
         <PhotoPicker
           onFile={(f) => void analyse(f)}
           disabled={busy !== null || left === 0}
           busy={busy === 'photo'}
-          title="Обрати фото страви"
+          title={t('Обрати фото страви')}
         />
-        {busy === 'photo' && <p className="status" style={{ marginTop: 12 }}>Аналізуємо фото…</p>}
+        {busy === 'photo' && <p className="status" style={{ marginTop: 12 }}>{t('Аналізуємо фото…')}</p>}
         {meal && !meal.is_food && (
           <p className="status" style={{ marginTop: 12 }}>
-            На фото не видно їжі. Спробуйте інше.
+            {t('На фото не видно їжі. Спробуйте інше.')}
           </p>
         )}
         {meal && meal.is_food && (
           <div style={{ marginTop: 16 }}>
             {mealPhoto && (
-              <img src={mealPhoto} alt="Ваше фото" style={{ width: 140, height: 140, objectFit: 'cover', borderRadius: 10, marginBottom: 10 }} />
+              <img src={mealPhoto} alt={t('Ваше фото')} style={{ width: 140, height: 140, objectFit: 'cover', borderRadius: 10, marginBottom: 10 }} />
             )}
             <h3>{meal.name}</h3>
             <p>
@@ -319,18 +320,16 @@ function AIPage({ userId }: { userId: string }) {
             </p>
             {meal.comment && <p className="muted">{meal.comment}</p>}
             <p>
-              <small>Це лише оцінка, реальні значення можуть відрізнятися.</small>
+              <small>{t('Це лише оцінка, реальні значення можуть відрізнятися.')}</small>
             </p>
-            <button onClick={saveMeal}>Зберегти як страву</button>
+            <button onClick={saveMeal}>{t('Зберегти як страву')}</button>
           </div>
         )}
       </section>
 
       <p>
         <small>
-          Фото й побажання надсилаються в Google Gemini. На безкоштовному тарифі Google може
-          використовувати такі дані для покращення своїх продуктів, тому не завантажуйте фото з
-          людьми чи особисту інформацію.
+          {t('Фото й побажання надсилаються в Google Gemini. На безкоштовному тарифі Google може використовувати такі дані для покращення своїх продуктів, тому не завантажуйте фото з людьми чи особисту інформацію.')}
         </small>
       </p>
     </div>

@@ -1474,3 +1474,10 @@ button.star.on {
 :root[data-theme='dark'] .seg button.on {
   color: #fff;
 }
+
+.lang-toggle {
+  width: auto;
+  padding: 0 12px;
+  font-size: 0.85rem;
+  font-weight: 700;
+}

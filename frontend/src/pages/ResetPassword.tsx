@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../api/supabase'
 import { passwordProblems } from '../password'
+import { t } from '../i18n'
 
 export default function ResetPassword() {
   const navigate = useNavigate()
@@ -25,7 +26,7 @@ export default function ResetPassword() {
 
   async function submit(e: FormEvent) {
     e.preventDefault()
-    if (problems.length) return setMessage('Придумайте надійніший пароль: ' + problems.join('; ').toLowerCase() + '.')
+    if (problems.length) return setMessage(t('Придумайте надійніший пароль: {list}.', { list: problems.join('; ').toLowerCase() }))
     const { error } = await supabase.auth.updateUser({ password })
     if (error) return setMessage(error.message)
     navigate('/today')
@@ -34,13 +35,13 @@ export default function ResetPassword() {
   if (!ready) {
     return (
       <div className="card narrow">
-        <h1>Новий пароль</h1>
+        <h1>{t('Новий пароль')}</h1>
         {waited ? (
           <p>
-            Посилання недійсне або застаріло. <Link to="/auth">Запросіть нове на сторінці входу</Link>.
+            {t('Посилання недійсне або застаріло.')} <Link to="/auth">{t('Запросіть нове на сторінці входу')}</Link>.
           </p>
         ) : (
-          <p className="status">Перевіряємо посилання…</p>
+          <p className="status">{t('Перевіряємо посилання…')}</p>
         )}
       </div>
     )
@@ -48,9 +49,9 @@ export default function ResetPassword() {
 
   return (
     <form onSubmit={submit} className="card narrow">
-      <h1>Новий пароль</h1>
+      <h1>{t('Новий пароль')}</h1>
       <label>
-        Пароль
+        {t('Пароль')}
         <input
           type="password"
           autoComplete="new-password"
@@ -66,8 +67,8 @@ export default function ResetPassword() {
           ))}
         </ul>
       )}
-      {!problems.length && password && <p className="pw-ok">Пароль надійний</p>}
-      <button type="submit">Зберегти пароль</button>
+      {!problems.length && password && <p className="pw-ok">{t('Пароль надійний')}</p>}
+      <button type="submit">{t('Зберегти пароль')}</button>
       {message && <p className="status" style={{ marginTop: 16 }}>{message}</p>}
     </form>
   )

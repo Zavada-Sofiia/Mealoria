@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { applyTheme, currentTheme } from '../theme'
+import { t } from '../i18n'
 
 export default function ThemeToggle() {
   const [theme, setTheme] = useState(currentTheme)
@@ -8,8 +9,8 @@ export default function ThemeToggle() {
     <button
       type="button"
       className="theme-toggle"
-      aria-label={next === 'dark' ? 'Темна тема' : 'Світла тема'}
-      title={next === 'dark' ? 'Темна тема' : 'Світла тема'}
+      aria-label={next === 'dark' ? t('Темна тема') : t('Світла тема')}
+      title={next === 'dark' ? t('Темна тема') : t('Світла тема')}
       onClick={() => {
         applyTheme(next)
         setTheme(next)

@@ -4,6 +4,7 @@ import { apiFetch } from '../api/client'
 import DeleteAccount from '../components/DeleteAccount'
 import RangeField from '../components/RangeField'
 import { estimateCalories } from '../calories'
+import { t } from '../i18n'
 
 type ProfileData = {
   sex: 'male' | 'female'
@@ -102,11 +103,11 @@ function Choice({
 }) {
   return (
     <fieldset>
-      <legend>{legend}</legend>
+      <legend>{t(legend)}</legend>
       {options.map(([key, label]) => (
         <label key={key}>
           <input type="radio" name={legend} checked={value === key} onChange={() => onChange(key)} />{' '}
-          {label}{' '}
+          {t(label)}{' '}
         </label>
       ))}
     </fieldset>
@@ -126,7 +127,7 @@ function Multi({
 }) {
   return (
     <fieldset>
-      <legend>{legend}</legend>
+      <legend>{t(legend)}</legend>
       {options.map(([key, label]) => (
         <label key={key}>
           <input
@@ -136,7 +137,7 @@ function Multi({
               onChange(value.includes(key) ? value.filter((v) => v !== key) : [...value, key])
             }
           />{' '}
-          {label}{' '}
+          {t(label)}{' '}
         </label>
       ))}
     </fieldset>
@@ -145,7 +146,7 @@ function Multi({
 
 export default function Profile() {
   const [form, setForm] = useState<ProfileData>(EMPTY)
-  const [status, setStatus] = useState('Завантаження…')
+  const [status, setStatus] = useState(t('Завантаження…'))
   // null = follow the live recommendation; a string = the user's own target
   const [targetText, setTargetText] = useState<string | null>(null)
 
@@ -158,7 +159,7 @@ export default function Profile() {
         }
         setStatus('')
       })
-      .catch(() => setStatus('Не вдалося завантажити профіль'))
+      .catch(() => setStatus(t('Не вдалося завантажити профіль')))
   }, [])
 
   function set<K extends keyof ProfileData>(key: K, value: ProfileData[K]) {
@@ -173,65 +174,65 @@ export default function Profile() {
   async function save(e: FormEvent) {
     e.preventDefault()
     if (form.age === null || form.height_cm === null || form.weight_kg === null) {
-      setStatus('Вкажіть вік, зріст і вагу')
+      setStatus(t('Вкажіть вік, зріст і вагу'))
       return
     }
     if (ownTarget !== null && (ownTarget < 800 || ownTarget > 6000)) {
-      setStatus('Бажаний калораж має бути від 800 до 6000 ккал')
+      setStatus(t('Бажаний калораж має бути від 800 до 6000 ккал'))
       return
     }
-    setStatus('Зберігаємо…')
+    setStatus(t('Зберігаємо…'))
     try {
       await apiFetch<ProfileResponse>('/api/profile', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...form, target_calories: ownTarget }),
       })
-      setStatus('Збережено')
+      setStatus(t('Збережено'))
     } catch {
-      setStatus('Не вдалося зберегти')
+      setStatus(t('Не вдалося зберегти'))
     }
   }
 
   return (
     <>
     <form onSubmit={save}>
-      <h1>Профіль</h1>
+      <h1>{t('Профіль')}</h1>
 
       <section className="card">
-      <h2 style={{ marginTop: 0 }}>Про вас</h2>
+      <h2 style={{ marginTop: 0 }}>{t('Про вас')}</h2>
       <label>
-        Стать
+        {t('Стать')}
         <select value={form.sex} onChange={(e) => set('sex', e.target.value as ProfileData['sex'])}>
-          <option value="female">Жінка</option>
-          <option value="male">Чоловік</option>
+          <option value="female">{t('Жінка')}</option>
+          <option value="male">{t('Чоловік')}</option>
         </select>
       </label>
-      <RangeField label="Вік" unit="років" min={10} max={100} value={form.age}
+      <RangeField label={t('Вік')} unit={t('років')} min={10} max={100} value={form.age}
         placeholder="—" onChange={(v) => set('age', v)} />
-      <RangeField label="Зріст" unit="см" min={100} max={250} value={form.height_cm}
+      <RangeField label={t('Зріст')} unit={t('см')} min={100} max={250} value={form.height_cm}
         placeholder="—" onChange={(v) => set('height_cm', v)} />
-      <RangeField label="Вага" unit="кг" min={30} max={200} value={form.weight_kg}
+      <RangeField label={t('Вага')} unit={t('кг')} min={30} max={200} value={form.weight_kg}
         placeholder="—" decimals onChange={(v) => set('weight_kg', v)} />
       <label>
-        Активність
+        {t('Активність')}
         <select value={form.activity}
           onChange={(e) => set('activity', e.target.value as ProfileData['activity'])}>
-          <option value="sedentary">Сидячий спосіб життя</option>
-          <option value="light">Легка (1–3 тренування на тиждень)</option>
-          <option value="moderate">Помірна (3–5 тренувань)</option>
-          <option value="active">Висока (6–7 тренувань)</option>
+          <option value="sedentary">{t('Сидячий спосіб життя')}</option>
+          <option value="light">{t('Легка (1–3 тренування на тиждень)')}</option>
+          <option value="moderate">{t('Помірна (3–5 тренувань)')}</option>
+          <option value="active">{t('Висока (6–7 тренувань)')}</option>
         </select>
       </label>
       <label>
-        Мета
+        {t('Мета')}
         <select value={form.goal} onChange={(e) => set('goal', e.target.value as ProfileData['goal'])}>
-          <option value="lose">Схуднути</option>
-          <option value="maintain">Підтримувати вагу</option>
-          <option value="gain">Набрати вагу</option>
+          <option value="lose">{t('Схуднути')}</option>
+          <option value="maintain">{t('Підтримувати вагу')}</option>
+          <option value="gain">{t('Набрати вагу')}</option>
         </select>
       </label>
-      <RangeField label="Прийомів їжі на день" unit="разів" min={1} max={8}
+      <RangeField label={t('Прийомів їжі на день')} unit={t('разів')} min={1} max={8}
         value={form.meals_per_day}
         onChange={(v) => set('meals_per_day', v ?? 3)} />
       <div className="calc">
@@ -239,64 +240,67 @@ export default function Profile() {
           <>
             <div className="calc-main">
               <span className="calc-num">{ownTarget ?? estimate.recommended}</span>
-              <span>ккал на добу{customTarget ? ' (ваша ціль)' : ''}</span>
+              <span>{t('ккал на добу')}{customTarget ? t(' (ваша ціль)') : ''}</span>
             </div>
             <p className="muted" style={{ margin: '6px 0 0' }}>
-              Рекомендовано {estimate.recommended} ккал: базовий обмін {estimate.bmr} ккал ×
-              активність {estimate.activityFactor} = {estimate.tdee} ккал
-              {estimate.goalFactor !== 1 ? `, мета ×${estimate.goalFactor}` : ''}. Розрахунок за
-              формулою Міффліна–Сан-Жеора.
+              {t('Рекомендовано {rec} ккал: базовий обмін {bmr} ккал × активність {act} = {tdee} ккал{goal}. Розрахунок за формулою Міффліна–Сан-Жеора.', {
+                rec: estimate.recommended,
+                bmr: estimate.bmr,
+                act: estimate.activityFactor,
+                tdee: estimate.tdee,
+                goal: estimate.goalFactor !== 1 ? t(', мета ×{n}', { n: estimate.goalFactor }) : '',
+              })}
             </p>
             {customTarget && (
               <button type="button" style={{ marginTop: 10 }}
                 onClick={() => setTargetText(null)}>
-                Повернути рекомендований ({estimate.recommended})
+                {t('Повернути рекомендований ({n})', { n: estimate.recommended })}
               </button>
             )}
           </>
         ) : (
           <p className="muted" style={{ margin: 0 }}>
-            Вкажіть вік, зріст і вагу, і ми одразу порахуємо вашу норму калорій.
+            {t('Вкажіть вік, зріст і вагу, і ми одразу порахуємо вашу норму калорій.')}
           </p>
         )}
       </div>
       <label>
-        Бажаний калораж, ккал на добу
+        {t('Бажаний калораж, ккал на добу')}
         <input type="number" inputMode="numeric" min={800} max={6000}
           className={customTarget ? undefined : 'auto-value'}
           value={targetText ?? (recommended ?? '')}
-          placeholder="Автоматично"
+          placeholder={t('Автоматично')}
           onChange={(e) => setTargetText(e.target.value)}
           onBlur={() => targetText === '' && setTargetText(null)} />
       </label>
       <p className="muted" style={{ marginTop: -6 }}>
         <small>
           {customTarget
-            ? 'Це ваша власна ціль. Збережемо саме її.'
-            : 'Підставлено автоматично за розрахунком вище і змінюється разом із вашими даними. Змініть число, якщо хочете свою ціль.'}
+            ? t('Це ваша власна ціль. Збережемо саме її.')
+            : t('Підставлено автоматично за розрахунком вище і змінюється разом із вашими даними. Змініть число, якщо хочете свою ціль.')}
         </small>
       </p>
       </section>
 
       <section className="card red">
-      <h2 style={{ marginTop: 0 }}>Вподобання</h2>
-      <Choice legend="Тип харчування" options={DIETS} value={form.diet}
+      <h2 style={{ marginTop: 0 }}>{t('Вподобання')}</h2>
+      <Choice legend={t('Тип харчування')} options={DIETS} value={form.diet}
         onChange={(v) => set('diet', v)} />
-      <Multi legend="Алергії та непереносимість" options={ALLERGENS} value={form.allergens}
+      <Multi legend={t('Алергії та непереносимість')} options={ALLERGENS} value={form.allergens}
         onChange={(v) => set('allergens', v)} />
-      <Multi legend="Улюблені кухні" options={CUISINES} value={form.cuisines}
+      <Multi legend={t('Улюблені кухні')} options={CUISINES} value={form.cuisines}
         onChange={(v) => set('cuisines', v)} />
-      <Choice legend="Скільки часу готуєте" options={COOK_TIMES} value={form.cook_time}
+      <Choice legend={t('Скільки часу готуєте')} options={COOK_TIMES} value={form.cook_time}
         onChange={(v) => set('cook_time', v)} />
-      <Choice legend="Бюджет" options={BUDGETS} value={form.budget}
+      <Choice legend={t('Бюджет')} options={BUDGETS} value={form.budget}
         onChange={(v) => set('budget', v)} />
       <label>
-        Що не любите чи не їсте
+        {t('Що не любите чи не їсте')}
         <textarea maxLength={1000} value={form.preferences}
           onChange={(e) => set('preferences', e.target.value)} />
       </label>
       <label>
-        Інші алергії
+        {t('Інші алергії')}
         <textarea maxLength={1000} value={form.allergies}
           onChange={(e) => set('allergies', e.target.value)} />
       </label>
@@ -304,11 +308,11 @@ export default function Profile() {
       </section>
 
       <div className="actions">
-      <button type="submit" className="big">Зберегти</button>
+      <button type="submit" className="big">{t('Зберегти')}</button>
       </div>
       {status && <p className="status" style={{ marginTop: 16 }}>{status}</p>}
       <p style={{ marginTop: 16 }}>
-        <Link to="/pricing">Тариф і оплата</Link> · <Link to="/support">Підтримати проєкт</Link>
+        <Link to="/pricing">{t('Тариф і оплата')}</Link> · <Link to="/support">{t('Підтримати проєкт')}</Link>
       </p>
     </form>
     <DeleteAccount />

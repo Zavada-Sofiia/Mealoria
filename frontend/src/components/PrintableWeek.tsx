@@ -1,5 +1,6 @@
 import { addDays, fmtDate, iso } from '../dates'
 import { mealName } from '../meals'
+import { t } from '../i18n'
 
 type Dish = {
   name: string
@@ -35,7 +36,7 @@ export default function PrintableWeek({
     <div className="print-only">
       <img className="print-banner" src="/print-header.jpg" alt="Mealoria" />
       <div className="print-title">
-        <h1>Меню на тиждень</h1>
+        <h1>{t('Меню на тиждень')}</h1>
         <p>
           {fmtDate(iso(weekStart))} — {fmtDate(iso(addDays(weekStart, 6)))}
         </p>
@@ -43,15 +44,15 @@ export default function PrintableWeek({
       <div className="print-summary">
         <div>
           <strong>{sum(planned, 'calories')}</strong>
-          <span>ккал за тиждень</span>
+          <span>{t('ккал за тиждень')}</span>
         </div>
         <div>
           <strong>{average}</strong>
-          <span>ккал на день{target ? `, норма ${target}` : ''}</span>
+          <span>{target ? t('ккал на день, норма {n}', { n: target }) : t('ккал на день')}</span>
         </div>
         <div>
           <strong>{planned.length}</strong>
-          <span>страв заплановано</span>
+          <span>{t('страв заплановано')}</span>
         </div>
       </div>
 
@@ -63,12 +64,12 @@ export default function PrintableWeek({
             <section key={date} className="print-day">
               <header>
                 <span>
-                  <strong>{FULL_DAYS[i]}</strong> {fmtDate(date).slice(0, 5)}
+                  <strong>{t(FULL_DAYS[i])}</strong> {fmtDate(date).slice(0, 5)}
                 </span>
-                {list.length > 0 && <span>{sum(list, 'calories')} ккал</span>}
+                {list.length > 0 && <span>{sum(list, 'calories')} {t('ккал')}</span>}
               </header>
               {list.length === 0 ? (
-                <p className="print-empty">Нічого не заплановано</p>
+                <p className="print-empty">{t('Нічого не заплановано')}</p>
               ) : (
                 <>
                   <ul>
@@ -76,12 +77,12 @@ export default function PrintableWeek({
                       <li key={e.id}>
                         <small>{mealName(meals, e.slot)}</small>
                         <span>{e.dish?.name}</span>
-                        <em>{e.dish?.calories != null ? `${e.dish.calories} ккал` : ''}</em>
+                        <em>{e.dish?.calories != null ? `${e.dish.calories} ${t('ккал')}` : ''}</em>
                       </li>
                     ))}
                   </ul>
                   <footer>
-                    Б {sum(list, 'protein_g')} · Ж {sum(list, 'fat_g')} · В {sum(list, 'carbs_g')} г
+                    {t('Б {p} · Ж {f} · В {c} г', { p: sum(list, 'protein_g'), f: sum(list, 'fat_g'), c: sum(list, 'carbs_g') })}
                   </footer>
                 </>
               )}
@@ -89,7 +90,7 @@ export default function PrintableWeek({
           )
         })}
       </div>
-      <p className="print-foot">Створено в Mealoria · mealoria.mealoria.workers.dev</p>
+      <p className="print-foot">{t('Створено в Mealoria')} · mealoria.mealoria.workers.dev</p>
     </div>
   )
 }

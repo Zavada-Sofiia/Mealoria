@@ -1,4 +1,5 @@
 import { useId, useState, type DragEvent } from 'react'
+import { t } from '../i18n'
 
 type Props = {
   onFile: (file: File) => void
@@ -13,8 +14,8 @@ export default function PhotoPicker({
   onFile,
   disabled = false,
   busy = false,
-  title = 'Обрати фото',
-  hint = 'або перетягніть зображення сюди',
+  title = t('Обрати фото'),
+  hint = t('або перетягніть зображення сюди'),
 }: Props) {
   const id = useId()
   const [over, setOver] = useState(false)
@@ -46,9 +47,9 @@ export default function PhotoPicker({
         />
         <circle cx="12" cy="12.5" r="3.2" stroke="currentColor" strokeWidth="1.6" />
       </svg>
-      <span className="dropzone-title">{busy ? 'Завантажуємо…' : title}</span>
+      <span className="dropzone-title">{busy ? t(t('Завантажуємо…')) : title}</span>
       <span className="dropzone-hint drag-hint">{hint}</span>
-      <span className="dropzone-hint">JPEG, PNG або WebP</span>
+      <span className="dropzone-hint">{t('JPEG, PNG або WebP')}</span>
       <input
         id={id}
         className="sr-only"

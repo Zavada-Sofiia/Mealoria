@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import type { Session } from '@supabase/supabase-js'
 import { apiFetch } from '../api/client'
 import { formatDate, limitLines, usePlan } from '../plan/context'
+import { t } from '../i18n'
 
 // Shown to visitors; change here when the real price is decided.
 const PREMIUM_PRICE = '49 грн / міс'
@@ -24,7 +25,7 @@ export default function Pricing({ session }: { session: Session | null }) {
     if (!session) return
     apiFetch<{ preordered: boolean }>('/api/preorder')
       .then((r) => setPreordered(r.preordered))
-      .catch(() => setStatus('Не вдалося перевірити передзамовлення'))
+      .catch(() => setStatus(t('Не вдалося перевірити передзамовлення')))
   }, [session])
 
   async function preorder() {
@@ -33,55 +34,55 @@ export default function Pricing({ session }: { session: Session | null }) {
       setPreordered(true)
       setStatus('')
     } catch {
-      setStatus('Не вдалося зберегти. Спробуйте ще раз')
+      setStatus(t('Не вдалося зберегти. Спробуйте ще раз'))
     }
   }
 
   return (
     <div>
-      <h1>Тарифи</h1>
+      <h1>{t('Тарифи')}</h1>
       <div className="plans">
         <section className="card">
-          <span className="badge">Безкоштовно</span>
-          <div className="price">0 грн</div>
+          <span className="badge">{t('Безкоштовно')}</span>
+          <div className="price">{t('0 грн')}</div>
           <ul>
             {[...FREE_FEATURES, ...(table ? limitLines(table.free, false) : [])].map((f) => (
-              <li key={f}>{f}</li>
+              <li key={f}>{t(f)}</li>
             ))}
           </ul>
-          {me?.plan === 'free' && <p className="status">Ваш поточний тариф</p>}
+          {me?.plan === 'free' && <p className="status">{t('Ваш поточний тариф')}</p>}
           {!session && (
             <Link to="/auth">
-              <button>Почати безкоштовно</button>
+              <button>{t('Почати безкоштовно')}</button>
             </Link>
           )}
         </section>
 
         <section className="card red">
-          <span className="badge paid">Преміум</span>
-          <div className="price">{PREMIUM_PRICE}</div>
+          <span className="badge paid">{t('Преміум')}</span>
+          <div className="price">{t(PREMIUM_PRICE)}</div>
           <p className="muted">
-            Більші ліміти вже працюють. Оплату підключимо найближчим часом: передзамовте, і ми
-            повідомимо.
+            {t('Більші ліміти вже працюють. Оплату підключимо найближчим часом: передзамовте, і ми повідомимо.')}
           </p>
           <ul>
             {[...(table ? limitLines(table.premium, true) : []), ...PREMIUM_EXTRAS].map((f) => (
-              <li key={f}>{f}</li>
+              <li key={f}>{t(f)}</li>
             ))}
           </ul>
           {me?.plan === 'premium' ? (
             <p className="status">
-              Ваш поточний тариф{me.premium_until ? `. Діє до ${formatDate(me.premium_until)}` : ''}
+              {t('Ваш поточний тариф')}
+              {me.premium_until ? `. ${t('Діє до {date}', { date: formatDate(me.premium_until) })}` : ''}
             </p>
           ) : !session ? (
-            <Link to="/auth">Увійдіть, щоб передзамовити</Link>
+            <Link to="/auth">{t('Увійдіть, щоб передзамовити')}</Link>
           ) : preordered ? (
-            <p className="status">Дякуємо! Ви в списку передзамовлень. Гроші зараз не списуються.</p>
+            <p className="status">{t('Дякуємо! Ви в списку передзамовлень. Гроші зараз не списуються.')}</p>
           ) : (
             <>
-              <button onClick={preorder}>Передзамовити преміум</button>
+              <button onClick={preorder}>{t('Передзамовити преміум')}</button>
               <p>
-                <small>Гроші зараз не списуються.</small>
+                <small>{t('Гроші зараз не списуються.')}</small>
               </p>
             </>
           )}
@@ -89,7 +90,7 @@ export default function Pricing({ session }: { session: Session | null }) {
       </div>
       {status && <p className="status">{status}</p>}
       <p>
-        <Link to="/support">Підтримати проєкт донатом</Link>
+        <Link to="/support">{t('Підтримати проєкт донатом')}</Link>
       </p>
     </div>
   )

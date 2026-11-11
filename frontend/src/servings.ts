@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { getLang } from './i18n'
 
 export const MAX_SERVINGS = 12
 const KEY = 'servings'
@@ -30,19 +31,26 @@ export function useServings(): [number, (n: number) => void] {
 }
 
 function format(n: number): string {
-  return String(Math.round(n * 100) / 100).replace('.', ',')
+  const text = String(Math.round(n * 100) / 100)
+  return getLang() === 'en' ? text : text.replace('.', ',')
 }
+
+const toNumber = (n: string) => Number(n.replace(',', '.'))
 
 function tidyUnit(amount: string): string {
   return amount
-    .replace(/(\d+(?:,\d+)?)\s*г(?![а-яіїєґ])/giu, (m, n) => {
-      const v = Number(n.replace(',', '.'))
-      return v >= 1000 ? `${format(v / 1000)} кг` : m
-    })
-    .replace(/(\d+(?:,\d+)?)\s*мл(?![а-яіїєґ])/giu, (m, n) => {
-      const v = Number(n.replace(',', '.'))
-      return v >= 1000 ? `${format(v / 1000)} л` : m
-    })
+    .replace(/(\d+(?:[.,]\d+)?)\s*г(?![а-яіїєґ])/giu, (m, n) =>
+      toNumber(n) >= 1000 ? `${format(toNumber(n) / 1000)} кг` : m,
+    )
+    .replace(/(\d+(?:[.,]\d+)?)\s*мл(?![а-яіїєґ])/giu, (m, n) =>
+      toNumber(n) >= 1000 ? `${format(toNumber(n) / 1000)} л` : m,
+    )
+    .replace(/(\d+(?:[.,]\d+)?)\s*g\b/gi, (m, n) =>
+      toNumber(n) >= 1000 ? `${format(toNumber(n) / 1000)} kg` : m,
+    )
+    .replace(/(\d+(?:[.,]\d+)?)\s*ml\b/gi, (m, n) =>
+      toNumber(n) >= 1000 ? `${format(toNumber(n) / 1000)} l` : m,
+    )
 }
 
 /** "80 г" for 3 people becomes "240 г"; text without numbers ("за смаком") stays as it is. */

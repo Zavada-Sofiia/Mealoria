@@ -2,10 +2,10 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { apiFetch } from '../api/client'
 import { supabase } from '../api/supabase'
-
-const WORD = 'ВИДАЛИТИ'
+import { t } from '../i18n'
 
 export default function DeleteAccount() {
+  const WORD = t('ВИДАЛИТИ')
   const navigate = useNavigate()
   const [open, setOpen] = useState(false)
   const [typed, setTyped] = useState('')
@@ -20,34 +20,33 @@ export default function DeleteAccount() {
       await supabase.auth.signOut()
       navigate('/')
     } catch {
-      setError('Не вдалося видалити акаунт. Спробуйте ще раз або напишіть нам.')
+      setError(t('Не вдалося видалити акаунт. Спробуйте ще раз або напишіть нам.'))
       setBusy(false)
     }
   }
 
   return (
     <section className="card red" style={{ marginTop: 24 }}>
-      <h2 style={{ marginTop: 0 }}>Видалити акаунт</h2>
+      <h2 style={{ marginTop: 0 }}>{t('Видалити акаунт')}</h2>
       <p className="muted">
-        Назавжди видалимо профіль, страви, фото, меню в календарі, список продуктів і журнал ваги. Це не
-        можна скасувати.
+        {t('Назавжди видалимо профіль, страви, фото, меню в календарі, список продуктів і журнал ваги. Це не можна скасувати.')}
       </p>
       {!open ? (
         <button type="button" className="danger" onClick={() => setOpen(true)}>
-          Видалити акаунт
+          {t('Видалити акаунт')}
         </button>
       ) : (
         <div>
           <label>
-            Щоб підтвердити, введіть слово {WORD}
+            {t('Щоб підтвердити, введіть слово {word}', { word: WORD })}
             <input value={typed} onChange={(e) => setTyped(e.target.value)} autoComplete="off" />
           </label>
           <div className="actions">
-            <button type="button" className="danger" disabled={typed.trim() !== WORD || busy} onClick={remove}>
-              {busy ? 'Видаляємо…' : 'Видалити назавжди'}
+            <button type="button" className="danger" disabled={typed.trim().toUpperCase() !== WORD || busy} onClick={remove}>
+              {busy ? t('Видаляємо…') : t('Видалити назавжди')}
             </button>
             <button type="button" onClick={() => { setOpen(false); setTyped('') }} disabled={busy}>
-              Скасувати
+              {t('Скасувати')}
             </button>
           </div>
         </div>

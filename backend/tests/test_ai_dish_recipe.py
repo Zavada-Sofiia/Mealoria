@@ -109,3 +109,24 @@ def test_text_without_steps_is_left_alone():
     assert one_step_per_line("  Просто змішайте. Додайте 2 яйця.  ") == "Просто змішайте. Додайте 2 яйця."
     assert one_step_per_line("1. Єдиний крок") == "1. Єдиний крок"
     assert one_step_per_line("1. Раз\n2. Два") == "1. Раз\n2. Два"
+
+
+def test_english_users_get_an_english_answer_request(env):
+    client, _, seen = env
+    client.post("/api/ai/dish-recipe", json=BODY, headers={"X-Lang": "en"})
+    client.post("/api/ai/dish-recipe", json=BODY)
+    assert "in English" in seen[0]
+    assert "in English" not in seen[1]
+
+
+def test_cors_allows_the_language_header(env):
+    client, _, _ = env
+    r = client.options(
+        "/api/ai/dish-recipe",
+        headers={
+            "Origin": "https://mealoria.mealoria.workers.dev",
+            "Access-Control-Request-Method": "POST",
+            "Access-Control-Request-Headers": "x-lang,authorization",
+        },
+    )
+    assert r.status_code == 200

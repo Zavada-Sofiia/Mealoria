@@ -203,3 +203,14 @@ DISH_RECIPE_SCHEMA = _obj(
     {"recipe": {"type": "STRING"}, "ingredients": INGREDIENTS},
     ["recipe", "ingredients"],
 )
+
+
+def with_language(prompt: str, lang: str) -> str:
+    """The prompts are written in Ukrainian; for English users the answer text must be English."""
+    if lang != "en":
+        return prompt
+    return (
+        prompt
+        + "\nIMPORTANT: write every text field of the answer (dish names, ingredient names and "
+        "amounts such as '150 g' or '2 pcs', recipe steps, comments) in English."
+    )

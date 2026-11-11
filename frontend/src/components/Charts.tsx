@@ -1,3 +1,5 @@
+import { t } from '../i18n'
+
 type Bar = { label: string; value: number }
 
 const W = 320
@@ -16,7 +18,7 @@ export function BarChart({ bars, target }: { bars: Bar[]; target?: number | null
   const y = (v: number) => PAD.t + (H - PAD.t - PAD.b) * (1 - v / max)
   const every = Math.ceil(bars.length / 7)
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="chart" role="img" aria-label="Калорії за днями">
+    <svg viewBox={`0 0 ${W} ${H}`} className="chart" role="img" aria-label={t('Калорії за днями')}>
       {[0, 0.5, 1].map((f) => (
         <g key={f}>
           <line x1={PAD.l} x2={W - PAD.r} y1={y(max * f)} y2={y(max * f)} className="chart-grid" />
@@ -63,7 +65,7 @@ export function LineChart({ points }: { points: { label: string; value: number }
   const y = (v: number) => PAD.t + (H - PAD.t - PAD.b) * (1 - (v - lo) / (hi - lo))
   const every = Math.ceil(points.length / 5)
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="chart" role="img" aria-label="Вага в часі">
+    <svg viewBox={`0 0 ${W} ${H}`} className="chart" role="img" aria-label={t('Вага в часі')}>
       {[lo, (lo + hi) / 2, hi].map((v) => (
         <g key={v}>
           <line x1={PAD.l} x2={W - PAD.r} y1={y(v)} y2={y(v)} className="chart-grid" />
@@ -80,7 +82,7 @@ export function LineChart({ points }: { points: { label: string; value: number }
       {points.map((p, i) => (
         <g key={i}>
           <circle cx={x(i)} cy={y(p.value)} r={3} className="chart-dot">
-            <title>{`${p.label}: ${p.value} кг`}</title>
+            <title>{`${p.label}: ${p.value} ${t('кг')}`}</title>
           </circle>
           {i % every === 0 && (
             <text x={x(i)} y={H - 6} textAnchor="middle" className="chart-text">
