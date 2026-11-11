@@ -26,11 +26,9 @@ type DishInput = {
 }
 type Dish = DishInput & { id: string }
 
-// meals first, then kinds of dishes; the same words are allowed by the database
-const CATEGORIES = [
-  'сніданок', 'обід', 'вечеря', 'перекус',
-  'основна страва', 'суп', 'салат', 'гарнір', 'закуска', 'десерт', 'випічка', 'напій',
-]
+// meals and kinds of dishes are shown as two separate groups; both are stored in one list
+const MEALS = ['сніданок', 'обід', 'вечеря', 'перекус']
+const KINDS = ['основна страва', 'суп', 'салат', 'гарнір', 'закуска', 'десерт', 'випічка', 'напій']
 
 type Sort = 'fav' | 'new' | 'old' | 'name' | 'kcal_asc' | 'kcal_desc'
 const SORTS: [Sort, string][] = [
@@ -64,6 +62,7 @@ export default function Dishes() {
   const [sort, setSortState] = useState<Sort>(loadSort)
   const [onlyFav, setOnlyFav] = useState(false)
   const [meal, setMeal] = useState('')
+  const [kind, setKind] = useState('')
   const [status, setStatus] = useState(t('Завантаження…'))
   const [uploading, setUploading] = useState(false)
   const [drawing, setDrawing] = useState<string | null>(null)
@@ -267,7 +266,7 @@ export default function Dishes() {
 
   const sorted = (() => {
     const needle = query.trim().toLowerCase()
-    const shown = dishes.filter((d) => (!onlyFav || d.favorite) && (!meal || (d.categories ?? []).includes(meal)) && d.name.toLowerCase().includes(needle))
+    const shown = dishes.filter((d) => (!onlyFav || d.favorite) && (!meal || (d.categories ?? []).includes(meal)) && (!kind || (d.categories ?? []).includes(kind)) && d.name.toLowerCase().includes(needle))
     const byName = (a: Dish, b: Dish) => a.name.localeCompare(b.name, locale())
     const kcal = (d: Dish, dir: 1 | -1) => (d.calories == null ? Infinity : d.calories * dir)
     switch (sort) {
@@ -452,8 +451,21 @@ export default function Dishes() {
             onChange={(e) => setForm({ ...form, name: e.target.value })} />
         </label>
         <fieldset>
-          <legend>{t('Категорії')}</legend>
-          {CATEGORIES.map((c) => (
+          <legend>{t('Прийом їжі')}</legend>
+          {MEALS.map((c) => (
+            <label key={c} className="inline" style={{ marginRight: 14 }}>
+              <input type="checkbox" checked={form.categories.includes(c)}
+                onChange={() => setForm({
+                  ...form,
+                  categories: form.categories.includes(c) ? form.categories.filter((x) => x !== c) : [...form.categories, c],
+                })} />{' '}
+              {t(c)}
+            </label>
+          ))}
+        </fieldset>
+        <fieldset>
+          <legend>{t('Тип страви')}</legend>
+          {KINDS.map((c) => (
             <label key={c} className="inline" style={{ marginRight: 14 }}>
               <input type="checkbox" checked={form.categories.includes(c)}
                 onChange={() => setForm({
@@ -608,8 +620,17 @@ export default function Dishes() {
             ))}
           </select>
           <div className="meal-filter">
-            {['', ...CATEGORIES].map((c) => (
+            <small className="muted">{t('Прийом їжі')}:</small>
+            {['', ...MEALS].map((c) => (
               <button key={c || 'all'} type="button" className={`chip-btn${meal === c ? ' on' : ''}`} onClick={() => setMeal(c)}>
+                {c ? t(c) : t('Усі')}
+              </button>
+            ))}
+          </div>
+          <div className="meal-filter">
+            <small className="muted">{t('Тип страви')}:</small>
+            {['', ...KINDS].map((c) => (
+              <button key={c || 'all'} type="button" className={`chip-btn${kind === c ? ' on' : ''}`} onClick={() => setKind(c)}>
                 {c ? t(c) : t('Усі')}
               </button>
             ))}
