@@ -91,3 +91,15 @@ def test_extended_allergens_are_accepted(client):
              "mushrooms", "corn", "legumes", "tomatoes"]
     r = client.put("/api/profile", json={**BODY, "allergens": ["gluten", *extra]})
     assert r.status_code == 200 and len(r.json()["profile"]["allergens"]) == 12
+
+
+def test_name_is_saved_trimmed_and_optional(client):
+    assert client.put("/api/profile", json=BODY).status_code in (200, 204)
+    assert client.get("/api/profile").json()["profile"]["first_name"] == ""
+
+    named = {**BODY, "first_name": "  Софія ", "last_name": "Завада   Іванівна"}
+    assert client.put("/api/profile", json=named).status_code in (200, 204)
+    saved = client.get("/api/profile").json()["profile"]
+    assert (saved["first_name"], saved["last_name"]) == ("Софія", "Завада Іванівна")
+
+    assert client.put("/api/profile", json={**BODY, "first_name": "x" * 61}).status_code == 422

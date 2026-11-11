@@ -1,6 +1,6 @@
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 Diet = Literal["any", "vegetarian", "vegan", "pescatarian"]
@@ -15,6 +15,8 @@ Budget = Literal["low", "medium", "any"]
 
 
 class ProfileIn(BaseModel):
+    first_name: str = Field(default="", max_length=60)
+    last_name: str = Field(default="", max_length=60)
     sex: Literal["male", "female"]
     age: int = Field(ge=10, le=100)
     height_cm: int = Field(ge=100, le=250)
@@ -30,6 +32,11 @@ class ProfileIn(BaseModel):
     budget: Budget = "any"
     preferences: str = Field(default="", max_length=1000)
     allergies: str = Field(default="", max_length=1000)
+
+    @field_validator("first_name", "last_name")
+    @classmethod
+    def clean_name(cls, v: str) -> str:
+        return " ".join(v.split())
 
 
 class ProfileOut(BaseModel):

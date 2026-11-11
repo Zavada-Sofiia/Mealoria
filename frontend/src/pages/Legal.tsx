@@ -19,7 +19,7 @@ function PrivacyUk() {
       <ul>
         <li>Email і спосіб входу (пароль або Google). Пароль зберігається лише у вигляді хешу, ми його не бачимо.</li>
         <li>
-          Профіль, який ви заповнюєте самі: стать, вік, зріст, вага, активність, мета, тип харчування,
+          Профіль, який ви заповнюєте самі: ім’я, прізвище, стать, вік, зріст, вага, активність, мета, тип харчування,
           алергени, кухні, час готування, бюджет, побажання. Це відомості про здоров’я, тому ми
           використовуємо їх лише для розрахунків і підбору рецептів.
         </li>
@@ -147,7 +147,7 @@ function PrivacyEn() {
       <ul>
         <li>Your email and sign-in method (password or Google). The password is stored only as a hash; we cannot see it.</li>
         <li>
-          The profile you fill in yourself: sex, age, height, weight, activity, goal, diet, allergens,
+          The profile you fill in yourself: first and last name, sex, age, height, weight, activity, goal, diet, allergens,
           cuisines, cooking time, budget and wishes. This is health-related information, so we use it only
           for calculations and recipe suggestions.
         </li>

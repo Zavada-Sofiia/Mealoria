@@ -7,6 +7,8 @@ import { estimateCalories } from '../calories'
 import { t } from '../i18n'
 
 type ProfileData = {
+  first_name: string
+  last_name: string
   sex: 'male' | 'female'
   age: number | null
   height_cm: number | null
@@ -27,6 +29,8 @@ type ProfileData = {
 type ProfileResponse = { profile: ProfileData | null; recommended_calories: number | null }
 
 const EMPTY: ProfileData = {
+  first_name: '',
+  last_name: '',
   sex: 'female',
   age: null,
   height_cm: null,
@@ -201,6 +205,18 @@ export default function Profile() {
 
       <section className="card">
       <h2 style={{ marginTop: 0 }}>{t('Про вас')}</h2>
+      <div className="row">
+        <label>
+          {t("Ім'я")}
+          <input value={form.first_name ?? ''} maxLength={60} autoComplete="given-name"
+            onChange={(e) => set('first_name', e.target.value)} />
+        </label>
+        <label>
+          {t('Прізвище')}
+          <input value={form.last_name ?? ''} maxLength={60} autoComplete="family-name"
+            onChange={(e) => set('last_name', e.target.value)} />
+        </label>
+      </div>
       <label>
         {t('Стать')}
         <select value={form.sex} onChange={(e) => set('sex', e.target.value as ProfileData['sex'])}>

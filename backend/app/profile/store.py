@@ -3,7 +3,7 @@ import os
 import httpx
 
 FIELDS = (
-    "sex,age,height_cm,weight_kg,activity,goal,meals_per_day,"
+    "first_name,last_name,sex,age,height_cm,weight_kg,activity,goal,meals_per_day,"
     "target_calories,diet,allergens,cuisines,cook_time,budget,preferences,allergies"
 )
 
