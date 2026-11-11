@@ -1299,3 +1299,69 @@ table.week.single .entry button {
   font-weight: 500;
   color: var(--muted);
 }
+
+button.star {
+  width: 40px;
+  min-height: 40px;
+  height: 40px;
+  padding: 0;
+  margin-right: 6px;
+  border-radius: 999px;
+  font-size: 1.3rem;
+  line-height: 1;
+  color: var(--muted);
+}
+button.star.on {
+  color: #e0a526;
+}
+:root[data-theme='dark'] button.star.on {
+  color: #e0a526;
+}
+
+.chart {
+  width: 100%;
+  height: auto;
+  max-height: 220px;
+}
+.chart-grid {
+  stroke: var(--line);
+  stroke-width: 1;
+}
+.chart-text {
+  font-size: 9px;
+  fill: var(--muted);
+}
+.chart-bar {
+  fill: var(--teal);
+}
+.chart-bar.over {
+  fill: var(--red);
+}
+.chart-target {
+  stroke: var(--ink);
+  stroke-width: 1;
+  stroke-dasharray: 4 3;
+}
+.chart-line {
+  stroke: var(--teal);
+  stroke-width: 2;
+}
+.chart-dot {
+  fill: var(--teal);
+}
+.seg {
+  display: inline-flex;
+  gap: 4px;
+  margin-bottom: 10px;
+}
+.seg button {
+  min-height: 36px;
+  padding: 4px 14px;
+}
+.seg button.on {
+  background: var(--teal);
+  color: #fff;
+}
+:root[data-theme='dark'] .seg button.on {
+  color: #fff;
+}

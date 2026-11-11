@@ -18,6 +18,7 @@ import NotFound from './pages/NotFound'
 import Pricing from './pages/Pricing'
 import Support from './pages/Support'
 import { Privacy, Terms } from './pages/Legal'
+import ResetPassword from './pages/ResetPassword'
 import Profile from './pages/Profile'
 import Recipes from './pages/Recipes'
 import Shopping from './pages/Shopping'
@@ -58,6 +59,7 @@ function App() {
         <Route path="/pricing" element={<Pricing session={session} />} />
         <Route path="/support" element={<Support />} />
         <Route path="/privacy" element={<Privacy />} />
+        <Route path="/reset" element={<ResetPassword />} />
         <Route path="/terms" element={<Terms />} />
         <Route
           path="/dishes"

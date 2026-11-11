@@ -15,10 +15,11 @@ type DishInput = {
   fat_g: number | null
   carbs_g: number | null
   photo_url: string | null
+  favorite: boolean
 }
 type Dish = DishInput & { id: string }
 
-const EMPTY: DishInput = { name: '', recipe: '', ingredients: [], calories: null, protein_g: null, fat_g: null, carbs_g: null, photo_url: null }
+const EMPTY: DishInput = { name: '', recipe: '', ingredients: [], calories: null, protein_g: null, fat_g: null, carbs_g: null, photo_url: null, favorite: false }
 
 export default function Dishes() {
   const { me, refresh } = usePlan()
@@ -234,6 +235,21 @@ export default function Dishes() {
     }
   }
 
+  async function toggleFavorite(d: Dish) {
+    const { id: _id, ...rest } = d
+    setDishes((ds) => ds.map((x) => (x.id === d.id ? { ...x, favorite: !d.favorite } : x)))
+    try {
+      await apiFetch<Dish>(`/api/dishes/${d.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...rest, favorite: !d.favorite }),
+      })
+    } catch {
+      setDishes((ds) => ds.map((x) => (x.id === d.id ? { ...x, favorite: d.favorite } : x)))
+      setStatus('Не вдалося зберегти')
+    }
+  }
+
   async function remove(id: string) {
     if (!confirm('Видалити страву?')) return
     try {
@@ -257,6 +273,7 @@ export default function Dishes() {
       fat_g: d.fat_g,
       carbs_g: d.carbs_g,
       photo_url: d.photo_url,
+      favorite: d.favorite,
     })
   }
 
@@ -399,7 +416,7 @@ export default function Dishes() {
       {status && <p className="status">{status}</p>}
 
       <ul className="cards">
-        {dishes.map((d) => (
+        {[...dishes].sort((a, b) => Number(b.favorite) - Number(a.favorite)).map((d) => (
           <li key={d.id}>
             <div className="media">
               {d.photo_url ? (
@@ -408,6 +425,15 @@ export default function Dishes() {
                 <div className="thumb empty">🍽</div>
               )}
               <div>
+            <button
+              type="button"
+              className={`star${d.favorite ? ' on' : ''}`}
+              aria-pressed={d.favorite}
+              aria-label={d.favorite ? 'Прибрати з улюблених' : 'Додати до улюблених'}
+              onClick={() => toggleFavorite(d)}
+            >
+              {d.favorite ? '★' : '☆'}
+            </button>
             <strong>{d.name}</strong>
             {d.calories != null && ` · ${d.calories} ккал`}
             {(d.protein_g != null || d.fat_g != null || d.carbs_g != null) &&

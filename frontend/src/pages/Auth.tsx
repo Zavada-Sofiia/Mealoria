@@ -26,6 +26,15 @@ export default function Auth() {
     navigate('/today')
   }
 
+  async function forgotPassword() {
+    setMessage('')
+    if (!email.trim()) return setMessage('Спочатку введіть email у поле вище.')
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+      redirectTo: `${window.location.origin}/reset`,
+    })
+    setMessage(error ? error.message : 'Якщо такий акаунт є, ми надіслали лист із посиланням для нового пароля.')
+  }
+
   async function signInWithGoogle() {
     setMessage('')
     const { error } = await supabase.auth.signInWithOAuth({
@@ -66,6 +75,13 @@ export default function Auth() {
         </ul>
       )}
       {mode === 'signup' && !problems.length && password && <p className="pw-ok">Пароль надійний</p>}
+      {mode === 'signin' && (
+        <p style={{ margin: '-4px 0 12px' }}>
+          <a href="#forgot" onClick={(e) => { e.preventDefault(); void forgotPassword() }}>
+            Забули пароль?
+          </a>
+        </p>
+      )}
       <div className="actions">
         <button type="submit">{mode === 'signin' ? 'Увійти' : 'Зареєструватися'}</button>
         <button type="button" onClick={() => setMode(mode === 'signin' ? 'signup' : 'signin')}>

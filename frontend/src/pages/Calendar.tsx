@@ -15,7 +15,7 @@ import { addDays, iso, mondayOf, pad } from '../dates'
 import { mealName } from '../meals'
 import { download, weekToIcs } from '../ics'
 
-type Dish = { id: string; name: string; calories: number | null }
+type Dish = { id: string; name: string; calories: number | null; favorite?: boolean }
 type Entry = { id: string; date: string; slot: number; dish: Dish | null }
 type ProfileResponse = {
   profile: { meals_per_day: number; target_calories: number | null } | null
@@ -90,7 +90,7 @@ export default function Calendar() {
       apiFetch<ProfileResponse>('/api/profile'),
     ])
       .then(([d, p]) => {
-        setDishes(d)
+        setDishes([...d].sort((a, b) => Number(!!b.favorite) - Number(!!a.favorite)))
         setHasProfile(p.profile !== null)
         setMeals(p.profile?.meals_per_day ?? 3)
         setTarget(p.profile?.target_calories ?? p.recommended_calories)
@@ -123,6 +123,16 @@ export default function Calendar() {
     if (next < 0) goToWeek(addDays(weekStart, -7), 6)
     else if (next > 6) goToWeek(addDays(weekStart, 7), 0)
     else setDayIdx(next)
+  }
+
+  async function copyPreviousWeek() {
+    setStatus('Копіюємо минулий тиждень…')
+    try {
+      setEntries(await apiFetch<Entry[]>(`/api/calendar/copy-week?start=${iso(weekStart)}`, { method: 'POST' }))
+      setStatus('')
+    } catch {
+      setStatus('Не вдалося скопіювати тиждень')
+    }
   }
 
   async function place(date: string, slot: number, dishId: string) {
@@ -238,6 +248,7 @@ export default function Calendar() {
             {dishes.map((d) => (
               <Draggable key={d.id} id={`dish:${d.id}`}>
                 <span className="chip">
+                  {d.favorite && '★ '}
                   {d.name}
                   {d.calories != null && ` · ${d.calories}`}
                 </span>
@@ -317,6 +328,9 @@ export default function Calendar() {
       </DndContext>
 
       <div className="actions" style={{ marginTop: 16 }}>
+        <button type="button" onClick={copyPreviousWeek}>
+          Повторити минулий тиждень
+        </button>
         <button type="button" onClick={() => window.print()} disabled={planned.length === 0}>
           Друк / PDF
         </button>
@@ -371,6 +385,7 @@ export default function Calendar() {
                   setPicking(null)
                 }}
               >
+                {d.favorite && '★ '}
                 {d.name}
                 {d.calories != null && <small>{d.calories} ккал</small>}
               </button>

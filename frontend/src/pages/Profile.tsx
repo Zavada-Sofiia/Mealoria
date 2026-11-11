@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { apiFetch } from '../api/client'
+import DeleteAccount from '../components/DeleteAccount'
 import RangeField from '../components/RangeField'
 import { estimateCalories } from '../calories'
 
@@ -193,6 +194,7 @@ export default function Profile() {
   }
 
   return (
+    <>
     <form onSubmit={save}>
       <h1>Профіль</h1>
 
@@ -309,5 +311,7 @@ export default function Profile() {
         <Link to="/pricing">Тариф і оплата</Link> · <Link to="/support">Підтримати проєкт</Link>
       </p>
     </form>
+    <DeleteAccount />
+    </>
   )
 }

@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { apiFetch } from '../api/client'
+import { BarChart, LineChart } from '../components/Charts'
 import { addDays, iso } from '../dates'
 
 type Macros = { kcal: number; protein_g: number; fat_g: number; carbs_g: number }
@@ -201,11 +202,149 @@ function DishCalculator() {
   )
 }
 
+type RangeResponse = { target: number | null; days: ({ date: string } & Macros)[] }
+const shortDate = (d: string) => `${d.slice(8)}.${d.slice(5, 7)}`
+
+function Trends() {
+  const [span, setSpan] = useState(7)
+  const [data, setData] = useState<RangeResponse | null>(null)
+  const [failed, setFailed] = useState(false)
+
+  useEffect(() => {
+    let current = true
+    const end = new Date()
+    apiFetch<RangeResponse>(`/api/calories/range?start=${iso(addDays(end, 1 - span))}&end=${iso(end)}`)
+      .then((r) => current && (setData(r), setFailed(false)))
+      .catch(() => current && setFailed(true))
+    return () => {
+      current = false
+    }
+  }, [span])
+
+  const planned = data?.days.filter((d) => d.kcal > 0) ?? []
+  const average = planned.length ? Math.round(planned.reduce((s, d) => s + d.kcal, 0) / planned.length) : 0
+
+  return (
+    <section className="card">
+      <h2 style={{ marginTop: 0 }}>Динаміка калорій</h2>
+      <div className="seg">
+        {[7, 30].map((n) => (
+          <button key={n} type="button" className={span === n ? 'on' : ''} onClick={() => setSpan(n)}>
+            {n} днів
+          </button>
+        ))}
+      </div>
+      {failed && <p className="status">Не вдалося завантажити дані</p>}
+      {data && (
+        <>
+          <BarChart
+            bars={data.days.map((d) => ({ label: shortDate(d.date), value: Math.round(d.kcal) }))}
+            target={data.target}
+          />
+          <p className="muted">
+            {planned.length
+              ? `У середньому ${average} ккал на день із запланованих (${planned.length} дн.)`
+              : 'У цьому періоді немає запланованих страв.'}
+            {data.target ? ` Пунктир: ваша норма ${data.target} ккал.` : ''}
+          </p>
+        </>
+      )}
+    </section>
+  )
+}
+
+type WeightPoint = { day: string; weight_kg: number }
+
+function WeightJournal() {
+  const [points, setPoints] = useState<WeightPoint[]>([])
+  const [today] = useState(() => iso(new Date()))
+  const [day, setDay] = useState(today)
+  const [weight, setWeight] = useState('')
+  const [status, setStatus] = useState('')
+
+  useEffect(() => {
+    apiFetch<WeightPoint[]>('/api/weight')
+      .then(setPoints)
+      .catch(() => setStatus('Не вдалося завантажити журнал ваги'))
+  }, [])
+
+  async function save(e: FormEvent) {
+    e.preventDefault()
+    const value = Number(weight.replace(',', '.'))
+    if (!(value >= 20 && value <= 400)) return setStatus('Вкажіть вагу від 20 до 400 кг')
+    try {
+      const saved = await apiFetch<WeightPoint>('/api/weight', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ day, weight_kg: value }),
+      })
+      setPoints((ps) => [...ps.filter((p) => p.day !== saved.day), saved].sort((a, b) => a.day.localeCompare(b.day)))
+      setWeight('')
+      setStatus('Збережено')
+    } catch {
+      setStatus('Не вдалося зберегти')
+    }
+  }
+
+  async function remove(d: string) {
+    try {
+      await apiFetch<void>(`/api/weight/${d}`, { method: 'DELETE' })
+      setPoints((ps) => ps.filter((p) => p.day !== d))
+    } catch {
+      setStatus('Не вдалося видалити')
+    }
+  }
+
+  const first = points[0]
+  const last = points[points.length - 1]
+  const change = first && last && first !== last ? Math.round((last.weight_kg - first.weight_kg) * 10) / 10 : null
+
+  return (
+    <section className="card red">
+      <h2 style={{ marginTop: 0 }}>Журнал ваги</h2>
+      <form onSubmit={save} className="actions" style={{ marginBottom: 12 }}>
+        <input type="date" value={day} max={today} onChange={(e) => e.target.value && setDay(e.target.value)} />
+        <input inputMode="decimal" placeholder="Вага, кг" value={weight} style={{ maxWidth: 120 }}
+          onChange={(e) => setWeight(e.target.value)} />
+        <button type="submit">Записати</button>
+      </form>
+      {status && <p className="status">{status}</p>}
+      {points.length >= 2 && (
+        <LineChart points={points.map((p) => ({ label: shortDate(p.day), value: p.weight_kg }))} />
+      )}
+      {points.length === 1 && <p className="muted">Додайте ще один запис, щоб побачити графік.</p>}
+      {change !== null && (
+        <p className="muted">
+          Зміна з {first.day.split('-').reverse().join('.')}: {change > 0 ? '+' : ''}
+          {change} кг
+        </p>
+      )}
+      {points.length > 0 && (
+        <details>
+          <summary>Усі записи ({points.length})</summary>
+          <ul className="cards">
+            {[...points].reverse().map((p) => (
+              <li key={p.day}>
+                {p.day.split('-').reverse().join('.')}: <strong>{p.weight_kg} кг</strong>{' '}
+                <button type="button" onClick={() => remove(p.day)} aria-label="Видалити запис">
+                  ×
+                </button>
+              </li>
+            ))}
+          </ul>
+        </details>
+      )}
+    </section>
+  )
+}
+
 export default function Calories() {
   return (
     <div>
       <h1>Калорії</h1>
       <DaySummary />
+      <Trends />
+      <WeightJournal />
       <DishCalculator />
     </div>
   )
