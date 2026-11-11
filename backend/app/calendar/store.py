@@ -65,3 +65,14 @@ class SupabaseCalendarStore:
         )
         r.raise_for_status()
         return bool(r.json())
+
+    def create_many(self, user_id: str, rows: "list[dict]") -> None:
+        if not rows:
+            return
+        r = httpx.post(
+            self.url,
+            headers={**self.headers, "Prefer": "return=minimal"},
+            json=[{**row, "user_id": user_id} for row in rows],
+            timeout=15,
+        )
+        r.raise_for_status()

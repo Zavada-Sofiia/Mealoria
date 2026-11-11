@@ -22,6 +22,34 @@ def food(q: str = Query(min_length=2, max_length=100), _: str = Depends(current_
         raise HTTPException(status_code=503, detail="Food database is unavailable")
 
 
+@router.get("/range")
+def day_range(
+    start: dt.date,
+    end: dt.date,
+    user_id: str = Depends(current_user_id),
+    calendar: SupabaseCalendarStore = Depends(get_calendar_store),
+    profiles: SupabaseProfileStore = Depends(get_profile_store),
+):
+    """Calories and macros for each day from `start` to `end` inclusive (at most 92 days)."""
+    if end < start or (end - start).days > 91:
+        raise HTTPException(status_code=422, detail="Range must be 1 to 92 days")
+    by_day: dict[str, list[dict]] = {}
+    for e in calendar.list(start, end + dt.timedelta(days=1)):
+        by_day.setdefault(str(e["date"]), []).append(e)
+    days = []
+    for i in range((end - start).days + 1):
+        date = (start + dt.timedelta(days=i)).isoformat()
+        days.append({"date": date, **summarize(by_day.get(date, []))["total"]})
+    row = profiles.get(user_id)
+    target = None
+    if row:
+        target = row["target_calories"] or recommended_calories(
+            row["sex"], row["age"], row["height_cm"], float(row["weight_kg"]),
+            row["activity"], row["goal"],
+        )
+    return {"target": target, "days": days}
+
+
 @router.get("/day")
 def day(
     date: dt.date,

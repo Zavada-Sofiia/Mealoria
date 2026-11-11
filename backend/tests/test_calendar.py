@@ -39,6 +39,10 @@ class FakeStore:
         self.rows[entry_id] = self._row(entry_id, data["date"], data["slot"])
         return self.rows[entry_id]
 
+    def create_many(self, user_id, rows):
+        for data in rows:
+            self.create(user_id, data)
+
     def delete(self, entry_id):
         return self.rows.pop(entry_id, None) is not None
 
@@ -80,3 +84,15 @@ def test_validation(client):
     bad = {"date": "2026-11-10", "slot": 9, "dish_id": DISH_ID}
     assert client.post("/api/calendar", json=bad).status_code == 422
     assert client.get("/api/calendar").status_code == 422
+
+
+def test_copy_previous_week_skips_what_is_already_there(client):
+    client.post("/api/calendar", json={"date": "2026-11-09", "slot": 0, "dish_id": DISH_ID})
+    client.post("/api/calendar", json={"date": "2026-11-10", "slot": 2, "dish_id": DISH_ID})
+    client.post("/api/calendar", json={"date": "2026-11-16", "slot": 0, "dish_id": DISH_ID})
+
+    week = client.post("/api/calendar/copy-week?start=2026-11-16").json()
+    assert sorted((e["date"], e["slot"]) for e in week) == [("2026-11-16", 0), ("2026-11-17", 2)]
+    # a second copy adds nothing
+    again = client.post("/api/calendar/copy-week?start=2026-11-16").json()
+    assert len(again) == 2

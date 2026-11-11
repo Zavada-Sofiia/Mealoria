@@ -3,6 +3,7 @@ import os
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.account.router import router as account_router
 from app.admin.router import router as admin_router
 from app.ai_gateway.router import router as ai_router
 from app.auth import current_user_id
@@ -15,6 +16,7 @@ from app.limits.router import router as limits_router
 from app.monitoring import init_sentry
 from app.profile.router import router as profile_router
 from app.shopping.router import router as shopping_router
+from app.weight.router import router as weight_router
 
 init_sentry()  # no-op unless SENTRY_DSN is set
 
@@ -40,6 +42,8 @@ app.include_router(limits_router)
 app.include_router(plans_router)
 app.include_router(ai_router)
 app.include_router(admin_router)
+app.include_router(weight_router)
+app.include_router(account_router)
 
 
 @app.get("/api/health")

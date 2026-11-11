@@ -41,6 +41,31 @@ def add_entry(
         raise HTTPException(status_code=400, detail="Could not add dish to calendar")
 
 
+@router.post("/copy-week", response_model=list[EntryOut])
+def copy_previous_week(
+    start: dt.date,
+    user_id: str = Depends(current_user_id),
+    store: SupabaseCalendarStore = Depends(get_store),
+):
+    """Copies the week before `start` into the week that begins on `start`, skipping what is already there."""
+    previous = start - dt.timedelta(days=7)
+    taken = {(e["date"], e["slot"], e["dish"]["id"]) for e in store.list(start, start + dt.timedelta(days=7)) if e["dish"]}
+    rows = []
+    for e in store.list(previous, start):
+        if not e["dish"]:
+            continue
+        date = dt.date.fromisoformat(str(e["date"])) + dt.timedelta(days=7)
+        if (date.isoformat(), e["slot"], e["dish"]["id"]) in taken:
+            continue
+        rows.append({"date": date.isoformat(), "slot": e["slot"], "dish_id": e["dish"]["id"]})
+    try:
+        store.create_many(user_id, rows)
+    except httpx.HTTPStatusError as err:
+        raise_if_plan_limit(err)
+        raise HTTPException(status_code=400, detail="Could not copy the week")
+    return store.list(start, start + dt.timedelta(days=7))
+
+
 @router.put("/{entry_id}", response_model=EntryOut)
 def move_entry(
     entry_id: UUID,

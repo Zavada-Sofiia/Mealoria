@@ -112,3 +112,25 @@ def test_food_search_error_is_503(client, monkeypatch):
     monkeypatch.setattr(calories_router, "search_food", boom)
     assert client.get("/api/calories/food?q=гречка").status_code == 503
     assert client.get("/api/calories/food?q=a").status_code == 422
+
+
+def test_range_gives_a_total_for_every_day():
+    class Calendar:
+        def list(self, start, end):
+            dish = {"name": "Борщ", "calories": 250, "protein_g": 5, "fat_g": 4, "carbs_g": 30}
+            return [{"date": "2026-11-10", "slot": 1, "dish": dish}]
+
+    class Profiles:
+        def get(self, user_id):
+            return None
+
+    app.dependency_overrides[current_user_id] = lambda: "user-1"
+    app.dependency_overrides[get_calendar_store] = lambda: Calendar()
+    app.dependency_overrides[get_profile_store] = lambda: Profiles()
+    try:
+        client = TestClient(app)
+        data = client.get("/api/calories/range?start=2026-11-09&end=2026-11-11").json()
+        assert [d["kcal"] for d in data["days"]] == [0, 250, 0]
+        assert client.get("/api/calories/range?start=2026-11-09&end=2027-06-01").status_code == 422
+    finally:
+        app.dependency_overrides.clear()
