@@ -81,3 +81,11 @@ def test_macros_are_optional_and_validated(client):
     bare = {"name": "Чай"}
     assert client.post("/api/dishes", json=bare).json()["protein_g"] is None
     assert client.post("/api/dishes", json={**bare, "fat_g": -1}).status_code == 422
+
+
+def test_a_dish_can_suit_several_meals(client):
+    body = {"name": "Омлет", "categories": ["сніданок", "перекус"]}
+    created = client.post("/api/dishes", json=body).json()
+    assert created["categories"] == ["сніданок", "перекус"]
+    assert client.post("/api/dishes", json={"name": "Х"}).json()["categories"] == []
+    assert client.post("/api/dishes", json={"name": "Х", "categories": ["полуденок"]}).status_code == 422

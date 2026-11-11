@@ -1532,3 +1532,18 @@ button.add-dish,
 button.add-dish:hover {
   background: var(--teal-hover);
 }
+
+.meal-filter {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.chip-btn.on {
+  background: var(--teal);
+  border-color: var(--teal);
+  color: #fff;
+}
+:root[data-theme='dark'] .chip-btn.on {
+  color: #fff;
+}

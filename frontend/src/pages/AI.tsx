@@ -33,6 +33,9 @@ type MealPhoto = {
 type Quota = { used: number; limit: number }
 
 const CATEGORIES = ['сніданок', 'обід', 'вечеря', 'перекус']
+// the AI answers in the language of the interface
+const ENGLISH_CATEGORIES: Record<string, string> = { breakfast: 'сніданок', lunch: 'обід', dinner: 'вечеря', snack: 'перекус' }
+const toCategory = (c: string) => ENGLISH_CATEGORIES[c.toLowerCase()] ?? c.toLowerCase()
 const json = { 'Content-Type': 'application/json' }
 
 function errorText(e: unknown): string {
@@ -147,6 +150,7 @@ function AIPage({ userId }: { userId: string }) {
         headers: json,
         body: JSON.stringify({
           name: i.name,
+          categories: CATEGORIES.includes(toCategory(i.category)) ? [toCategory(i.category)] : [],
           recipe: i.recipe,
           ingredients: i.ingredients,
           calories: i.calories,

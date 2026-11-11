@@ -12,7 +12,7 @@ import {
 import { Link } from 'react-router-dom'
 import { apiFetch } from '../api/client'
 import { addDays, fmtDate, iso, mondayOf, pad } from '../dates'
-import { mealName } from '../meals'
+import { mealName, slotCategory } from '../meals'
 import PrintableWeek from '../components/PrintableWeek'
 import { download, weekToIcs } from '../ics'
 import { t } from '../i18n'
@@ -25,6 +25,7 @@ type Dish = {
   fat_g?: number | null
   carbs_g?: number | null
   favorite?: boolean
+  categories?: string[]
 }
 type Entry = { id: string; date: string; slot: number; dish: Dish | null }
 type ProfileResponse = {
@@ -357,21 +358,34 @@ export default function Calendar() {
           <div className="sheet-backdrop" onClick={() => setPicking(null)} />
           <div className="sheet" role="dialog" aria-label={t('Обрати страву')}>
             <h3>{t('{meal}: обрати страву', { meal: mealName(meals, picking.slot) })}</h3>
-            {dishes.map((d) => (
-              <button
-                key={d.id}
-                type="button"
-                className="sheet-item"
-                onClick={() => {
-                  void place(picking.date, picking.slot, d.id)
-                  setPicking(null)
-                }}
-              >
-                {d.favorite && '★ '}
-                {d.name}
-                {d.calories != null && <small>{d.calories} {t('ккал')}</small>}
-              </button>
-            ))}
+            {(() => {
+              const want = slotCategory(meals, picking.slot)
+              const fits = want ? dishes.filter((d) => d.categories?.includes(want)) : []
+              const rest = dishes.filter((d) => !fits.includes(d))
+              const item = (d: Dish) => (
+                <button
+                  key={d.id}
+                  type="button"
+                  className="sheet-item"
+                  onClick={() => {
+                    void place(picking.date, picking.slot, d.id)
+                    setPicking(null)
+                  }}
+                >
+                  {d.favorite && '★ '}
+                  {d.name}
+                  {d.calories != null && <small>{d.calories} {t('ккал')}</small>}
+                </button>
+              )
+              return (
+                <>
+                  {fits.length > 0 && <small className="muted">{t('Підходять для {meal}', { meal: mealName(meals, picking.slot).toLowerCase() })}</small>}
+                  {fits.map(item)}
+                  {fits.length > 0 && rest.length > 0 && <small className="muted">{t('Інші страви')}</small>}
+                  {rest.map(item)}
+                </>
+              )
+            })()}
           </div>
         </>
       )}

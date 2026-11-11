@@ -19,8 +19,11 @@ type DishInput = {
   photo_url: string | null
   favorite: boolean
   servings: number
+  categories: string[]
 }
 type Dish = DishInput & { id: string }
+
+const CATEGORIES = ['сніданок', 'обід', 'вечеря', 'перекус']
 
 type Sort = 'fav' | 'new' | 'old' | 'name' | 'kcal_asc' | 'kcal_desc'
 const SORTS: [Sort, string][] = [
@@ -42,7 +45,7 @@ function loadSort(): Sort {
   return 'fav'
 }
 
-const EMPTY: DishInput = { name: '', recipe: '', ingredients: [], calories: null, protein_g: null, fat_g: null, carbs_g: null, photo_url: null, favorite: false, servings: 1 }
+const EMPTY: DishInput = { name: '', recipe: '', ingredients: [], calories: null, protein_g: null, fat_g: null, carbs_g: null, photo_url: null, favorite: false, servings: 1, categories: [] }
 
 export default function Dishes() {
   const { me, refresh } = usePlan()
@@ -53,6 +56,7 @@ export default function Dishes() {
   const [query, setQuery] = useState('')
   const [sort, setSortState] = useState<Sort>(loadSort)
   const [onlyFav, setOnlyFav] = useState(false)
+  const [meal, setMeal] = useState('')
   const [status, setStatus] = useState(t('Завантаження…'))
   const [uploading, setUploading] = useState(false)
   const [drawing, setDrawing] = useState<string | null>(null)
@@ -247,7 +251,7 @@ export default function Dishes() {
 
   const sorted = (() => {
     const needle = query.trim().toLowerCase()
-    const shown = dishes.filter((d) => (!onlyFav || d.favorite) && d.name.toLowerCase().includes(needle))
+    const shown = dishes.filter((d) => (!onlyFav || d.favorite) && (!meal || (d.categories ?? []).includes(meal)) && d.name.toLowerCase().includes(needle))
     const byName = (a: Dish, b: Dish) => a.name.localeCompare(b.name, locale())
     const kcal = (d: Dish, dir: 1 | -1) => (d.calories == null ? Infinity : d.calories * dir)
     switch (sort) {
@@ -373,6 +377,7 @@ export default function Dishes() {
       photo_url: d.photo_url,
       favorite: d.favorite,
       servings: d.servings ?? 1,
+      categories: d.categories ?? [],
     })
   }
 
@@ -409,6 +414,19 @@ export default function Dishes() {
           <input value={form.name} maxLength={100} required
             onChange={(e) => setForm({ ...form, name: e.target.value })} />
         </label>
+        <fieldset>
+          <legend>{t('Підходить для')}</legend>
+          {CATEGORIES.map((c) => (
+            <label key={c} className="inline" style={{ marginRight: 14 }}>
+              <input type="checkbox" checked={form.categories.includes(c)}
+                onChange={() => setForm({
+                  ...form,
+                  categories: form.categories.includes(c) ? form.categories.filter((x) => x !== c) : [...form.categories, c],
+                })} />{' '}
+              {t(c)}
+            </label>
+          ))}
+        </fieldset>
         <label>
           {t('На скільки порцій цей рецепт')}
           <input type="number" min={1} max={100} inputMode="numeric" value={form.servings || ''}
@@ -545,6 +563,13 @@ export default function Dishes() {
               </option>
             ))}
           </select>
+          <div className="meal-filter">
+            {['', ...CATEGORIES].map((c) => (
+              <button key={c || 'all'} type="button" className={`chip-btn${meal === c ? ' on' : ''}`} onClick={() => setMeal(c)}>
+                {c ? t(c) : t('Усі')}
+              </button>
+            ))}
+          </div>
           <label className="inline">
             <input type="checkbox" checked={onlyFav} onChange={(e) => setOnlyFav(e.target.checked)} /> {t('Лише улюблені')}
           </label>
@@ -572,6 +597,9 @@ export default function Dishes() {
               {d.favorite ? '★' : '☆'}
             </button>
             <strong>{d.name}</strong>
+            {(d.categories ?? []).map((c) => (
+              <span key={c} className="badge" style={{ marginLeft: 6 }}>{t(c)}</span>
+            ))}
             {d.calories != null && ` · ${d.calories} ${t('ккал')}`}
             {(d.protein_g != null || d.fat_g != null || d.carbs_g != null) &&
               ` · ${t('Б {p} · Ж {f} · В {c} г', { p: d.protein_g ?? 0, f: d.fat_g ?? 0, c: d.carbs_g ?? 0 })}`}
