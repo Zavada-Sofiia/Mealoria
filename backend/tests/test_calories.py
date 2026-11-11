@@ -12,10 +12,10 @@ from app.profile.router import get_store as get_profile_store
 
 def test_parse_products_filters_and_dedupes():
     products = [
-        {"product_name": "Гречка", "nutriments": {"energy-kcal_100g": 329, "proteins_100g": 12.6}},
-        {"product_name": "гречка", "nutriments": {"energy-kcal_100g": 300}},
-        {"product_name": "", "nutriments": {"energy-kcal_100g": 100}},
-        {"product_name": "Без калорій", "nutriments": {}},
+        {"product_name": "Гречка", "lang": "uk", "nutriments": {"energy-kcal_100g": 329, "proteins_100g": 12.6}},
+        {"product_name": "гречка", "lang": "uk", "nutriments": {"energy-kcal_100g": 300}},
+        {"product_name": "", "lang": "uk", "nutriments": {"energy-kcal_100g": 100}},
+        {"product_name": "Без калорій", "lang": "uk", "nutriments": {}},
     ]
     items = parse_products(products)
     assert [i.name for i in items] == ["Гречка"]
@@ -34,6 +34,11 @@ def test_parse_products_filters_and_dedupes():
         ("Сыр плавленый", False),  # Russian: has "ы"
         ("Яблоко и груша, пюре", False),  # Russian: standalone "и"
         ("Пюре яблуко і груша", True),
+        ("Молоко ультрапастеризованное", False),  # Russian ending -ное
+        ("Гречка алтайская", False),  # Russian ending -ая
+        ("Молоко згущене незбиране", True),
+        ("Сир кисломолочний 5%", True),
+        ("Молоко коров'яче пастеризоване", True),
         ("Healthy breakfast груша яблуко", False),  # more Latin than Cyrillic
         ("", False),
     ],
@@ -47,10 +52,24 @@ def test_only_ukrainian_names_are_returned_and_the_uk_field_wins():
         {"product_name": "Chicken Breast", "nutriments": {"energy-kcal_100g": 115}},
         {"product_name": "Chicken Breast", "product_name_uk": "Куряче філе",
          "nutriments": {"energy-kcal_100g": 110}},
-        {"product_name": "Куряча грудка", "nutriments": {"energy-kcal_100g": 120}},
-        {"product_name": "Гречка с мясом", "nutriments": {"energy-kcal_100g": 150}},
+        {"product_name": "Куряча грудка", "lang": "uk", "nutriments": {"energy-kcal_100g": 120}},
+        {"product_name": "Гречка с мясом", "lang": "uk", "nutriments": {"energy-kcal_100g": 150}},
     ]
     assert [i.name for i in parse_products(products)] == ["Куряче філе", "Куряча грудка"]
+
+
+def test_russian_and_unmarked_cyrillic_entries_are_skipped():
+    products = [
+        {"product_name": "Молоко 2.5% пастеризоване", "lang": "ru", "nutriments": {"energy-kcal_100g": 52}},
+        {"product_name": "Молоко 3,2%", "nutriments": {"energy-kcal_100g": 60}},  # no language mark
+        {"product_name": "Гречка отварная", "lang": "bg", "nutriments": {"energy-kcal_100g": 110}},
+        {"product_name": "Молоко", "product_name_uk": "Молоко ультрапастеризованное",
+         "nutriments": {"energy-kcal_100g": 60}},  # the uk field holds Russian text
+        {"product_name": "Гречка ядриця", "lang": "uk", "nutriments": {"energy-kcal_100g": 330}},
+        {"product_name": "Мілка", "product_name_uk": "Молоко згущене", "lang": "ru",
+         "nutriments": {"energy-kcal_100g": 320}},
+    ]
+    assert [i.name for i in parse_products(products)] == ["Гречка ядриця", "Молоко згущене"]
 
 
 def test_summarize_totals_and_meals():
@@ -134,3 +153,8 @@ def test_range_gives_a_total_for_every_day():
         assert client.get("/api/calories/range?start=2026-11-09&end=2027-06-01").status_code == 422
     finally:
         app.dependency_overrides.clear()
+
+
+def test_html_entities_in_names_are_decoded():
+    products = [{"product_name_uk": "Крупа рисова &quot;Басматі&quot;", "nutriments": {"energy-kcal_100g": 350}}]
+    assert parse_products(products)[0].name == 'Крупа рисова "Басматі"'
