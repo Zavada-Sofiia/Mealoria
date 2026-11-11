@@ -12,6 +12,8 @@ from app.ai_gateway.schemas import (
     DishImageIn,
     DishImageOut,
     DishNutritionIn,
+    DishRecipeIn,
+    DishRecipeOut,
     MealPhotoIn,
     MealPhotoOut,
     NutritionOut,
@@ -214,3 +216,25 @@ def dish_nutrition(
         return result
     except Exception as e:  # any failure must become a JSON 502 the browser can read
         raise _failure("AI could not estimate the nutrition", e, quota)
+
+
+@router.post("/dish-recipe", response_model=DishRecipeOut)
+def dish_recipe(
+    body: DishRecipeIn,
+    user_id: str = Depends(current_user_id),
+    quota: SupabaseQuotaStore = Depends(get_quota_store),
+    profiles: SupabaseProfileStore = Depends(get_profile_store),
+    plans: SupabasePlanStore = Depends(get_plan_store),
+):
+    """Premium: write a recipe and the ingredients for a dish from its name (respects the user's profile)."""
+    if not _is_premium(plans):
+        raise HTTPException(status_code=403, detail="premium_required")
+    limit = _daily_limit(plans)
+    _check_quota(quota, limit)
+    try:
+        prompt = prompts.dish_recipe_prompt(body.name.strip(), profiles.get(user_id), body.note.strip())
+        result = DishRecipeOut(**generate_json(prompt, prompts.DISH_RECIPE_SCHEMA))
+        _charge(quota, limit)
+        return result
+    except Exception as e:  # any failure must become a JSON 502 the browser can read
+        raise _failure("AI could not write the recipe", e, quota)

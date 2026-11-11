@@ -74,7 +74,11 @@ export default function Dishes() {
     return 'Щось пішло не так. Спробуйте ще раз'
   }
 
-  function nutritionError(e: unknown): string {
+  function nutritionError(
+    e: unknown,
+    failed = 'ШІ не зміг порахувати КБЖВ.',
+    fallback = 'Не вдалося порахувати КБЖВ',
+  ): string {
     if (e instanceof ApiError) {
       if (e.status === 429) return 'Ліміт запитів до ШІ на сьогодні вичерпано'
       if (e.status === 503) return 'ШІ ще не налаштований на сервері'
@@ -83,10 +87,10 @@ export default function Dishes() {
       }
       if (e.status === 502) {
         const reason = e.detail.includes(': ') ? e.detail.slice(e.detail.indexOf(': ') + 2) : ''
-        return `ШІ не зміг порахувати КБЖВ.${reason ? ` Технічна причина: ${reason}` : ''}`
+        return `${failed}${reason ? ` Технічна причина: ${reason}` : ''}`
       }
     }
-    return 'Не вдалося порахувати КБЖВ'
+    return fallback
   }
 
   type Nutrition = Pick<DishInput, 'calories' | 'protein_g' | 'fat_g' | 'carbs_g'>
@@ -121,6 +125,32 @@ export default function Dishes() {
       setStatus(nutritionError(e))
     } finally {
       setEstimating(false)
+    }
+  }
+
+  const [writing, setWriting] = useState(false)
+
+  async function writeRecipe() {
+    if (!premium) {
+      window.dispatchEvent(new CustomEvent('plan-limit', { detail: 'premium_required' }))
+      return
+    }
+    const hasContent = form.recipe.trim() || form.ingredients.some((i) => i.name.trim())
+    if (hasContent && !confirm('Замінити поточний рецепт та інгредієнти?')) return
+    setWriting(true)
+    setStatus('')
+    try {
+      const r = await apiFetch<{ recipe: string; ingredients: Ingredient[] }>('/api/ai/dish-recipe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: form.name.trim() }),
+      })
+      setForm({ ...form, recipe: r.recipe, ingredients: r.ingredients })
+      setStatus('Рецепт і інгредієнти створено ШІ. Перевірте їх і виправте за потреби')
+    } catch (e) {
+      setStatus(nutritionError(e, 'ШІ не зміг написати рецепт.', 'Не вдалося створити рецепт'))
+    } finally {
+      setWriting(false)
     }
   }
 
@@ -304,6 +334,13 @@ export default function Dishes() {
           <input value={form.name} maxLength={100} required
             onChange={(e) => setForm({ ...form, name: e.target.value })} />
         </label>
+        <p className="actions" style={{ margin: '-6px 0 18px' }}>
+          <button type="button" onClick={writeRecipe} disabled={writing || !form.name.trim()}>
+            {writing ? 'Пишемо рецепт…' : 'Згенерувати рецепт та інгредієнти (ШІ)'}
+            {!premium && <span className="badge paid" style={{ marginLeft: 8 }}>преміум</span>}
+          </button>
+          {premium && <small className="muted">Враховує ваш профіль: дієту й алергени</small>}
+        </p>
         <div className="row">
         <label>
           Калорії на порцію

@@ -69,3 +69,13 @@ class NutritionOut(BaseModel):
     protein_g: float = Field(ge=0, le=1000)
     fat_g: float = Field(ge=0, le=1000)
     carbs_g: float = Field(ge=0, le=1000)
+
+
+class DishRecipeIn(BaseModel):
+    name: str = Field(min_length=1, max_length=100)
+    note: str = Field(default="", max_length=200)
+
+
+class DishRecipeOut(BaseModel):
+    recipe: str = Field(max_length=5000)
+    ingredients: list[Ingredient] = Field(max_length=30)
