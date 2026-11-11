@@ -1,5 +1,14 @@
 import { supabase } from './supabase'
 
+export class ApiError extends Error {
+  status: number
+
+  constructor(status: number) {
+    super(`API ${status}`)
+    this.status = status
+  }
+}
+
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
 
 export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
@@ -11,7 +20,7 @@ export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise
       Authorization: `Bearer ${data.session?.access_token}`,
     },
   })
-  if (!res.ok) throw new Error(`API ${res.status}`)
+  if (!res.ok) throw new ApiError(res.status)
   if (res.status === 204) return undefined as T
   return res.json() as Promise<T>
 }
