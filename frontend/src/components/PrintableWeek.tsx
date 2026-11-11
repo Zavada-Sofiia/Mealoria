@@ -15,7 +15,7 @@ type Entry = { id: string; date: string; slot: number; dish: Dish | null }
 
 const FULL_DAYS = ['Понеділок', 'Вівторок', 'Середа', 'Четвер', 'П’ятниця', 'Субота', 'Неділя']
 const sum = (list: Entry[], field: 'calories' | 'protein_g' | 'fat_g' | 'carbs_g' | 'fiber_g') =>
-  Math.round(list.reduce((s, e) => s + (e.dish?.[field] ?? 0), 0))
+  Math.round(list.reduce((s, e) => s + (e.dish?.[field] ?? 0), 0) * 10) / 10
 
 /** The week as a printable page (shown only when printing or saving as PDF). */
 export default function PrintableWeek({
@@ -33,6 +33,7 @@ export default function PrintableWeek({
   const planned = entries.filter((e) => e.dish)
   const busyDays = days.filter((d) => planned.some((e) => e.date === iso(d))).length
   const average = busyDays ? Math.round(sum(planned, 'calories') / busyDays) : 0
+  const averageFiber = busyDays ? Math.round((sum(planned, 'fiber_g') / busyDays) * 10) / 10 : 0
 
   return (
     <div className="print-only">
@@ -51,6 +52,10 @@ export default function PrintableWeek({
         <div>
           <strong>{average}</strong>
           <span>{target ? t('ккал на день, норма {n}', { n: target }) : t('ккал на день')}</span>
+        </div>
+        <div>
+          <strong>{averageFiber}</strong>
+          <span>{t('г клітковини на день')}</span>
         </div>
         <div>
           <strong>{planned.length}</strong>
@@ -84,7 +89,7 @@ export default function PrintableWeek({
                     ))}
                   </ul>
                   <footer>
-                    {macrosLine(sum(list, 'protein_g'), sum(list, 'fat_g'), sum(list, 'carbs_g'), sum(list, 'fiber_g'))}
+                    {macrosLine(sum(list, 'protein_g'), sum(list, 'fat_g'), sum(list, 'carbs_g'), sum(list, 'fiber_g'), true)}
                   </footer>
                 </>
               )}

@@ -515,6 +515,7 @@ export const en: Record<string, string> = {
   "вегетаріанське": "vegetarian",
   "вечеря": "dinner",
   "г": "g",
+  "г клітковини на день": "g of fiber per day",
   "глютен": "gluten",
   "горіхи": "nuts",
   "гриби": "mushrooms",
