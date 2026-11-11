@@ -46,7 +46,7 @@ frontend/           React + TypeScript (Vite)
   src/components/   меню
   src/api/          клієнт API, Supabase, завантаження фото
 infra/
-  supabase/         SQL-скрипти бази й сховища (001…021)
+  supabase/         SQL-скрипти бази й сховища (001…022)
   scripts/          генерація фото для каталогу рецептів
   terraform/        опис Render, Supabase (авторизація) і Cloudflare Worker кодом
 .github/workflows/  CI (тести й збірка) та «будильник» Supabase
@@ -77,7 +77,7 @@ flowchart LR
 
 ### 1. База даних
 
-У Supabase → SQL Editor по черзі виконайте файли з `infra/supabase/` (від `001` до `021`).
+У Supabase → SQL Editor по черзі виконайте файли з `infra/supabase/` (від `001` до `022`).
 Скрипти можна запускати повторно. Файли `005` і `011` містять каталог рецептів і посилання на їхні фото.
 Для `011` фото мають бути завантажені в Storage (див. нижче).
 
