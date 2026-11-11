@@ -1548,69 +1548,59 @@ button.add-dish:hover {
   color: #fff;
 }
 
-/* ---------- section rail (AI assistant) ---------- */
+/* ---------- section tabs (AI assistant) ---------- */
 .card[id^='ai-'] {
-  scroll-margin-top: 76px;
+  scroll-margin-top: 130px;
 }
-.rail {
-  position: fixed;
-  top: 50%;
-  right: 6px;
-  z-index: 12;
+.section-tabs {
+  position: sticky;
+  top: 62px;
+  z-index: 14;
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 10px;
-  padding: 10px 6px;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--card) 85%, transparent);
+  margin: 0 0 16px;
+  padding: 4px;
   border: 1px solid var(--line);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--card) 92%, transparent);
+  backdrop-filter: blur(6px);
   box-shadow: var(--shadow);
-  transform: translateY(-50%);
 }
-.rail button {
+.section-tabs-thumb {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  left: 4px;
+  width: calc((100% - 8px) / var(--n, 3));
+  border-radius: 999px;
+  background: var(--teal);
+  transition: transform 0.25s ease;
+  pointer-events: none;
+}
+.section-tabs button {
   position: relative;
-  display: block;
-  width: 12px;
-  min-height: 0;
-  height: 12px;
-  padding: 0;
-  border: 2px solid var(--teal);
+  flex: 1;
+  min-height: 38px;
+  padding: 4px 8px;
+  border: 0;
   border-radius: 999px;
   background: transparent;
-  transition: height 0.2s, background 0.2s;
-}
-.rail button.on {
-  height: 30px;
-  background: var(--teal);
-}
-.rail button span {
-  position: absolute;
-  right: 22px;
-  top: 50%;
-  padding: 3px 10px;
-  border-radius: 999px;
-  background: var(--ink);
-  color: var(--bg);
-  font-size: 0.78rem;
+  color: var(--ink);
+  font-size: 0.9rem;
   font-weight: 600;
-  white-space: nowrap;
-  opacity: 0;
-  pointer-events: none;
-  transform: translateY(-50%);
-  transition: opacity 0.15s;
 }
-.rail button:hover span,
-.rail button:focus-visible span {
-  opacity: 1;
+.section-tabs button.on,
+:root[data-theme='dark'] .section-tabs button.on {
+  color: #fff;
 }
-@media (min-width: 1100px) {
-  .rail button.on span {
-    opacity: 1;
-  }
+:root[data-theme='dark'] .section-tabs button {
+  color: var(--ink);
 }
 @media (max-width: 760px) {
-  .rail {
-    right: 3px;
+  .section-tabs {
+    top: 58px;
+  }
+  .section-tabs button {
+    font-size: 0.82rem;
+    padding: 4px 2px;
   }
 }

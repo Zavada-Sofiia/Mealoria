@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type CSSProperties } from 'react'
 import { t } from '../i18n'
 
 export type RailItem = { id: string; label: string }
 
-/** A slider on the right edge of the page: shows which block you are on and jumps to another one. */
+/** Tabs that stay under the header: the highlighted one is the block you are on, a tap jumps to another block. */
 export default function SectionRail({ items }: { items: RailItem[] }) {
   const [active, setActive] = useState(items[0]?.id ?? '')
 
@@ -16,7 +16,7 @@ export default function SectionRail({ items }: { items: RailItem[] }) {
         if (first) setActive(first.id)
       },
       // a block counts as current while it crosses the middle band of the screen
-      { rootMargin: '-35% 0px -55% 0px' },
+      { rootMargin: '-30% 0px -60% 0px' },
     )
     for (const i of items) {
       const el = document.getElementById(i.id)
@@ -30,18 +30,24 @@ export default function SectionRail({ items }: { items: RailItem[] }) {
     setActive(id)
   }
 
+  const index = Math.max(0, items.findIndex((i) => i.id === active))
+
   return (
-    <nav className="rail" aria-label={t('Блоки сторінки')}>
+    <nav className="section-tabs" aria-label={t('Блоки сторінки')}>
+      <span
+        className="section-tabs-thumb"
+        aria-hidden="true"
+        style={{ '--n': items.length, transform: `translateX(${index * 100}%)` } as CSSProperties}
+      />
       {items.map((i) => (
         <button
           key={i.id}
           type="button"
           className={i.id === active ? 'on' : ''}
           aria-current={i.id === active ? 'true' : undefined}
-          aria-label={t(i.label)}
           onClick={() => go(i.id)}
         >
-          <span>{t(i.label)}</span>
+          {t(i.label)}
         </button>
       ))}
     </nav>
