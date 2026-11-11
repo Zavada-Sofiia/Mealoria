@@ -2,7 +2,7 @@ import os
 
 import httpx
 
-FIELDS = "id,name,recipe,ingredients,calories,protein_g,fat_g,carbs_g,photo_url,favorite,servings,categories"
+FIELDS = "id,name,recipe,ingredients,calories,protein_g,fat_g,carbs_g,fiber_g,photo_url,favorite,servings,categories"
 
 
 class SupabaseDishStore:

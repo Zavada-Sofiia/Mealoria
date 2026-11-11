@@ -47,7 +47,7 @@ def save_to_my_dishes(
     recipe = recipes.get(str(recipe_id))
     if recipe is None:
         raise HTTPException(status_code=404, detail="Recipe not found")
-    fields = ("name", "recipe", "ingredients", "calories", "protein_g", "fat_g", "carbs_g", "photo_url")
+    fields = ("name", "recipe", "ingredients", "calories", "protein_g", "fat_g", "carbs_g", "fiber_g", "photo_url")
     data = {k: recipe.get(k) for k in fields}
     if recipe.get("category") in ("сніданок", "обід", "вечеря", "перекус"):
         data["categories"] = [recipe["category"]]

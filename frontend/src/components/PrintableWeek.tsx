@@ -1,6 +1,7 @@
 import { addDays, fmtDate, iso } from '../dates'
 import { mealName } from '../meals'
 import { t } from '../i18n'
+import { macrosLine } from '../macros'
 
 type Dish = {
   name: string
@@ -8,11 +9,12 @@ type Dish = {
   protein_g?: number | null
   fat_g?: number | null
   carbs_g?: number | null
+  fiber_g?: number | null
 }
 type Entry = { id: string; date: string; slot: number; dish: Dish | null }
 
 const FULL_DAYS = ['Понеділок', 'Вівторок', 'Середа', 'Четвер', 'П’ятниця', 'Субота', 'Неділя']
-const sum = (list: Entry[], field: 'calories' | 'protein_g' | 'fat_g' | 'carbs_g') =>
+const sum = (list: Entry[], field: 'calories' | 'protein_g' | 'fat_g' | 'carbs_g' | 'fiber_g') =>
   Math.round(list.reduce((s, e) => s + (e.dish?.[field] ?? 0), 0))
 
 /** The week as a printable page (shown only when printing or saving as PDF). */
@@ -82,7 +84,7 @@ export default function PrintableWeek({
                     ))}
                   </ul>
                   <footer>
-                    {t('Б {p} · Ж {f} · В {c} г', { p: sum(list, 'protein_g'), f: sum(list, 'fat_g'), c: sum(list, 'carbs_g') })}
+                    {macrosLine(sum(list, 'protein_g'), sum(list, 'fat_g'), sum(list, 'carbs_g'), sum(list, 'fiber_g'))}
                   </footer>
                 </>
               )}

@@ -3,8 +3,9 @@ import { apiFetch } from '../api/client'
 import { BarChart, LineChart } from '../components/Charts'
 import { addDays, fmtDate, iso } from '../dates'
 import { t } from '../i18n'
+import { macrosLine } from '../macros'
 
-type Macros = { kcal: number; protein_g: number; fat_g: number; carbs_g: number }
+type Macros = { kcal: number; protein_g: number; fat_g: number; carbs_g: number; fiber_g: number }
 type DayResponse = {
   target: number | null
   total: Macros
@@ -16,6 +17,7 @@ type Food = {
   protein_100g: number
   fat_100g: number
   carbs_100g: number
+  fiber_100g?: number
 }
 type Line = Food & { grams: number }
 
@@ -72,7 +74,9 @@ function DaySummary() {
             <p>{diff > 0 ? t('Перевищення на {n} ккал', { n: diff }) : t('Залишилось {n} ккал', { n: -diff })}</p>
           )}
           <p>
-            {t('Білки {p} г · Жири {f} г · Вуглеводи {c} г', { p: data.total.protein_g, f: data.total.fat_g, c: data.total.carbs_g })}
+            {data.total.fiber_g
+              ? t('Білки {p} г · Жири {f} г · Вуглеводи {c} г · Клітковина {k} г', { p: data.total.protein_g, f: data.total.fat_g, c: data.total.carbs_g, k: data.total.fiber_g })
+              : t('Білки {p} г · Жири {f} г · Вуглеводи {c} г', { p: data.total.protein_g, f: data.total.fat_g, c: data.total.carbs_g })}
           </p>
           {data.meals.length === 0 ? (
             <p>{t('На цей день у календарі немає страв.')}</p>
@@ -118,6 +122,7 @@ function DishCalculator() {
   const protein = sum((l) => l.protein_100g)
   const fat = sum((l) => l.fat_100g)
   const carbs = sum((l) => l.carbs_100g)
+  const fiber = sum((l) => l.fiber_100g ?? 0)
 
   async function saveDish() {
     if (!name.trim() || lines.length === 0) return
@@ -131,6 +136,7 @@ function DishCalculator() {
           protein_g: protein,
           fat_g: fat,
           carbs_g: carbs,
+          fiber_g: fiber || null,
           servings,
           ingredients: lines.map((l) => ({ name: l.name.slice(0, 100), amount: `${l.grams} ${t('г')}` })),
         }),
@@ -184,7 +190,7 @@ function DishCalculator() {
               onChange={(e) => setServings(Math.max(1, Number(e.target.value)))} />
           </p>
           <p>
-            {t('На порцію:')} <strong>{kcal} {t('ккал')}</strong> · {t('Б {p} · Ж {f} · В {c} г', { p: protein, f: fat, c: carbs })}
+            {t('На порцію:')} <strong>{kcal} {t('ккал')}</strong> · {macrosLine(protein, fat, carbs, fiber)}
           </p>
           <p>
             <input placeholder={t('Назва страви')} value={name} maxLength={100}

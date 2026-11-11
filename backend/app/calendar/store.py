@@ -3,7 +3,7 @@ import os
 
 import httpx
 
-DISH = "dish:dishes(id,name,calories,protein_g,fat_g,carbs_g)"
+DISH = "dish:dishes(id,name,calories,protein_g,fat_g,carbs_g,fiber_g)"
 FIELDS = f"id,date,slot,{DISH}"
 
 

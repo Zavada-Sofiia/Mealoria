@@ -24,6 +24,7 @@ type Dish = {
   protein_g?: number | null
   fat_g?: number | null
   carbs_g?: number | null
+  fiber_g?: number | null
   favorite?: boolean
   categories?: string[]
 }

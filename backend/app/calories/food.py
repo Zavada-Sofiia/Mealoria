@@ -17,6 +17,7 @@ class FoodItem(BaseModel):
     protein_100g: float
     fat_100g: float
     carbs_100g: float
+    fiber_100g: float = 0
 
 
 class FoodSearchError(Exception):
@@ -64,6 +65,7 @@ def parse_products(products: list[dict]) -> list[FoodItem]:
                 protein_100g=n.get("proteins_100g") or 0,
                 fat_100g=n.get("fat_100g") or 0,
                 carbs_100g=n.get("carbohydrates_100g") or 0,
+                fiber_100g=n.get("fiber_100g") or 0,
             )
         )
     return items

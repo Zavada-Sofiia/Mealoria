@@ -37,6 +37,7 @@ class MealPhotoOut(BaseModel):
     protein_g: float = Field(default=0, ge=0, le=1000)
     fat_g: float = Field(default=0, ge=0, le=1000)
     carbs_g: float = Field(default=0, ge=0, le=1000)
+    fiber_g: float = Field(default=0, ge=0, le=1000)
     ingredients: list[Ingredient] = Field(default_factory=list, max_length=30)
     comment: str = ""
 
@@ -53,6 +54,7 @@ class RecipeIdea(BaseModel):
     protein_g: float = Field(ge=0, le=1000)
     fat_g: float = Field(ge=0, le=1000)
     carbs_g: float = Field(ge=0, le=1000)
+    fiber_g: float = Field(default=0, ge=0, le=1000)
     cook_minutes: int = Field(ge=1, le=600)
     ingredients: list[Ingredient] = Field(max_length=30)
     recipe: str = Field(max_length=5000)
@@ -85,6 +87,7 @@ class NutritionOut(BaseModel):
     protein_g: float = Field(ge=0, le=1000)
     fat_g: float = Field(ge=0, le=1000)
     carbs_g: float = Field(ge=0, le=1000)
+    fiber_g: float = Field(default=0, ge=0, le=1000)
 
 
 class DishRecipeIn(BaseModel):

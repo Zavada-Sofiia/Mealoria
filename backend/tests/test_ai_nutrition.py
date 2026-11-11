@@ -10,7 +10,7 @@ from app.main import app
 from tests.test_ai import FakeQuota
 
 BODY = {"name": "Борщ", "ingredients": [{"name": "Буряк", "amount": "100 г"}, {"name": "Сіль", "amount": ""}]}
-ANSWER = {"calories": 250, "protein_g": 9.5, "fat_g": 10, "carbs_g": 30}
+ANSWER = {"calories": 250, "protein_g": 9.5, "fat_g": 10, "carbs_g": 30, "fiber_g": 4.5}
 
 
 class Plans:

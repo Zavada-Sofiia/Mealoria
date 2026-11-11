@@ -4,10 +4,11 @@ import { apiFetch } from '../api/client'
 import { iso, mondayOf } from '../dates'
 import { mealName } from '../meals'
 import { locale, t } from '../i18n'
+import { macrosLine } from '../macros'
 
 type Day = {
   target: number | null
-  total: { kcal: number; protein_g: number; fat_g: number; carbs_g: number }
+  total: { kcal: number; protein_g: number; fat_g: number; carbs_g: number; fiber_g: number }
   meals: { slot: number; kcal: number; dishes: string[] }[]
 }
 type Profile = { profile: { meals_per_day: number } | null }
@@ -99,7 +100,7 @@ export default function Dashboard() {
               <progress className={total > target ? 'over' : undefined} value={Math.min(total, target)} max={target} />
             ) : null}
             <p className="muted">
-              {t('Б {p} · Ж {f} · В {c} г', { p: day.total.protein_g, f: day.total.fat_g, c: day.total.carbs_g })}
+              {macrosLine(day.total.protein_g, day.total.fat_g, day.total.carbs_g, day.total.fiber_g)}
             </p>
             <Link to="/calories">{t('Деталі →')}</Link>
           </section>

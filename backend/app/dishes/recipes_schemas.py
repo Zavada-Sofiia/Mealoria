@@ -13,6 +13,7 @@ class RecipeOut(BaseModel):
     protein_g: float
     fat_g: float
     carbs_g: float
+    fiber_g: float | None = None
     diet: str
     allergens: list[str]
     cuisine: str | None = None

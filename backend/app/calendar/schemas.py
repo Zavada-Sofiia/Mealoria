@@ -22,6 +22,7 @@ class DishBrief(BaseModel):
     protein_g: float | None = None
     fat_g: float | None = None
     carbs_g: float | None = None
+    fiber_g: float | None = None
 
 
 class EntryOut(BaseModel):

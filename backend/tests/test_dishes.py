@@ -89,3 +89,9 @@ def test_a_dish_can_suit_several_meals(client):
     assert created["categories"] == ["сніданок", "перекус"]
     assert client.post("/api/dishes", json={"name": "Х"}).json()["categories"] == []
     assert client.post("/api/dishes", json={"name": "Х", "categories": ["полуденок"]}).status_code == 422
+
+
+def test_fiber_is_optional_and_validated(client):
+    assert client.post("/api/dishes", json={"name": "Х"}).json()["fiber_g"] is None
+    assert client.post("/api/dishes", json={"name": "Х", "fiber_g": 6.5}).json()["fiber_g"] == 6.5
+    assert client.post("/api/dishes", json={"name": "Х", "fiber_g": -1}).status_code == 422

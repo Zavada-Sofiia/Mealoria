@@ -16,6 +16,7 @@ type Idea = {
   protein_g: number
   fat_g: number
   carbs_g: number
+  fiber_g?: number
   cook_minutes: number
   ingredients: Ingredient[]
   recipe: string
@@ -27,6 +28,7 @@ type MealPhoto = {
   protein_g: number
   fat_g: number
   carbs_g: number
+  fiber_g?: number
   ingredients: Ingredient[]
   comment: string
 }
@@ -55,8 +57,11 @@ function errorText(e: unknown): string {
   return t('Щось пішло не так. Спробуйте ще раз')
 }
 
-function macros(x: { calories: number; protein_g: number; fat_g: number; carbs_g: number }) {
-  return t('{kcal} ккал · Б {p} / Ж {f} / В {c} г', { kcal: x.calories, p: x.protein_g, f: x.fat_g, c: x.carbs_g })
+function macros(x: { calories: number; protein_g: number; fat_g: number; carbs_g: number; fiber_g?: number }) {
+  const v = { kcal: x.calories, p: x.protein_g, f: x.fat_g, c: x.carbs_g }
+  return x.fiber_g
+    ? t('{kcal} ккал · Б {p} / Ж {f} / В {c} · Кл {k} г', { ...v, k: x.fiber_g })
+    : t('{kcal} ккал · Б {p} / Ж {f} / В {c} г', v)
 }
 
 // Results stay in this browser (per account) until cleared, so leaving the page does not lose them.
@@ -157,6 +162,7 @@ function AIPage({ userId }: { userId: string }) {
           protein_g: i.protein_g,
           fat_g: i.fat_g,
           carbs_g: i.carbs_g,
+          fiber_g: i.fiber_g || null,
         }),
       })
       setStatus(t('«{name}» додано до моїх страв', { name: i.name }))
@@ -201,6 +207,7 @@ function AIPage({ userId }: { userId: string }) {
           protein_g: meal.protein_g,
           fat_g: meal.fat_g,
           carbs_g: meal.carbs_g,
+          fiber_g: meal.fiber_g || null,
           ingredients: meal.ingredients,
           photo_url,
         }),

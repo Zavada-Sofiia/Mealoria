@@ -35,14 +35,14 @@ CUISINES = {
 BUDGETS = {"low": "економний", "medium": "середній", "any": "без обмежень"}
 
 MEAL_PHOTO_PROMPT = (
-    "Ти дієтолог. На фото страва. Визнач її назву українською, орієнтовні калорії та БЖВ "
+    "Ти дієтолог. На фото страва. Визнач її назву українською, орієнтовні калорії, БЖВ та клітковину "
     "на всю порцію, яка видна на фото, і основні інгредієнти з орієнтовною вагою (наприклад, "
     "'150 г'). Це лише оцінка. Якщо на фото немає їжі, поверни is_food = false і нулі. "
     "Відповідай українською."
 )
 
 RECIPE_SCHEMA_HINT = (
-    "Кожен рецепт: коротка назва, категорія, калорії та БЖВ на одну порцію, час приготування "
+    "Кожен рецепт: коротка назва, категорія, калорії, БЖВ та клітковина (г) на одну порцію, час приготування "
     "у хвилинах, інгредієнти з кількістю (наприклад '200 г', '2 шт') і рецепт у 3–6 коротких "
     "пронумерованих кроках, кожен крок з нового рядка. Відповідай українською."
 )
@@ -118,7 +118,7 @@ def image_description_prompt(name: str, ingredient_names: list[str]) -> str:
 
 def nutrition_prompt(name: str, ingredients: list[dict], recipe: str, servings: int = 1) -> str:
     lines = [
-        "Ти дієтолог. Оціни калорії та БЖВ (білки, жири, вуглеводи) на ОДНУ порцію страви.",
+        "Ти дієтолог. Оціни калорії та БЖВ (білки, жири, вуглеводи) і клітковину на ОДНУ порцію страви.",
         f"Назва страви: «{name}».",
     ]
     if ingredients:
@@ -128,7 +128,7 @@ def nutrition_prompt(name: str, ingredients: list[dict], recipe: str, servings: 
         if servings > 1:
             lines.append(
                 f"Інгредієнти вказано на всю страву, з неї виходить {servings} порцій: {listed}. "
-                f"Порахуй калорії та БЖВ на ОДНУ порцію (одна {servings}-а частина страви)."
+                f"Порахуй калорії, БЖВ і клітковину на ОДНУ порцію (одна {servings}-а частина страви)."
             )
         else:
             lines.append(
@@ -138,7 +138,7 @@ def nutrition_prompt(name: str, ingredients: list[dict], recipe: str, servings: 
         lines.append("Інгредієнти не вказано: оціни за типовою порцією такої страви.")
     if recipe:
         lines.append(f"Рецепт: «{recipe[:600]}».")
-    lines.append("Це оцінка. Відповідай числами: калорії цілим числом, БЖВ у грамах.")
+    lines.append("Це оцінка. Відповідай числами: калорії цілим числом, БЖВ і клітковина у грамах.")
     return "\n".join(lines)
 
 
@@ -161,10 +161,11 @@ MEAL_PHOTO_SCHEMA = _obj(
         "protein_g": {"type": "NUMBER"},
         "fat_g": {"type": "NUMBER"},
         "carbs_g": {"type": "NUMBER"},
+        "fiber_g": {"type": "NUMBER"},
         "ingredients": INGREDIENTS,
         "comment": {"type": "STRING"},
     },
-    ["is_food", "name", "calories", "protein_g", "fat_g", "carbs_g", "ingredients"],
+    ["is_food", "name", "calories", "protein_g", "fat_g", "carbs_g", "fiber_g", "ingredients"],
 )
 
 RECIPES_SCHEMA = _obj(
@@ -182,11 +183,12 @@ RECIPES_SCHEMA = _obj(
                     "protein_g": {"type": "NUMBER"},
                     "fat_g": {"type": "NUMBER"},
                     "carbs_g": {"type": "NUMBER"},
+                    "fiber_g": {"type": "NUMBER"},
                     "cook_minutes": {"type": "INTEGER"},
                     "ingredients": INGREDIENTS,
                     "recipe": {"type": "STRING"},
                 },
-                ["name", "category", "calories", "protein_g", "fat_g", "carbs_g",
+                ["name", "category", "calories", "protein_g", "fat_g", "carbs_g", "fiber_g",
                  "cook_minutes", "ingredients", "recipe"],
             ),
         }
@@ -202,8 +204,9 @@ NUTRITION_SCHEMA = _obj(
         "protein_g": {"type": "NUMBER"},
         "fat_g": {"type": "NUMBER"},
         "carbs_g": {"type": "NUMBER"},
+        "fiber_g": {"type": "NUMBER"},
     },
-    ["calories", "protein_g", "fat_g", "carbs_g"],
+    ["calories", "protein_g", "fat_g", "carbs_g", "fiber_g"],
 )
 
 DISH_RECIPE_SCHEMA = _obj(

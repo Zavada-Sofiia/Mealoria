@@ -5,6 +5,7 @@ import ServingsPicker from '../components/ServingsPicker'
 import { scaleAmount, useServings } from '../servings'
 import { oneStepPerLine } from '../steps'
 import { t } from '../i18n'
+import { macrosLine } from '../macros'
 
 type Recipe = {
   id: string
@@ -16,6 +17,7 @@ type Recipe = {
   protein_g: number
   fat_g: number
   carbs_g: number
+  fiber_g: number | null
   diet: string
   allergens: string[]
   cuisine: string | null
@@ -157,7 +159,7 @@ export default function Recipes() {
               )}
               <div>
             <strong>{r.name}</strong> · {t(r.category)} · {r.calories} {t('ккал')} ·{' '}
-            {t('Б {p} · Ж {f} · В {c} г', { p: r.protein_g, f: r.fat_g, c: r.carbs_g })}
+            {macrosLine(r.protein_g, r.fat_g, r.carbs_g, r.fiber_g)}
             <div>
               <small>
                 {t('{n} хв', { n: r.cook_minutes })}

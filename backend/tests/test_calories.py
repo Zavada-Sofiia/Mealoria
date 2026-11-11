@@ -54,14 +54,14 @@ def test_only_ukrainian_names_are_returned_and_the_uk_field_wins():
 
 
 def test_summarize_totals_and_meals():
-    dish = lambda name, kcal: {"name": name, "calories": kcal, "protein_g": 10, "fat_g": None, "carbs_g": 20}
+    dish = lambda name, kcal: {"name": name, "calories": kcal, "protein_g": 10, "fat_g": None, "carbs_g": 20, "fiber_g": 4}
     result = summarize([
         {"slot": 1, "dish": dish("Суп", 200)},
         {"slot": 0, "dish": dish("Каша", 300)},
         {"slot": 0, "dish": dish("Чай", None)},
         {"slot": 2, "dish": None},
     ])
-    assert result["total"] == {"kcal": 500.0, "protein_g": 30.0, "fat_g": 0.0, "carbs_g": 60.0}
+    assert result["total"] == {"kcal": 500.0, "protein_g": 30.0, "fat_g": 0.0, "carbs_g": 60.0, "fiber_g": 12.0}
     assert [m["slot"] for m in result["meals"]] == [0, 1]
     assert result["meals"][0]["dishes"] == ["Каша", "Чай"]
 

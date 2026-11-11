@@ -6,6 +6,7 @@ import PhotoPicker from '../components/PhotoPicker'
 import { usePlan } from '../plan/context'
 import { oneStepPerLine } from '../steps'
 import { locale, t } from '../i18n'
+import { macrosLine } from '../macros'
 
 type Ingredient = { name: string; amount: string }
 type DishInput = {
@@ -16,6 +17,7 @@ type DishInput = {
   protein_g: number | null
   fat_g: number | null
   carbs_g: number | null
+  fiber_g: number | null
   photo_url: string | null
   favorite: boolean
   servings: number
@@ -45,7 +47,7 @@ function loadSort(): Sort {
   return 'fav'
 }
 
-const EMPTY: DishInput = { name: '', recipe: '', ingredients: [], calories: null, protein_g: null, fat_g: null, carbs_g: null, photo_url: null, favorite: false, servings: 1, categories: [] }
+const EMPTY: DishInput = { name: '', recipe: '', ingredients: [], calories: null, protein_g: null, fat_g: null, carbs_g: null, fiber_g: null, photo_url: null, favorite: false, servings: 1, categories: [] }
 
 export default function Dishes() {
   const { me, refresh } = usePlan()
@@ -124,10 +126,10 @@ export default function Dishes() {
     return fallback
   }
 
-  type Nutrition = Pick<DishInput, 'calories' | 'protein_g' | 'fat_g' | 'carbs_g'>
+  type Nutrition = Pick<DishInput, 'calories' | 'protein_g' | 'fat_g' | 'carbs_g' | 'fiber_g'>
 
   async function estimateNutrition(source: DishInput): Promise<Nutrition> {
-    const n = await apiFetch<{ calories: number; protein_g: number; fat_g: number; carbs_g: number }>(
+    const n = await apiFetch<{ calories: number; protein_g: number; fat_g: number; carbs_g: number; fiber_g: number }>(
       '/api/ai/dish-nutrition',
       {
         method: 'POST',
@@ -140,7 +142,7 @@ export default function Dishes() {
         }),
       },
     )
-    return { calories: n.calories, protein_g: n.protein_g, fat_g: n.fat_g, carbs_g: n.carbs_g }
+    return { calories: n.calories, protein_g: n.protein_g, fat_g: n.fat_g, carbs_g: n.carbs_g, fiber_g: n.fiber_g || null }
   }
 
   async function fillNutrition() {
@@ -278,7 +280,7 @@ export default function Dishes() {
     let estimated = false
     let failureNote = ''
     const noNutrition =
-      form.calories == null && form.protein_g == null && form.fat_g == null && form.carbs_g == null
+      form.calories == null && form.protein_g == null && form.fat_g == null && form.carbs_g == null && form.fiber_g == null
     if (premium && noNutrition && form.name.trim()) {
       // premium: fill calories and macros automatically when they were left empty
       setStatus(t('Рахуємо КБЖВ…'))
@@ -374,6 +376,7 @@ export default function Dishes() {
       protein_g: d.protein_g,
       fat_g: d.fat_g,
       carbs_g: d.carbs_g,
+      fiber_g: d.fiber_g ?? null,
       photo_url: d.photo_url,
       favorite: d.favorite,
       servings: d.servings ?? 1,
@@ -469,6 +472,13 @@ export default function Dishes() {
           <input type="number" min={0} max={1000} step={0.1} value={form.carbs_g ?? ''}
             onChange={(e) =>
               setForm({ ...form, carbs_g: e.target.value ? Number(e.target.value) : null })
+            } />
+        </label>
+        <label>
+          {t('Клітковина, г')}
+          <input type="number" min={0} max={1000} step={0.1} value={form.fiber_g ?? ''}
+            onChange={(e) =>
+              setForm({ ...form, fiber_g: e.target.value ? Number(e.target.value) : null })
             } />
         </label>
         </div>
@@ -602,7 +612,7 @@ export default function Dishes() {
             ))}
             {d.calories != null && ` · ${d.calories} ${t('ккал')}`}
             {(d.protein_g != null || d.fat_g != null || d.carbs_g != null) &&
-              ` · ${t('Б {p} · Ж {f} · В {c} г', { p: d.protein_g ?? 0, f: d.fat_g ?? 0, c: d.carbs_g ?? 0 })}`}
+              ` · ${macrosLine(d.protein_g, d.fat_g, d.carbs_g, d.fiber_g)}`}
             {d.servings > 1 && ` · ${t('Порцій: {n}', { n: d.servings })}`}
             {d.ingredients.length > 0 && (
               <div>{d.ingredients.map((i) => `${i.name}${i.amount ? ` (${i.amount})` : ''}`).join(', ')}</div>
