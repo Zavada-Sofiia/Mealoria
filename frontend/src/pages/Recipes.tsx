@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 import { apiFetch } from '../api/client'
+import ServingsPicker from '../components/ServingsPicker'
+import { scaleAmount, useServings } from '../servings'
 
 type Recipe = {
   id: string
@@ -105,6 +107,7 @@ export default function Recipes() {
     }
   }
 
+  const [servings, setServings] = useServings()
   const shown = recipes
     .filter((r) => !category || r.category === category)
     .sort((a, b) => CATEGORIES.indexOf(a.category) - CATEGORIES.indexOf(b.category))
@@ -112,6 +115,7 @@ export default function Recipes() {
   return (
     <div>
       <h1>Рецепти</h1>
+      <ServingsPicker value={servings} onChange={setServings} />
       <div className="actions" style={{ marginBottom: 12 }}>
         <input placeholder="Пошук за назвою" value={query} style={{ maxWidth: 320 }}
           onChange={(e) => setQuery(e.target.value)} />
@@ -162,7 +166,10 @@ export default function Recipes() {
             </div>
             <details>
               <summary>Рецепт</summary>
-              <div>{r.ingredients.map((i) => `${i.name} (${i.amount})`).join(', ')}</div>
+              <div>
+                {servings > 1 && <strong>На {servings}: </strong>}
+                {r.ingredients.map((i) => `${i.name} (${scaleAmount(i.amount, servings)})`).join(', ')}
+              </div>
               <p>{r.recipe}</p>
             </details>
             <div className="actions" style={{ marginTop: 8 }}>

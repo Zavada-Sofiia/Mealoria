@@ -1218,3 +1218,26 @@ table.week.single .entry button {
 :root[data-theme='dark'] li button {
   color: var(--teal-dark);
 }
+
+.servings {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 14px;
+  color: var(--muted);
+}
+.servings strong {
+  min-width: 1.5em;
+  text-align: center;
+  color: var(--ink);
+  font-size: 1.1rem;
+}
+.servings button {
+  width: 40px;
+  min-height: 40px;
+  height: 40px;
+  padding: 0;
+  border-radius: 999px;
+  font-size: 1.3rem;
+  line-height: 1;
+}

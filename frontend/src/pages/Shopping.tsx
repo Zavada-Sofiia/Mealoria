@@ -1,7 +1,9 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { apiFetch } from '../api/client'
+import ServingsPicker from '../components/ServingsPicker'
 import { addDays, iso, mondayOf } from '../dates'
+import { scaleAmount, useServings } from '../servings'
 
 type Item = { name: string; amount: string; checked: boolean }
 type ShoppingResponse = { items: Item[]; at_home: string[] }
@@ -14,6 +16,7 @@ export default function Shopping() {
   const [newItem, setNewItem] = useState('')
   const [status, setStatus] = useState('Завантаження…')
   const [version, setVersion] = useState(0)
+  const [servings, setServings] = useServings()
 
   const start = iso(weekStart)
 
@@ -96,6 +99,7 @@ export default function Shopping() {
         <button onClick={() => goToWeek(addDays(weekStart, 7))}>→</button>
         <button onClick={() => goToWeek(mondayOf(new Date()))}>Сьогодні</button>
       </div>
+      <ServingsPicker value={servings} onChange={setServings} />
       {status && <p className="status">{status}</p>}
       {!status && data.items.length === 0 && data.at_home.length === 0 && (
         <p>
@@ -108,7 +112,7 @@ export default function Shopping() {
           <li key={i.name} style={{ textDecoration: i.checked ? 'line-through' : undefined, opacity: i.checked ? 0.6 : 1 }}>
             <label className="inline" style={{ margin: 0 }}>
               <input type="checkbox" checked={i.checked} onChange={() => toggle(i)} /> {i.name}
-              {i.amount && ` — ${i.amount}`}
+              {i.amount && ` — ${scaleAmount(i.amount, servings)}`}
             </label>
           </li>
         ))}
