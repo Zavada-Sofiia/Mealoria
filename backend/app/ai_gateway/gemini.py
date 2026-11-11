@@ -4,7 +4,9 @@ import os
 import httpx
 
 API = "https://generativelanguage.googleapis.com/v1beta/models"
-DEFAULT_MODEL = "gemini-2.5-flash"
+# The "-latest" alias follows Google's current Flash model, so retired model names stop breaking us.
+# Pin a specific model with the GEMINI_MODEL environment variable if needed.
+DEFAULT_MODEL = "gemini-flash-latest"
 
 
 class AIError(Exception):
@@ -31,7 +33,6 @@ def generate_json(
         "generationConfig": {
             "responseMimeType": "application/json",
             "responseSchema": schema,
-            "temperature": 0.4,
         },
     }
     try:

@@ -98,7 +98,7 @@ pytest                      # тести
 | `SUPABASE_PUBLISHABLE_KEY` | публічний ключ (publishable) |
 | `CORS_ORIGINS` | дозволені адреси сайту через кому (необов'язково) |
 | `GEMINI_API_KEY` | ключ Google AI Studio для ШІ-помічника. Без нього ШІ-запити повертають 503 |
-| `GEMINI_MODEL` | модель Gemini, за замовчуванням `gemini-2.5-flash` |
+| `GEMINI_MODEL` | модель Gemini, за замовчуванням `gemini-flash-latest` (завжди актуальна Flash-модель) |
 | `AI_DAILY_LIMIT` | ШІ-запитів на користувача на добу, за замовчуванням 5 |
 
 ### 3. Фронтенд

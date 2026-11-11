@@ -138,7 +138,7 @@ def test_generate_json_parses_gemini_response(monkeypatch):
 
     monkeypatch.setattr(gemini.httpx, "post", fake_post)
     assert gemini.generate_json("hi", {"type": "OBJECT"}, "QUJD") == {"a": 1}
-    assert seen["key"] == "k" and "gemini-2.5-flash:generateContent" in seen["url"]
+    assert seen["key"] == "k" and "gemini-flash-latest:generateContent" in seen["url"]
     parts = seen["body"]["contents"][0]["parts"]
     assert parts[1]["inline_data"]["data"] == "QUJD"
 
