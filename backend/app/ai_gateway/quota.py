@@ -2,12 +2,6 @@ import os
 
 import httpx
 
-DEFAULT_DAILY_LIMIT = 5
-
-
-def daily_limit() -> int:
-    return int(os.environ.get("AI_DAILY_LIMIT", DEFAULT_DAILY_LIMIT))
-
 
 class SupabaseQuotaStore:
     """Calls the ai_quota() SQL function as the signed-in user."""

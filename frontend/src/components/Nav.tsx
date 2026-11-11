@@ -1,6 +1,7 @@
 import { NavLink } from 'react-router-dom'
 import { useEffect } from 'react'
 import { supabase } from '../api/supabase'
+import { usePlan } from '../plan/context'
 
 const TABS = [
   ['/today', 'Сьогодні'],
@@ -25,6 +26,7 @@ const RIGHT = [
 ]
 
 export default function Nav() {
+  const { me } = usePlan()
   useEffect(() => {
     document.body.classList.add('has-tabbar')
     return () => document.body.classList.remove('has-tabbar')
@@ -48,6 +50,11 @@ export default function Nav() {
               </NavLink>
             ))}
           </nav>
+          {me && (
+            <NavLink to="/pricing" className={`plan-badge${me.plan === 'premium' ? ' premium' : ''}`}>
+              {me.plan === 'premium' ? 'Преміум' : 'Безкоштовний тариф'}
+            </NavLink>
+          )}
           <button className="secondary" onClick={() => supabase.auth.signOut()}>
             Вийти
           </button>

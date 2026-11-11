@@ -1,5 +1,6 @@
 from uuid import UUID
 
+import httpx
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials
 
@@ -10,6 +11,7 @@ from app.dishes.recipes_store import SupabaseRecipeStore
 from app.dishes.router import get_store as get_dish_store
 from app.dishes.schemas import DishOut
 from app.dishes.store import SupabaseDishStore
+from app.limits.plans import raise_if_plan_limit
 from app.profile.router import get_store as get_profile_store
 from app.profile.store import SupabaseProfileStore
 
@@ -47,4 +49,8 @@ def save_to_my_dishes(
         raise HTTPException(status_code=404, detail="Recipe not found")
     fields = ("name", "recipe", "ingredients", "calories", "protein_g", "fat_g", "carbs_g", "photo_url")
     data = {k: recipe.get(k) for k in fields}
-    return dishes.create(user_id, data)
+    try:
+        return dishes.create(user_id, data)
+    except httpx.HTTPStatusError as e:
+        raise_if_plan_limit(e)
+        raise

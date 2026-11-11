@@ -4,7 +4,7 @@ from fastapi.testclient import TestClient
 
 from app.ai_gateway import gemini, prompts
 from app.ai_gateway import router as ai_router
-from app.ai_gateway.router import get_quota_store
+from app.ai_gateway.router import get_plan_store, get_quota_store
 from app.auth import current_user_id
 from app.main import app
 from app.profile.router import get_store as get_profile_store
@@ -40,6 +40,14 @@ class FakeQuota:
         return {"allowed": True, "used": self.used, "limit": limit}
 
 
+class FakePlans:
+    def __init__(self, ai_per_day=2):
+        self.ai_per_day = ai_per_day
+
+    def my_limits(self):
+        return {"plan": "free", "ai_per_day": self.ai_per_day}
+
+
 class FakeProfiles:
     row = None
 
@@ -55,7 +63,6 @@ def no_sleep(monkeypatch):
 @pytest.fixture
 def env(monkeypatch):
     monkeypatch.setenv("GEMINI_API_KEY", "test-key")
-    monkeypatch.setenv("AI_DAILY_LIMIT", "2")
     quota, profiles, calls = FakeQuota(), FakeProfiles(), []
 
     def fake_generate(prompt, schema, image_b64=None, mime_type="image/jpeg"):
@@ -65,6 +72,7 @@ def env(monkeypatch):
     monkeypatch.setattr(ai_router, "generate_json", fake_generate)
     app.dependency_overrides[current_user_id] = lambda: "user-1"
     app.dependency_overrides[get_quota_store] = lambda: quota
+    app.dependency_overrides[get_plan_store] = lambda: FakePlans()
     app.dependency_overrides[get_profile_store] = lambda: profiles
     yield TestClient(app), quota, profiles, calls
     app.dependency_overrides.clear()
@@ -288,3 +296,22 @@ def test_quota_failure_after_success_still_returns_the_answer(env, monkeypatch):
 
     monkeypatch.setattr(quota, "consume", broken_consume)
     assert client.post("/api/ai/recipes", json={}).status_code == 200
+
+
+def test_premium_gets_a_bigger_daily_limit(env):
+    client, quota, _, _ = env
+    app.dependency_overrides[get_plan_store] = lambda: FakePlans(ai_per_day=50)
+    assert client.get("/api/ai/quota").json() == {"used": 0, "limit": 50}
+    quota.used = 2  # over the free limit of 2, still fine for premium
+    assert client.post("/api/ai/recipes", json={}).status_code == 200
+
+
+def test_plan_lookup_failure_falls_back_to_the_free_limit(env):
+    client, quota, _, _ = env
+
+    class Broken:
+        def my_limits(self):
+            raise httpx.ConnectError("db down")
+
+    app.dependency_overrides[get_plan_store] = lambda: Broken()
+    assert client.get("/api/ai/quota").json()["limit"] == 3

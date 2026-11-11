@@ -30,6 +30,9 @@ export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise
     } catch {
       // no JSON body
     }
+    if (res.status === 403 && detail.startsWith('plan_limit:')) {
+      window.dispatchEvent(new CustomEvent('plan-limit', { detail }))
+    }
     throw new ApiError(res.status, detail)
   }
   if (res.status === 204) return undefined as T

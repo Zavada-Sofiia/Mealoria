@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { ApiError, apiFetch } from '../api/client'
 import NotFound from './NotFound'
 
@@ -13,6 +13,7 @@ type UserRow = {
   planned: number
   preordered: boolean
 }
+type PremiumUser = { email: string; premium_until: string | null; active: boolean }
 type Stats = {
   users_total: number
   users_7d: number
@@ -55,6 +56,11 @@ export default function Admin() {
   const [denied, setDenied] = useState(false)
   const [error, setError] = useState('')
   const [version, setVersion] = useState(0)
+  const [premium, setPremium] = useState<PremiumUser[]>([])
+  const [email, setEmail] = useState('')
+  const [plan, setPlan] = useState('premium')
+  const [days, setDays] = useState('30')
+  const [planMessage, setPlanMessage] = useState('')
 
   useEffect(() => {
     let current = true
@@ -65,10 +71,38 @@ export default function Admin() {
         if (e instanceof ApiError && e.status === 404) setDenied(true)
         else setError('Не вдалося завантажити статистику')
       })
+    // a failure here (for example, the plans SQL is not applied yet) must not hide the stats
+    apiFetch<PremiumUser[]>('/api/admin/premium')
+      .then((p) => current && setPremium(p))
+      .catch(() => {})
     return () => {
       current = false
     }
   }, [version])
+
+  async function changePlan(e: FormEvent) {
+    e.preventDefault()
+    setPlanMessage('')
+    try {
+      await apiFetch('/api/admin/plan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: email.trim(),
+          plan,
+          days: plan === 'premium' && days ? Number(days) : null,
+        }),
+      })
+      setPlanMessage(plan === 'premium' ? 'Преміум видано' : 'Користувача повернуто на безкоштовний тариф')
+      setVersion((v) => v + 1)
+    } catch (err) {
+      setPlanMessage(
+        err instanceof ApiError && err.detail === 'user_not_found'
+          ? 'Користувача з такою поштою не знайдено (він має хоч раз увійти на сайт)'
+          : 'Не вдалося змінити тариф',
+      )
+    }
+  }
 
   // Anyone who is not an admin gets the same page as for an address that does not exist.
   if (denied) return <NotFound />
@@ -78,6 +112,7 @@ export default function Admin() {
     ? [
         ['Користувачів', stats.users_total],
         ['Нових за 7 днів', stats.users_7d],
+        ['Преміум-користувачів', premium.filter((p) => p.active).length],
         ['Передзамовлень', stats.preorders_total],
         ['Конверсія в передзамовлення', `${conversion}%`],
         ['Заповнили профіль', stats.profiles_total],
@@ -113,6 +148,55 @@ export default function Admin() {
             <Bars days={stats.daily} field="signups" title="Реєстрації за 14 днів" />
             <Bars days={stats.daily} field="preorders" title="Передзамовлення за 14 днів" />
           </div>
+
+          <section className="card">
+            <h3>Тарифи користувачів</h3>
+            <form onSubmit={changePlan}>
+              <div className="row">
+                <label>
+                  Email користувача
+                  <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+                </label>
+                <label>
+                  Тариф
+                  <select value={plan} onChange={(e) => setPlan(e.target.value)}>
+                    <option value="premium">Преміум</option>
+                    <option value="free">Безкоштовний</option>
+                  </select>
+                </label>
+                {plan === 'premium' && (
+                  <label>
+                    Днів (порожньо = безстроково)
+                    <input type="number" min={1} max={3650} value={days} onChange={(e) => setDays(e.target.value)} />
+                  </label>
+                )}
+              </div>
+              <button type="submit">Застосувати</button>
+              {planMessage && <span className="muted"> {planMessage}</span>}
+            </form>
+            {premium.length > 0 && (
+              <div className="week-scroll" style={{ boxShadow: 'none', marginTop: 16 }}>
+                <table className="data">
+                  <thead>
+                    <tr>
+                      <th>Email</th>
+                      <th>Діє до</th>
+                      <th>Статус</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {premium.map((p) => (
+                      <tr key={p.email}>
+                        <td>{p.email}</td>
+                        <td>{p.premium_until ? fmt(p.premium_until) : 'безстроково'}</td>
+                        <td>{p.active ? 'діє' : 'закінчився'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </section>
 
           <section className="card red">
             <h3>Користувачі (останні 200)</h3>

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { apiFetch } from '../api/client'
 import { deleteDishPhoto, uploadDishPhoto } from '../api/photos'
 import PhotoPicker from '../components/PhotoPicker'
+import { usePlan } from '../plan/context'
 
 type Ingredient = { name: string; amount: string }
 type DishInput = {
@@ -20,6 +21,7 @@ type Dish = DishInput & { id: string }
 const EMPTY: DishInput = { name: '', recipe: '', ingredients: [], calories: null, protein_g: null, fat_g: null, carbs_g: null, photo_url: null }
 
 export default function Dishes() {
+  const { me, refresh } = usePlan()
   const [dishes, setDishes] = useState<Dish[]>([])
   const [form, setForm] = useState<DishInput>(EMPTY)
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -60,6 +62,8 @@ export default function Dishes() {
     }
   }
 
+  const atLimit = me !== null && !editingId && dishes.length >= me.dishes
+
   async function save(e: FormEvent) {
     e.preventDefault()
     const body = JSON.stringify({
@@ -79,6 +83,7 @@ export default function Dishes() {
       setForm(EMPTY)
       setEditingId(null)
       setStatus('Збережено')
+      refresh()
     } catch {
       setStatus('Не вдалося зберегти')
     }
@@ -90,6 +95,7 @@ export default function Dishes() {
       await apiFetch<void>(`/api/dishes/${id}`, { method: 'DELETE' })
       void deleteDishPhoto(dishes.find((d) => d.id === id)?.photo_url ?? null)
       setDishes((ds) => ds.filter((d) => d.id !== id))
+      refresh()
     } catch {
       setStatus('Не вдалося видалити')
     }
@@ -112,6 +118,14 @@ export default function Dishes() {
   return (
     <div>
       <h1>Мої страви</h1>
+      {me && (
+        <p className="usage">
+          <span>
+            Страв: <strong>{dishes.length}</strong> з {me.dishes}
+          </span>
+          {me.plan === 'free' && <Link to="/pricing">У преміумі до 500</Link>}
+        </p>
+      )}
       <p>
         <Link to="/recipes">Знайти рецепт</Link>
       </p>
@@ -205,7 +219,14 @@ export default function Dishes() {
             onChange={(e) => setForm({ ...form, recipe: e.target.value })} />
         </label>
         <div className="actions">
-        <button type="submit">{editingId ? 'Зберегти зміни' : 'Додати'}</button>
+        <button type="submit" disabled={atLimit}>
+          {editingId ? 'Зберегти зміни' : 'Додати'}
+        </button>
+        {atLimit && (
+          <span className="muted">
+            Ліміт страв вичерпано. Видаліть зайві або <Link to="/pricing">перейдіть на преміум</Link>.
+          </span>
+        )}
         {editingId && (
           <button type="button" onClick={() => { setEditingId(null); setForm(EMPTY) }}>
             Скасувати

@@ -3,7 +3,9 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from './api/supabase'
 import Nav from './components/Nav'
+import PlanLimitBanner from './components/PlanLimitBanner'
 import PublicNav from './components/PublicNav'
+import PlanProvider from './plan/PlanProvider'
 import Admin from './pages/Admin'
 import AI from './pages/AI'
 import Auth from './pages/Auth'
@@ -32,8 +34,10 @@ function App() {
 
   return (
     <BrowserRouter>
+      <PlanProvider signedIn={!!session}>
       {session ? <Nav /> : <PublicNav />}
       <main className="page">
+      {session && <PlanLimitBanner />}
       <Routes>
         <Route path="/auth" element={session ? <Navigate to="/today" /> : <Auth />} />
         <Route
@@ -75,6 +79,7 @@ function App() {
         <Route path="*" element={<NotFound />} />
       </Routes>
       </main>
+      </PlanProvider>
     </BrowserRouter>
   )
 }

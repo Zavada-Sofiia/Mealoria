@@ -3,6 +3,8 @@ import { ApiError, apiFetch } from '../api/client'
 import { supabase } from '../api/supabase'
 import { blobToBase64, compressImage, uploadDishPhoto } from '../api/photos'
 import PhotoPicker from '../components/PhotoPicker'
+import { Link } from 'react-router-dom'
+import { usePlan } from '../plan/context'
 
 type Ingredient = { name: string; amount: string }
 type Idea = {
@@ -84,6 +86,7 @@ export default function AI() {
 }
 
 function AIPage({ userId }: { userId: string }) {
+  const { me, table } = usePlan()
   const [saved] = useState(() => (userId ? loadSaved(userId) : EMPTY_SAVED))
   const [quota, setQuota] = useState<Quota | null>(null)
   const [category, setCategory] = useState(saved.category)
@@ -222,7 +225,12 @@ function AIPage({ userId }: { userId: string }) {
       <p className="muted">
         {quota
           ? `Сьогодні використано ${quota.used} з ${quota.limit} запитів${left === 0 ? '. Ліміт вичерпано' : ''}.`
-          : 'Перевіряємо ліміт…'}
+          : 'Перевіряємо ліміт…'}{' '}
+        {me?.plan === 'free' && table && (
+          <>
+            У преміумі {table.premium.ai_per_day} запитів на добу. <Link to="/pricing">Тарифи</Link>
+          </>
+        )}
       </p>
       {status && <p className="status">{status}</p>}
       {hasResults && (

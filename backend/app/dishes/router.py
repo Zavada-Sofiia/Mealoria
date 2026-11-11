@@ -1,5 +1,6 @@
 from uuid import UUID
 
+import httpx
 from fastapi import APIRouter, Depends, HTTPException, Response
 from fastapi.security import HTTPAuthorizationCredentials
 
@@ -7,6 +8,7 @@ from app.auth import bearer, current_user_id
 from app.dishes.photos import check_photo_url
 from app.dishes.schemas import DishIn, DishOut
 from app.dishes.store import SupabaseDishStore
+from app.limits.plans import raise_if_plan_limit
 
 router = APIRouter(prefix="/api/dishes", tags=["dishes"])
 
@@ -32,7 +34,11 @@ def create_dish(
     store: SupabaseDishStore = Depends(get_store),
 ):
     check_photo_url(body.photo_url, user_id)
-    return store.create(user_id, body.model_dump())
+    try:
+        return store.create(user_id, body.model_dump())
+    except httpx.HTTPStatusError as e:
+        raise_if_plan_limit(e)
+        raise
 
 
 @router.put("/{dish_id}", response_model=DishOut)

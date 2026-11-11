@@ -1,12 +1,14 @@
 import datetime as dt
 from uuid import UUID
 
+import httpx
 from fastapi import APIRouter, Depends, HTTPException, Response
 from fastapi.security import HTTPAuthorizationCredentials
 
 from app.auth import bearer, current_user_id
 from app.calendar.schemas import EntryIn, EntryMove, EntryOut
 from app.calendar.store import SupabaseCalendarStore
+from app.limits.plans import raise_if_plan_limit
 
 router = APIRouter(prefix="/api/calendar", tags=["calendar"])
 
@@ -34,7 +36,8 @@ def add_entry(
 ):
     try:
         return store.create(user_id, body.model_dump(mode="json"))
-    except Exception:
+    except httpx.HTTPStatusError as e:
+        raise_if_plan_limit(e)
         raise HTTPException(status_code=400, detail="Could not add dish to calendar")
 
 
@@ -45,7 +48,11 @@ def move_entry(
     _: str = Depends(current_user_id),
     store: SupabaseCalendarStore = Depends(get_store),
 ):
-    row = store.move(str(entry_id), body.model_dump(mode="json"))
+    try:
+        row = store.move(str(entry_id), body.model_dump(mode="json"))
+    except httpx.HTTPStatusError as e:
+        raise_if_plan_limit(e)
+        raise
     if row is None:
         raise HTTPException(status_code=404, detail="Entry not found")
     return row
