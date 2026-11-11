@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../api/supabase'
+import { passwordProblems } from '../password'
 
 export default function Auth() {
   const navigate = useNavigate()
@@ -8,11 +9,13 @@ export default function Auth() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [message, setMessage] = useState('')
+  const problems = mode === 'signup' ? passwordProblems(password, email) : []
 
   async function submit(e: FormEvent) {
     e.preventDefault()
     setMessage('')
     if (mode === 'signup') {
+      if (problems.length) return setMessage('Придумайте надійніший пароль: ' + problems.join('; ').toLowerCase() + '.')
       const { data, error } = await supabase.auth.signUp({ email, password })
       if (error) return setMessage(error.message)
       if (!data.session) return setMessage('Перевірте пошту, щоб підтвердити email.')
@@ -52,10 +55,17 @@ export default function Auth() {
           autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          minLength={6}
           required
         />
       </label>
+      {problems.length > 0 && password && (
+        <ul className="pw-hints">
+          {problems.map((p) => (
+            <li key={p}>{p}</li>
+          ))}
+        </ul>
+      )}
+      {mode === 'signup' && !problems.length && password && <p className="pw-ok">Пароль надійний</p>}
       <div className="actions">
         <button type="submit">{mode === 'signin' ? 'Увійти' : 'Зареєструватися'}</button>
         <button type="button" onClick={() => setMode(mode === 'signin' ? 'signup' : 'signin')}>
