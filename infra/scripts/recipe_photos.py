@@ -6,6 +6,10 @@ Usage:
     python3 infra/scripts/recipe_photos.py            # writes infra/scripts/out/<slug>.jpg
     python3 infra/scripts/recipe_photos.py --dry-run  # only prints the prompts
 
+After generating, shrink the files for the web (macOS): see out_web in the README steps:
+    mkdir -p infra/scripts/out_web && for f in infra/scripts/out/*.jpg; do
+      sips -Z 640 -s format jpeg -s formatOptions 70 "$f" --out infra/scripts/out_web/ >/dev/null; done
+
 Existing files are skipped, so it is safe to run again after a failure.
 Upload the files from out/ to Supabase Storage: bucket dish-photos, folder recipes/.
 """
@@ -37,10 +41,10 @@ RECIPES = {
     "pumpkin-soup": ("Крем-суп з гарбуза", "smooth orange pumpkin cream soup in a bowl"),
     "pasta-tomato": ("Макарони з томатним соусом", "pasta with tomato sauce and grated hard cheese"),
     "caesar-chicken": ("Салат Цезар з куркою", "chicken caesar salad with croutons and parmesan"),
-    "braised-cabbage-pork": ("Тушкована капуста зі свининою", "braised cabbage with pork and carrot in a pan"),
+    "braised-cabbage-pork": ("Тушкована капуста зі свининою", "braised white cabbage stew with chunks of pork and carrot in a cast iron skillet, no noodles, no chopsticks"),
     "baked-fish-vegetables": ("Запечена риба з овочами", "baked white fish fillet with zucchini and tomato, lemon"),
     "steamed-chicken-cutlets": ("Парові курячі котлети з броколі", "steamed chicken cutlets with broccoli on a plate"),
-    "vegetable-stew": ("Овочеве рагу", "vegetable stew with zucchini, eggplant and potato"),
+    "vegetable-stew": ("Овочеве рагу", "colorful vegetable stew with zucchini slices, tomato, potato cubes and bell pepper in a bowl"),
     "turkey-potatoes": ("Печена картопля з індичкою", "roasted potatoes with turkey fillet and paprika"),
     "stuffed-peppers": ("Фаршировані перці", "stuffed bell peppers in tomato sauce"),
     "lobio": ("Лобіо з червоної квасолі", "Georgian lobio red bean stew with walnuts and cilantro"),

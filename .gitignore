@@ -10,3 +10,4 @@ __pycache__/
 
 # generated recipe photos (uploaded to Supabase instead)
 infra/scripts/out/
+infra/scripts/out_web/
