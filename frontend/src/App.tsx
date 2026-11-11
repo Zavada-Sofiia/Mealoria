@@ -22,6 +22,7 @@ import ResetPassword from './pages/ResetPassword'
 import Profile from './pages/Profile'
 import Recipes from './pages/Recipes'
 import Shopping from './pages/Shopping'
+import ConfirmHost from './components/ConfirmHost'
 import { getLang, setLang, type Lang } from './i18n'
 import { LangContext } from './i18n/context'
 
@@ -46,6 +47,7 @@ function App() {
     <BrowserRouter key={lang}>
       <PlanProvider signedIn={!!session}>
       {session ? <Nav /> : <PublicNav />}
+      <ConfirmHost />
       <main className="page">
       {session && <PlanLimitBanner />}
       <Routes>

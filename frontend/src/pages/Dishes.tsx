@@ -6,6 +6,7 @@ import PhotoPicker from '../components/PhotoPicker'
 import { usePlan } from '../plan/context'
 import { oneStepPerLine } from '../steps'
 import { locale, t } from '../i18n'
+import { askConfirm } from '../confirm'
 import { macrosLine } from '../macros'
 
 type Ingredient = { name: string; amount: string }
@@ -170,7 +171,16 @@ export default function Dishes() {
       return
     }
     const hasContent = form.recipe.trim() || form.ingredients.some((i) => i.name.trim())
-    if (hasContent && !confirm(t('Замінити поточний рецепт та інгредієнти?'))) return
+    if (
+      hasContent &&
+      !(await askConfirm({
+        title: t('Замінити поточний рецепт та інгредієнти?'),
+        text: t('Те, що ви вже ввели в рецепт та інгредієнти, буде замінено відповіддю ШІ.'),
+        confirmLabel: t('Замінити'),
+        cancelLabel: t('Скасувати'),
+      }))
+    )
+      return
     setWriting(true)
     setStatus('')
     try {
@@ -351,7 +361,14 @@ export default function Dishes() {
   }
 
   async function remove(id: string) {
-    if (!confirm(t('Видалити страву?'))) return
+    const ok = await askConfirm({
+      title: t('Видалити страву?'),
+      text: t('Страву буде видалено разом із її фото. Це не можна скасувати.'),
+      confirmLabel: t('Видалити'),
+      cancelLabel: t('Скасувати'),
+      danger: true,
+    })
+    if (!ok) return
     try {
       await apiFetch<void>(`/api/dishes/${id}`, { method: 'DELETE' })
       void deleteDishPhoto(dishes.find((d) => d.id === id)?.photo_url ?? null)
