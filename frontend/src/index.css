@@ -480,6 +480,29 @@ progress.over::-moz-progress-bar {
   background: var(--red);
 }
 
+/* ---------- live calorie estimate ---------- */
+.calc {
+  margin: 4px 0 20px;
+  padding: 16px 18px;
+  border-radius: var(--radius);
+  background: var(--teal-soft);
+  border: 1px solid #cfe3e6;
+}
+.calc-main {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+  color: var(--teal-dark);
+  font-weight: 600;
+}
+.calc-num {
+  font-size: 2.2rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
 /* ---------- number + slider field ---------- */
 input[type='number'] {
   -moz-appearance: textfield;

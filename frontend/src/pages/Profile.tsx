@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { apiFetch } from '../api/client'
 import RangeField from '../components/RangeField'
+import { estimateCalories } from '../calories'
 
 type ProfileData = {
   sex: 'male' | 'female'
@@ -132,14 +133,12 @@ function Multi({
 
 export default function Profile() {
   const [form, setForm] = useState<ProfileData>(EMPTY)
-  const [recommended, setRecommended] = useState<number | null>(null)
   const [status, setStatus] = useState('Завантаження…')
 
   useEffect(() => {
     apiFetch<ProfileResponse>('/api/profile')
       .then((r) => {
         if (r.profile) setForm(r.profile)
-        setRecommended(r.recommended_calories)
         setStatus('')
       })
       .catch(() => setStatus('Не вдалося завантажити профіль'))
@@ -149,6 +148,10 @@ export default function Profile() {
     setForm((f) => ({ ...f, [key]: value }))
   }
 
+  const estimate = estimateCalories(form)
+  const recommended = estimate?.recommended ?? null
+  const customTarget = form.target_calories !== null && form.target_calories !== recommended
+
   async function save(e: FormEvent) {
     e.preventDefault()
     if (form.age === null || form.height_cm === null || form.weight_kg === null) {
@@ -157,12 +160,11 @@ export default function Profile() {
     }
     setStatus('Зберігаємо…')
     try {
-      const r = await apiFetch<ProfileResponse>('/api/profile', {
+      await apiFetch<ProfileResponse>('/api/profile', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),
       })
-      setRecommended(r.recommended_calories)
       setStatus('Збережено')
     } catch {
       setStatus('Не вдалося зберегти')
@@ -209,11 +211,37 @@ export default function Profile() {
       <RangeField label="Прийомів їжі на день" unit="разів" min={1} max={8}
         value={form.meals_per_day}
         onChange={(v) => set('meals_per_day', v ?? 3)} />
+      <div className="calc">
+        {estimate ? (
+          <>
+            <div className="calc-main">
+              <span className="calc-num">{form.target_calories ?? estimate.recommended}</span>
+              <span>ккал на добу{customTarget ? ' (ваша ціль)' : ''}</span>
+            </div>
+            <p className="muted" style={{ margin: '6px 0 0' }}>
+              Рекомендовано {estimate.recommended} ккал: базовий обмін {estimate.bmr} ккал ×
+              активність {estimate.activityFactor} = {estimate.tdee} ккал
+              {estimate.goalFactor !== 1 ? `, мета ×${estimate.goalFactor}` : ''}. Розрахунок за
+              формулою Міффліна–Сан-Жеора.
+            </p>
+            {customTarget && (
+              <button type="button" style={{ marginTop: 10 }}
+                onClick={() => set('target_calories', null)}>
+                Повернути рекомендований ({estimate.recommended})
+              </button>
+            )}
+          </>
+        ) : (
+          <p className="muted" style={{ margin: 0 }}>
+            Вкажіть вік, зріст і вагу, і ми одразу порахуємо вашу норму калорій.
+          </p>
+        )}
+      </div>
       <label>
-        Бажаний калораж{recommended ? ` (рекомендовано: ${recommended})` : ''}
+        Своя ціль, ккал (необов'язково)
         <input type="number" inputMode="numeric" min={800} max={6000}
           value={form.target_calories ?? ''}
-          placeholder={recommended ? String(recommended) : 'Автоматично'}
+          placeholder={recommended ? `Зараз використовується ${recommended}` : 'Автоматично'}
           onChange={(e) => set('target_calories', e.target.value ? Number(e.target.value) : null)} />
       </label>
       </section>
