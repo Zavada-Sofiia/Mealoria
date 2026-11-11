@@ -1241,3 +1241,39 @@ table.week.single .entry button {
   font-size: 1.3rem;
   line-height: 1;
 }
+
+.print-only {
+  display: none;
+}
+@media print {
+  .topbar,
+  .sidebar,
+  .tabbar,
+  .limit-banner,
+  .sheet,
+  .sheet-backdrop,
+  .no-print {
+    display: none !important;
+  }
+  .print-only {
+    display: block;
+  }
+  body,
+  body.has-tabbar {
+    background: #fff;
+    color: #000;
+    padding: 0;
+  }
+  .page {
+    margin: 0 !important;
+    padding: 0 !important;
+    max-width: none !important;
+  }
+  .print-only section {
+    break-inside: avoid;
+    margin-bottom: 8px;
+  }
+  .print-only h3 {
+    margin: 10px 0 4px;
+  }
+}

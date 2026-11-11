@@ -13,6 +13,7 @@ import { Link } from 'react-router-dom'
 import { apiFetch } from '../api/client'
 import { addDays, iso, mondayOf, pad } from '../dates'
 import { mealName } from '../meals'
+import { download, weekToIcs } from '../ics'
 
 type Dish = { id: string; name: string; calories: number | null }
 type Entry = { id: string; date: string; slot: number; dish: Dish | null }
@@ -169,12 +170,16 @@ export default function Calendar() {
   }
 
   const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i))
+  const planned = entries.filter((e) => e.dish)
+  const exportIcs = () =>
+    download(`mealoria-${iso(weekStart)}.ics`, weekToIcs(planned, meals), 'text/calendar;charset=utf-8')
   const shown = mobile ? [days[dayIdx]] : days
   const dayCalories = (date: string) =>
     entries.filter((e) => e.date === date).reduce((sum, e) => sum + (e.dish?.calories ?? 0), 0)
 
   return (
     <div>
+      <div className="no-print">
       <h1>Календар</h1>
       {!hasProfile && (
         <p>
@@ -310,6 +315,46 @@ export default function Calendar() {
           </table>
         </div>
       </DndContext>
+
+      <div className="actions" style={{ marginTop: 16 }}>
+        <button type="button" onClick={() => window.print()} disabled={planned.length === 0}>
+          Друк / PDF
+        </button>
+        <button type="button" onClick={exportIcs} disabled={planned.length === 0}>
+          Додати в Google/Apple Календар (.ics)
+        </button>
+      </div>
+      </div>
+
+      <div className="print-only">
+        <h1>
+          Меню на тиждень {iso(weekStart)} — {iso(addDays(weekStart, 6))}
+        </h1>
+        {days.map((d, i) => {
+          const date = iso(d)
+          const list = planned.filter((e) => e.date === date).sort((a, b) => a.slot - b.slot)
+          return (
+            <section key={date}>
+              <h3>
+                {DAY_NAMES[i]} {pad(d.getDate())}.{pad(d.getMonth() + 1)}
+                {list.length > 0 && ` · ${dayCalories(date)} ккал`}
+              </h3>
+              {list.length === 0 ? (
+                <p>—</p>
+              ) : (
+                <ul>
+                  {list.map((e) => (
+                    <li key={e.id}>
+                      {mealName(meals, e.slot)}: {e.dish?.name}
+                      {e.dish?.calories != null && ` (${e.dish.calories} ккал)`}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+          )
+        })}
+      </div>
 
       {picking && (
         <>
