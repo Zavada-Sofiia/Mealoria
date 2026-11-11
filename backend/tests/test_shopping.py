@@ -94,3 +94,25 @@ def test_list_check_and_pantry_flow(client):
 
     assert client.delete(f"/api/shopping/pantry/{pantry[0]['id']}").status_code == 204
     assert names(client.get("/api/shopping?start=2026-11-09").json()) == ["Сіль", "Яйця"]
+
+
+def pot(servings, *ingredients):
+    return {"dish": {"name": "борщ", "servings": servings,
+                     "ingredients": [{"name": n, "amount": a} for n, a in ingredients]}}
+
+
+def test_a_pot_of_six_servings_is_bought_once_when_all_six_are_planned():
+    plan = [pot(6, ("Буряк", "600 г"), ("Сіль", "за смаком"))] * 6
+    by_name = {i["name"]: i["amount"] for i in build_items(plan, set(), set())[0]}
+    assert by_name["Буряк"] == "600 г"
+    assert by_name["Сіль"] == "за смаком"
+
+
+def test_each_entry_is_one_serving_so_a_part_of_the_pot_is_listed():
+    by_name = {i["name"]: i["amount"] for i in build_items([pot(6, ("Буряк", "600 г"))] * 2, set(), set())[0]}
+    assert by_name["Буряк"] == "200 г"
+
+
+def test_servings_missing_or_one_changes_nothing():
+    plan = [dish(("Картопля", "2 шт")), pot(1, ("Картопля", "1 шт"))]
+    assert build_items(plan, set(), set())[0][0]["amount"] == "3 шт"

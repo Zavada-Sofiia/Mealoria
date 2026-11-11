@@ -131,6 +131,7 @@ function DishCalculator() {
           protein_g: protein,
           fat_g: fat,
           carbs_g: carbs,
+          servings,
           ingredients: lines.map((l) => ({ name: l.name.slice(0, 100), amount: `${l.grams} ${t('г')}` })),
         }),
       })

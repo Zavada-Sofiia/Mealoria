@@ -216,7 +216,7 @@ def dish_nutrition(
     _check_quota(quota, limit)
     try:
         prompt = prompts.nutrition_prompt(
-            body.name, [i.model_dump() for i in body.ingredients], body.recipe
+            body.name, [i.model_dump() for i in body.ingredients], body.recipe, body.servings
         )
         result = NutritionOut(**generate_json(prompt, prompts.NUTRITION_SCHEMA))
         _charge(quota, limit)
@@ -241,7 +241,10 @@ def dish_recipe(
     _check_quota(quota, limit)
     try:
         prompt = prompts.with_language(
-            prompts.dish_recipe_prompt(body.name.strip(), profiles.get(user_id), body.note.strip()), lang
+            prompts.dish_recipe_prompt(
+                body.name.strip(), profiles.get(user_id), body.note.strip(), body.servings
+            ),
+            lang,
         )
         result = DishRecipeOut(**generate_json(prompt, prompts.DISH_RECIPE_SCHEMA))
         _charge(quota, limit)

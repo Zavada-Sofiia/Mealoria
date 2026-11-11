@@ -90,3 +90,12 @@ def test_input_validation(env):
 
 def test_prompt_without_ingredients_asks_for_a_typical_portion():
     assert "типовою порцією" in prompts.nutrition_prompt("Плов", [], "")
+
+
+def test_servings_are_passed_to_the_nutrition_prompt(env):
+    client, _, seen = env
+    client.post("/api/ai/dish-nutrition", json={**BODY, "servings": 6})
+    client.post("/api/ai/dish-nutrition", json=BODY)
+    assert "6 порцій" in seen[0] and "ОДНУ порцію" in seen[0]
+    assert "6 порцій" not in seen[1]
+    assert client.post("/api/ai/dish-nutrition", json={**BODY, "servings": 0}).status_code == 422

@@ -23,7 +23,7 @@ class SupabaseShoppingStore:
         return self._get(
             "meal_plan",
             [
-                ("select", "dish:dishes(name,ingredients)"),
+                ("select", "dish:dishes(name,ingredients,servings)"),
                 ("date", f"gte.{start}"),
                 ("date", f"lt.{end}"),
             ],

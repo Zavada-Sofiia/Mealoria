@@ -18,10 +18,11 @@ type DishInput = {
   carbs_g: number | null
   photo_url: string | null
   favorite: boolean
+  servings: number
 }
 type Dish = DishInput & { id: string }
 
-const EMPTY: DishInput = { name: '', recipe: '', ingredients: [], calories: null, protein_g: null, fat_g: null, carbs_g: null, photo_url: null, favorite: false }
+const EMPTY: DishInput = { name: '', recipe: '', ingredients: [], calories: null, protein_g: null, fat_g: null, carbs_g: null, photo_url: null, favorite: false, servings: 1 }
 
 export default function Dishes() {
   const { me, refresh } = usePlan()
@@ -106,6 +107,7 @@ export default function Dishes() {
         body: JSON.stringify({
           name: source.name,
           recipe: source.recipe,
+          servings: source.servings || 1,
           ingredients: source.ingredients.filter((i) => i.name.trim()),
         }),
       },
@@ -145,7 +147,7 @@ export default function Dishes() {
       const r = await apiFetch<{ recipe: string; ingredients: Ingredient[] }>('/api/ai/dish-recipe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: form.name.trim() }),
+        body: JSON.stringify({ name: form.name.trim(), servings: form.servings || 1 }),
       })
       setForm({ ...form, recipe: oneStepPerLine(r.recipe), ingredients: r.ingredients })
       setStatus(t('Рецепт і інгредієнти створено ШІ. Перевірте їх і виправте за потреби'))
@@ -240,6 +242,7 @@ export default function Dishes() {
     }
     const body = JSON.stringify({
       ...data,
+      servings: data.servings || 1,
       ingredients: data.ingredients.filter((i) => i.name.trim()),
     })
     const init = { headers: { 'Content-Type': 'application/json' }, body }
@@ -306,6 +309,7 @@ export default function Dishes() {
       carbs_g: d.carbs_g,
       photo_url: d.photo_url,
       favorite: d.favorite,
+      servings: d.servings ?? 1,
     })
   }
 
@@ -336,6 +340,14 @@ export default function Dishes() {
           <input value={form.name} maxLength={100} required
             onChange={(e) => setForm({ ...form, name: e.target.value })} />
         </label>
+        <label>
+          {t('На скільки порцій цей рецепт')}
+          <input type="number" min={1} max={100} inputMode="numeric" value={form.servings || ''}
+            onChange={(e) => setForm({ ...form, servings: Math.min(100, Math.round(Number(e.target.value)) || 0) })} />
+        </label>
+        <p className="muted" style={{ margin: '-6px 0 14px' }}>
+          <small>{t('Інгредієнти вказуйте на всю страву (наприклад, на всю каструлю), а калорії та БЖВ на одну порцію. Кожен запис у календарі це одна порція.')}</small>
+        </p>
         <p className="actions" style={{ margin: '-6px 0 18px' }}>
           <button type="button" onClick={writeRecipe} disabled={writing || !form.name.trim()}>
             {writing ? t('Пишемо рецепт…') : t('Згенерувати рецепт та інгредієнти (ШІ)')}
@@ -477,6 +489,7 @@ export default function Dishes() {
             {d.calories != null && ` · ${d.calories} ${t('ккал')}`}
             {(d.protein_g != null || d.fat_g != null || d.carbs_g != null) &&
               ` · ${t('Б {p} · Ж {f} · В {c} г', { p: d.protein_g ?? 0, f: d.fat_g ?? 0, c: d.carbs_g ?? 0 })}`}
+            {d.servings > 1 && ` · ${t('Порцій: {n}', { n: d.servings })}`}
             {d.ingredients.length > 0 && (
               <div>{d.ingredients.map((i) => `${i.name}${i.amount ? ` (${i.amount})` : ''}`).join(', ')}</div>
             )}

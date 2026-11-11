@@ -74,6 +74,7 @@ class DishImageOut(BaseModel):
 
 
 class DishNutritionIn(BaseModel):
+    servings: int = Field(default=1, ge=1, le=100)
     name: str = Field(min_length=1, max_length=100)
     ingredients: list[Ingredient] = Field(default_factory=list, max_length=30)
     recipe: str = Field(default="", max_length=2000)
@@ -87,6 +88,7 @@ class NutritionOut(BaseModel):
 
 
 class DishRecipeIn(BaseModel):
+    servings: int = Field(default=1, ge=1, le=100)
     name: str = Field(min_length=1, max_length=100)
     note: str = Field(default="", max_length=200)
 

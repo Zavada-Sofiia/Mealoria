@@ -130,3 +130,11 @@ def test_cors_allows_the_language_header(env):
         },
     )
     assert r.status_code == 200
+
+
+def test_recipe_is_written_for_the_whole_pot(env):
+    client, _, seen = env
+    client.post("/api/ai/dish-recipe", json={**BODY, "servings": 8})
+    client.post("/api/ai/dish-recipe", json=BODY)
+    assert "8 порцій" in seen[0] and "ОДНУ" not in seen[0]
+    assert "ОДНУ порцію" in seen[1]
