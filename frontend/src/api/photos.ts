@@ -4,7 +4,7 @@ const BUCKET = 'dish-photos'
 const MAX_SIDE = 1024
 
 /** Shrink a photo to at most 1024 px and re-encode as JPEG to save storage. */
-export async function compressImage(file: File): Promise<Blob> {
+export async function compressImage(file: Blob): Promise<Blob> {
   const bitmap = await createImageBitmap(file)
   const scale = Math.min(1, MAX_SIDE / Math.max(bitmap.width, bitmap.height))
   const canvas = document.createElement('canvas')
@@ -17,7 +17,7 @@ export async function compressImage(file: File): Promise<Blob> {
 }
 
 /** Upload into the signed-in user's folder and return the public URL. */
-export async function uploadDishPhoto(file: File): Promise<string> {
+export async function uploadDishPhoto(file: Blob): Promise<string> {
   const { data } = await supabase.auth.getSession()
   const userId = data.session?.user.id
   if (!userId) throw new Error('not signed in')

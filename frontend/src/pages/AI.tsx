@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { ApiError, apiFetch } from '../api/client'
+import { supabase } from '../api/supabase'
 import { blobToBase64, compressImage, uploadDishPhoto } from '../api/photos'
 import PhotoPicker from '../components/PhotoPicker'
 
@@ -51,15 +52,59 @@ function macros(x: { calories: number; protein_g: number; fat_g: number; carbs_g
   return `${x.calories} ккал · Б ${x.protein_g} / Ж ${x.fat_g} / В ${x.carbs_g} г`
 }
 
+// Results stay in this browser (per account) until cleared, so leaving the page does not lose them.
+type Saved = {
+  category: string
+  note: string
+  ideas: Idea[]
+  meal: MealPhoto | null
+  mealPhoto: string | null // compressed photo as a data URL
+}
+const EMPTY_SAVED: Saved = { category: '', note: '', ideas: [], meal: null, mealPhoto: null }
+const storageKey = (userId: string) => `mealoria.ai.v1.${userId}`
+
+function loadSaved(userId: string): Saved {
+  try {
+    const raw = localStorage.getItem(storageKey(userId))
+    return raw ? { ...EMPTY_SAVED, ...JSON.parse(raw) } : EMPTY_SAVED
+  } catch {
+    return EMPTY_SAVED
+  }
+}
+
 export default function AI() {
+  const [userId, setUserId] = useState<string | null>(null)
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => setUserId(data.session?.user.id ?? ''))
+  }, [])
+
+  if (userId === null) return null
+  return <AIPage key={userId} userId={userId} />
+}
+
+function AIPage({ userId }: { userId: string }) {
+  const [saved] = useState(() => (userId ? loadSaved(userId) : EMPTY_SAVED))
   const [quota, setQuota] = useState<Quota | null>(null)
-  const [category, setCategory] = useState('')
-  const [note, setNote] = useState('')
-  const [ideas, setIdeas] = useState<Idea[]>([])
-  const [meal, setMeal] = useState<MealPhoto | null>(null)
-  const [mealFile, setMealFile] = useState<File | null>(null)
+  const [category, setCategory] = useState(saved.category)
+  const [note, setNote] = useState(saved.note)
+  const [ideas, setIdeas] = useState<Idea[]>(saved.ideas)
+  const [meal, setMeal] = useState<MealPhoto | null>(saved.meal)
+  const [mealPhoto, setMealPhoto] = useState<string | null>(saved.mealPhoto)
   const [busy, setBusy] = useState<'ideas' | 'photo' | null>(null)
   const [status, setStatus] = useState('')
+
+  useEffect(() => {
+    if (!userId) return
+    try {
+      localStorage.setItem(
+        storageKey(userId),
+        JSON.stringify({ category, note, ideas, meal, mealPhoto }),
+      )
+    } catch {
+      // storage full or blocked: the results just will not survive leaving the page
+    }
+  }, [userId, category, note, ideas, meal, mealPhoto])
 
   useEffect(() => {
     apiFetch<Quota>('/api/ai/quota')
@@ -116,9 +161,9 @@ export default function AI() {
     setBusy('photo')
     setStatus('')
     setMeal(null)
-    setMealFile(file)
     try {
       const image_base64 = await blobToBase64(await compressImage(file))
+      setMealPhoto(`data:image/jpeg;base64,${image_base64}`)
       setMeal(
         await apiFetch<MealPhoto>('/api/ai/meal-photo', {
           method: 'POST',
@@ -135,9 +180,9 @@ export default function AI() {
   }
 
   async function saveMeal() {
-    if (!meal || !mealFile) return
+    if (!meal || !mealPhoto) return
     try {
-      const photo_url = await uploadDishPhoto(mealFile)
+      const photo_url = await uploadDishPhoto(await (await fetch(mealPhoto)).blob())
       await apiFetch('/api/dishes', {
         method: 'POST',
         headers: json,
@@ -153,12 +198,21 @@ export default function AI() {
       })
       setStatus(`«${meal.name}» додано до моїх страв`)
       setMeal(null)
+      setMealPhoto(null)
     } catch {
       setStatus('Не вдалося зберегти страву')
     }
   }
 
   const left = quota ? Math.max(0, quota.limit - quota.used) : null
+  const hasResults = ideas.length > 0 || meal !== null
+
+  function clearResults() {
+    setIdeas([])
+    setMeal(null)
+    setMealPhoto(null)
+    setStatus('')
+  }
 
   return (
     <div>
@@ -171,6 +225,12 @@ export default function AI() {
           : 'Перевіряємо ліміт…'}
       </p>
       {status && <p className="status">{status}</p>}
+      {hasResults && (
+        <p>
+          <small className="muted">Результати збережено в цьому браузері. </small>
+          <button type="button" onClick={clearResults}>Очистити результати</button>
+        </p>
+      )}
 
       <section className="card">
         <h2>Підібрати рецепти</h2>
@@ -238,6 +298,9 @@ export default function AI() {
         )}
         {meal && meal.is_food && (
           <div style={{ marginTop: 16 }}>
+            {mealPhoto && (
+              <img src={mealPhoto} alt="Ваше фото" style={{ width: 140, height: 140, objectFit: 'cover', borderRadius: 10, marginBottom: 10 }} />
+            )}
             <h3>{meal.name}</h3>
             <p>
               <strong>{macros(meal)}</strong>
