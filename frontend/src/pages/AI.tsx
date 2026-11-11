@@ -3,6 +3,7 @@ import { ApiError, apiFetch } from '../api/client'
 import { supabase } from '../api/supabase'
 import { blobToBase64, compressImage, uploadDishPhoto } from '../api/photos'
 import PhotoPicker from '../components/PhotoPicker'
+import SectionRail from '../components/SectionRail'
 import { Link } from 'react-router-dom'
 import { usePlan } from '../plan/context'
 import { oneStepPerLine } from '../steps'
@@ -87,6 +88,12 @@ function loadSaved(userId: string): Saved {
     return EMPTY_SAVED
   }
 }
+
+const RAIL = [
+  { id: 'ai-recipes', label: 'Підбір' },
+  { id: 'ai-fridge', label: 'З холодильника' },
+  { id: 'ai-photo', label: 'По фото' },
+]
 
 function IdeaList({ ideas, saved, onSave }: { ideas: Idea[]; saved: string[]; onSave: (i: Idea) => void }) {
   return (
@@ -331,7 +338,9 @@ function AIPage({ userId }: { userId: string }) {
         </p>
       )}
 
-      <section className="card">
+      <SectionRail items={RAIL} />
+
+      <section className="card" id="ai-recipes">
         <h2>{t('Підібрати рецепти')}</h2>
         <p className="muted">
           {t('Ураховуємо ваш профіль: тип харчування, алергени, кухні, час, бюджет і калораж. Відповідь може займати до півхвилини.')}
@@ -363,7 +372,7 @@ function AIPage({ userId }: { userId: string }) {
         {ideas.length > 0 && <IdeaList ideas={ideas} saved={savedNames} onSave={saveIdea} />}
       </section>
 
-      <section className="card">
+      <section className="card" id="ai-fridge">
         <h2>{t('Рецепти з того, що є в холодильнику')}</h2>
         <p className="muted">
           {t('Напишіть продукти, які у вас є, і ШІ запропонує, що з них приготувати. Це окрема функція: звичайний підбір рецептів вище працює як і раніше.')}
@@ -390,7 +399,7 @@ function AIPage({ userId }: { userId: string }) {
         {fridgeIdeas.length > 0 && <IdeaList ideas={fridgeIdeas} saved={savedNames} onSave={saveIdea} />}
       </section>
 
-      <section className="card red">
+      <section className="card red" id="ai-photo">
         <h2>{t('Калорії по фото')}</h2>
         <p className="muted">{t('Сфотографуйте страву, і ШІ оцінить калорії, БЖВ та інгредієнти.')}</p>
         <PhotoPicker
