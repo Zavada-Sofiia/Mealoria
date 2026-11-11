@@ -647,6 +647,58 @@ input[type='number']::-webkit-outer-spin-button {
   }
 }
 
+/* ---------- developer stats ---------- */
+table.data {
+  border-collapse: collapse;
+  width: 100%;
+  min-width: 780px;
+  font-size: 0.9rem;
+}
+table.data th,
+table.data td {
+  padding: 8px 10px;
+  text-align: left;
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+table.data th {
+  background: var(--teal-soft);
+  color: var(--teal-dark);
+}
+.bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  height: 150px;
+  padding-top: 8px;
+}
+.bar-col {
+  flex: 1;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 3px;
+  min-width: 0;
+}
+.bar {
+  width: 100%;
+  min-height: 2px;
+  border-radius: 4px 4px 0 0;
+  background: var(--teal);
+}
+.bar-num {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--teal-dark);
+  height: 14px;
+}
+.bar-day {
+  font-size: 0.68rem;
+  color: var(--muted);
+}
+
 /* ---------- calendar ---------- */
 .week-scroll {
   overflow-x: auto;

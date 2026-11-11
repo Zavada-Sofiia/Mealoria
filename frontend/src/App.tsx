@@ -4,6 +4,7 @@ import type { Session } from '@supabase/supabase-js'
 import { supabase } from './api/supabase'
 import Nav from './components/Nav'
 import PublicNav from './components/PublicNav'
+import Admin from './pages/Admin'
 import AI from './pages/AI'
 import Auth from './pages/Auth'
 import Calendar from './pages/Calendar'
@@ -11,6 +12,7 @@ import Calories from './pages/Calories'
 import Dashboard from './pages/Dashboard'
 import Dishes from './pages/Dishes'
 import Home from './pages/Home'
+import NotFound from './pages/NotFound'
 import Pricing from './pages/Pricing'
 import Support from './pages/Support'
 import Profile from './pages/Profile'
@@ -47,6 +49,7 @@ function App() {
           path="/calendar"
           element={session ? <Calendar /> : <Navigate to="/auth" />}
         />
+        <Route path="/staff" element={session ? <Admin /> : <NotFound />} />
         <Route path="/pricing" element={<Pricing session={session} />} />
         <Route path="/support" element={<Support />} />
         <Route
@@ -69,6 +72,7 @@ function App() {
           path="/profile"
           element={session ? <Profile /> : <Navigate to="/auth" />}
         />
+        <Route path="*" element={<NotFound />} />
       </Routes>
       </main>
     </BrowserRouter>
