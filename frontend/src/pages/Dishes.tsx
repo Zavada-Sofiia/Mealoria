@@ -26,7 +26,11 @@ type DishInput = {
 }
 type Dish = DishInput & { id: string }
 
-const CATEGORIES = ['сніданок', 'обід', 'вечеря', 'перекус']
+// meals first, then kinds of dishes; the same words are allowed by the database
+const CATEGORIES = [
+  'сніданок', 'обід', 'вечеря', 'перекус',
+  'основна страва', 'суп', 'салат', 'гарнір', 'закуска', 'десерт', 'випічка', 'напій',
+]
 
 type Sort = 'fav' | 'new' | 'old' | 'name' | 'kcal_asc' | 'kcal_desc'
 const SORTS: [Sort, string][] = [
@@ -448,7 +452,7 @@ export default function Dishes() {
             onChange={(e) => setForm({ ...form, name: e.target.value })} />
         </label>
         <fieldset>
-          <legend>{t('Підходить для')}</legend>
+          <legend>{t('Категорії')}</legend>
           {CATEGORIES.map((c) => (
             <label key={c} className="inline" style={{ marginRight: 14 }}>
               <input type="checkbox" checked={form.categories.includes(c)}

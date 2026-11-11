@@ -3,7 +3,10 @@ from typing import Literal
 from pydantic import BaseModel, Field
 
 
-Category = Literal["сніданок", "обід", "вечеря", "перекус"]
+Category = Literal[
+    "сніданок", "обід", "вечеря", "перекус",
+    "основна страва", "суп", "салат", "гарнір", "закуска", "десерт", "випічка", "напій",
+]
 
 
 class Ingredient(BaseModel):
@@ -23,7 +26,7 @@ class DishIn(BaseModel):
     photo_url: str | None = Field(default=None, max_length=500)
     favorite: bool = False
     servings: int = Field(default=1, ge=1, le=100)
-    categories: list[Category] = Field(default_factory=list, max_length=4)
+    categories: list[Category] = Field(default_factory=list, max_length=12)
 
 
 class DishOut(DishIn):

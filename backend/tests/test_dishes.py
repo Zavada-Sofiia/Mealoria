@@ -95,3 +95,10 @@ def test_fiber_is_optional_and_validated(client):
     assert client.post("/api/dishes", json={"name": "Х"}).json()["fiber_g"] is None
     assert client.post("/api/dishes", json={"name": "Х", "fiber_g": 6.5}).json()["fiber_g"] == 6.5
     assert client.post("/api/dishes", json={"name": "Х", "fiber_g": -1}).status_code == 422
+
+
+def test_dish_kinds_are_categories_too(client):
+    body = {"name": "Цезар", "categories": ["салат", "обід"]}
+    assert client.post("/api/dishes", json=body).json()["categories"] == ["салат", "обід"]
+    assert client.post("/api/dishes", json={"name": "Х", "categories": ["суп", "гарнір", "десерт", "напій"]}).status_code == 201
+    assert client.post("/api/dishes", json={"name": "Х", "categories": ["їжа"]}).status_code == 422
