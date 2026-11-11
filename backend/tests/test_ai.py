@@ -180,4 +180,20 @@ def test_only_admins_see_the_technical_reason(env, monkeypatch):
     assert client.post("/api/ai/recipes", json={}).json()["detail"] == "AI could not suggest recipes"
     quota.admin = True
     detail = client.post("/api/ai/recipes", json={}).json()["detail"]
-    assert detail == "AI could not suggest recipes: Gemini returned 429: quota"
+    assert detail == "AI could not suggest recipes: AIError: Gemini returned 429: quota"
+
+
+def test_unexpected_errors_still_return_a_readable_502(env, monkeypatch):
+    client, quota, profiles, _ = env
+    profiles.row = {"diet": "any", "allergens": None, "target_calories": "oops", "meals_per_day": 0}
+
+    def explode(*a, **k):
+        raise RuntimeError("something unforeseen")
+
+    monkeypatch.setattr(ai_router, "generate_json", explode)
+    quota.admin = True
+    r = client.post("/api/ai/recipes", json={})
+    assert r.status_code == 502
+    assert "RuntimeError: something unforeseen" in r.json()["detail"]
+    quota.admin = False
+    assert client.post("/api/ai/meal-photo", json=PHOTO).json()["detail"] == "AI could not analyse the photo"

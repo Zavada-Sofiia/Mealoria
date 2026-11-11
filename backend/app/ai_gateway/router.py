@@ -2,10 +2,9 @@ import logging
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials
-from pydantic import ValidationError
 
 from app.ai_gateway import prompts
-from app.ai_gateway.gemini import AIError, generate_json, is_configured
+from app.ai_gateway.gemini import generate_json, is_configured
 from app.ai_gateway.quota import SupabaseQuotaStore, daily_limit
 from app.ai_gateway.schemas import (
     MealPhotoIn,
@@ -30,8 +29,9 @@ def get_quota_store(
 
 def _failure(message: str, error: Exception, quota: SupabaseQuotaStore) -> HTTPException:
     """502 for the user; developers (public.admins) also get the technical reason."""
-    log.warning("%s: %s", message, error)
-    detail = f"{message}: {str(error)[:300]}" if quota.is_admin() else message
+    log.warning("%s: %r", message, error, exc_info=error)
+    reason = f"{type(error).__name__}: {error}"[:300]
+    detail = f"{message}: {reason}" if quota.is_admin() else message
     return HTTPException(status_code=502, detail=detail)
 
 
@@ -63,7 +63,7 @@ def meal_photo(
             prompts.MEAL_PHOTO_PROMPT, prompts.MEAL_PHOTO_SCHEMA, body.image_base64, body.mime_type
         )
         return MealPhotoOut(**data)
-    except (AIError, ValidationError, TypeError) as e:
+    except Exception as e:  # any failure must become a JSON 502 the browser can read
         raise _failure("AI could not analyse the photo", e, quota)
 
 
@@ -75,8 +75,8 @@ def recipe_ideas(
     profiles: SupabaseProfileStore = Depends(get_profile_store),
 ):
     _use_quota(quota)
-    prompt = prompts.recipe_prompt(profiles.get(user_id), body.category, body.note.strip())
     try:
+        prompt = prompts.recipe_prompt(profiles.get(user_id), body.category, body.note.strip())
         return RecipeIdeasOut(**generate_json(prompt, prompts.RECIPES_SCHEMA))
-    except (AIError, ValidationError, TypeError) as e:
+    except Exception as e:  # any failure must become a JSON 502 the browser can read
         raise _failure("AI could not suggest recipes", e, quota)
