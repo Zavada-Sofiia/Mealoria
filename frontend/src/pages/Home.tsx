@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { CONTACT_EMAIL } from '../config'
 
 const STEPS = [
   ['1', 'Розкажіть про себе', 'Вік, зріст, вага, мета й вподобання. Ми порахуємо ваш калораж і врахуємо дієту та алергії.'],
@@ -76,6 +77,8 @@ export default function Home({ signedIn }: { signedIn: boolean }) {
             · <Link to="/auth">Увійти</Link>
           </>
         )}
+        <br />
+        Питання й відгуки: <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
       </footer>
     </div>
   )

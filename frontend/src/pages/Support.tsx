@@ -1,4 +1,6 @@
 // A public monobank jar link. VITE_DONATION_URL overrides it without a code change.
+import { CONTACT_EMAIL } from '../config'
+
 const DONATION_URL =
   (import.meta.env.VITE_DONATION_URL as string | undefined) || 'https://send.monobank.ua/jar/AeUzaYD5jJ'
 
@@ -19,6 +21,10 @@ export default function Support() {
           <p className="status">Посилання для донатів скоро з'явиться.</p>
         )}
       </section>
+      <p className="muted">
+        Питання, ідеї чи знайшли помилку? Напишіть нам:{' '}
+        <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
+      </p>
     </div>
   )
 }
