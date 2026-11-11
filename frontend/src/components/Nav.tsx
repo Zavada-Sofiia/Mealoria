@@ -2,6 +2,7 @@ import { NavLink, useLocation } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { supabase } from '../api/supabase'
 import { usePlan } from '../plan/context'
+import { askConfirm } from '../confirm'
 import { t } from '../i18n'
 import LangToggle from './LangToggle'
 import ThemeToggle from './ThemeToggle'
@@ -50,6 +51,16 @@ const RIGHT = [
   ['/support', 'Підтримати'],
 ]
 
+async function signOut() {
+  const ok = await askConfirm({
+    title: t('Точно хочете вийти?'),
+    text: t('Щоб користуватися сайтом далі, вам потрібно буде увійти знову.'),
+    confirmLabel: t('Вийти'),
+    cancelLabel: t('Лишитися'),
+  })
+  if (ok) await supabase.auth.signOut()
+}
+
 export default function Nav() {
   const { me } = usePlan()
   const [moreOpen, setMoreOpen] = useState(false)
@@ -86,7 +97,7 @@ export default function Nav() {
               <span className="desktop-only">{me.plan === 'premium' ? '' : ` ${t('тариф')}`}</span>
             </NavLink>
           )}
-          <button className="secondary desktop-only" onClick={() => supabase.auth.signOut()}>
+          <button className="secondary desktop-only" onClick={() => signOut()}>
             {t('Вийти')}
           </button>
         </div>
@@ -126,7 +137,7 @@ export default function Nav() {
                 {t(label)}
               </NavLink>
             ))}
-            <button type="button" className="secondary" onClick={() => supabase.auth.signOut()}>
+            <button type="button" className="secondary" onClick={() => signOut()}>
               {t('Вийти')}
             </button>
             <p className="sheet-legal">
