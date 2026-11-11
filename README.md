@@ -46,6 +46,7 @@ frontend/           React + TypeScript (Vite)
 infra/
   supabase/         SQL-скрипти бази й сховища (001…016)
   scripts/          генерація фото для каталогу рецептів
+  terraform/        опис Render, Supabase (авторизація) і Cloudflare Worker кодом
 .github/workflows/  CI (тести й збірка) та «будильник» Supabase
 ```
 
@@ -137,12 +138,18 @@ npm run build
 без запитів (перший запит триває близько хвилини). Безкоштовний Supabase зупиняє проєкт після тижня без
 активності, тому workflow `keepalive.yml` раз на 3 дні робить до нього запит.
 
+## Інфраструктура кодом
+
+Хостинг описано Terraform-конфігурацією в `infra/terraform` (Render, налаштування авторизації Supabase,
+Cloudflare Worker). Інструкція з перевірки та імпорту наявних сервісів: [infra/terraform/README.md](infra/terraform/README.md).
+
 ## CI
 
 `.github/workflows/ci.yml` на кожен пуш і pull request запускає:
 
 - бекенд: `pip install` і `pytest`;
-- фронтенд: `npm ci`, `npm run lint`, `npm run build`.
+- фронтенд: `npm ci`, `npm run lint`, `npm run build`;
+- інфраструктура: `terraform fmt -check` і `terraform validate`.
 
 ## Фото каталогу рецептів
 
@@ -153,7 +160,6 @@ npm run build
 
 ## Заплановано
 
-- Опис інфраструктури кодом (Terraform) у `infra/`.
 - Відстеження помилок (Sentry).
 - Фото до власної страви від ШІ, преміум-тариф із більшим лімітом ШІ.
 - Реальна оплата преміуму після перевірки попиту.

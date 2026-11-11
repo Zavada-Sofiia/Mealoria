@@ -11,3 +11,7 @@ __pycache__/
 # generated recipe photos (uploaded to Supabase instead)
 infra/scripts/out/
 infra/scripts/out_web/
+
+# Terraform: real variable files hold secrets; the example is committed
+infra/terraform/*.tfvars
+!infra/terraform/*.tfvars.example
