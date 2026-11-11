@@ -89,6 +89,26 @@ def image_description_prompt(name: str, ingredient_names: list[str]) -> str:
     )
 
 
+def nutrition_prompt(name: str, ingredients: list[dict], recipe: str) -> str:
+    lines = [
+        "Ти дієтолог. Оціни калорії та БЖВ (білки, жири, вуглеводи) на ОДНУ порцію страви.",
+        f"Назва страви: «{name}».",
+    ]
+    if ingredients:
+        listed = ", ".join(
+            f"{i['name']} ({i['amount']})" if i.get("amount") else i["name"] for i in ingredients
+        )
+        lines.append(
+            f"Інгредієнти (кількості вказано на всю страву, вважай її однією порцією): {listed}."
+        )
+    else:
+        lines.append("Інгредієнти не вказано: оціни за типовою порцією такої страви.")
+    if recipe:
+        lines.append(f"Рецепт: «{recipe[:600]}».")
+    lines.append("Це оцінка. Відповідай числами: калорії цілим числом, БЖВ у грамах.")
+    return "\n".join(lines)
+
+
 def _obj(props: dict, required: list[str]) -> dict:
     return {"type": "OBJECT", "properties": props, "required": required}
 
@@ -142,3 +162,13 @@ RECIPES_SCHEMA = _obj(
 )
 
 IMAGE_DESCRIPTION_SCHEMA = _obj({"description": {"type": "STRING"}}, ["description"])
+
+NUTRITION_SCHEMA = _obj(
+    {
+        "calories": {"type": "INTEGER"},
+        "protein_g": {"type": "NUMBER"},
+        "fat_g": {"type": "NUMBER"},
+        "carbs_g": {"type": "NUMBER"},
+    },
+    ["calories", "protein_g", "fat_g", "carbs_g"],
+)

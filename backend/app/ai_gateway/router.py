@@ -11,8 +11,10 @@ from app.ai_gateway.quota import SupabaseQuotaStore
 from app.ai_gateway.schemas import (
     DishImageIn,
     DishImageOut,
+    DishNutritionIn,
     MealPhotoIn,
     MealPhotoOut,
+    NutritionOut,
     Quota,
     RecipeIdeasIn,
     RecipeIdeasOut,
@@ -54,6 +56,10 @@ def _limits(plans: SupabasePlanStore) -> dict:
 def _daily_limit(plans: SupabasePlanStore) -> int:
     """Text/photo-analysis requests per day for the user's plan (free or premium)."""
     return int(_limits(plans)["ai_per_day"])
+
+
+def _is_premium(plans: SupabasePlanStore) -> bool:
+    return _limits(plans).get("plan") == "premium"
 
 
 def _photos_limit(plans: SupabasePlanStore) -> int:
@@ -185,3 +191,26 @@ def dish_image(
         return DishImageOut(image_base64=image)
     except Exception as e:  # any failure must become a JSON 502 the browser can read
         raise _failure("AI could not draw the dish", e, images)
+
+
+@router.post("/dish-nutrition", response_model=NutritionOut)
+def dish_nutrition(
+    body: DishNutritionIn,
+    _: str = Depends(current_user_id),
+    quota: SupabaseQuotaStore = Depends(get_quota_store),
+    plans: SupabasePlanStore = Depends(get_plan_store),
+):
+    """Premium: estimate calories and macros of a dish from its name and ingredients."""
+    if not _is_premium(plans):
+        raise HTTPException(status_code=403, detail="premium_required")
+    limit = _daily_limit(plans)
+    _check_quota(quota, limit)
+    try:
+        prompt = prompts.nutrition_prompt(
+            body.name, [i.model_dump() for i in body.ingredients], body.recipe
+        )
+        result = NutritionOut(**generate_json(prompt, prompts.NUTRITION_SCHEMA))
+        _charge(quota, limit)
+        return result
+    except Exception as e:  # any failure must become a JSON 502 the browser can read
+        raise _failure("AI could not estimate the nutrition", e, quota)

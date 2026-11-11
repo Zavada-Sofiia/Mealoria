@@ -28,6 +28,7 @@ export default function Dishes() {
   const [status, setStatus] = useState('Завантаження…')
   const [uploading, setUploading] = useState(false)
   const [drawing, setDrawing] = useState<string | null>(null)
+  const [estimating, setEstimating] = useState(false)
   const [proposal, setProposal] = useState<{ dishId: string; base64: string } | null>(null)
   const [photoQuota, setPhotoQuota] = useState<{ used: number; limit: number } | null>(null)
   const editedPhoto = editingId ? (dishes.find((d) => d.id === editingId)?.photo_url ?? null) : null
@@ -70,6 +71,56 @@ export default function Dishes() {
       }
     }
     return 'Щось пішло не так. Спробуйте ще раз'
+  }
+
+  function nutritionError(e: unknown): string {
+    if (e instanceof ApiError) {
+      if (e.status === 429) return 'Ліміт запитів до ШІ на сьогодні вичерпано'
+      if (e.status === 503) return 'ШІ ще не налаштований на сервері'
+      if (e.status === 502 && e.detail.startsWith('AI is busy')) {
+        return 'ШІ зараз перевантажений, спробуйте за кілька хвилин'
+      }
+      if (e.status === 502) {
+        const reason = e.detail.includes(': ') ? e.detail.slice(e.detail.indexOf(': ') + 2) : ''
+        return `ШІ не зміг порахувати КБЖВ.${reason ? ` Технічна причина: ${reason}` : ''}`
+      }
+    }
+    return 'Не вдалося порахувати КБЖВ'
+  }
+
+  type Nutrition = Pick<DishInput, 'calories' | 'protein_g' | 'fat_g' | 'carbs_g'>
+
+  async function estimateNutrition(source: DishInput): Promise<Nutrition> {
+    const n = await apiFetch<{ calories: number; protein_g: number; fat_g: number; carbs_g: number }>(
+      '/api/ai/dish-nutrition',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: source.name,
+          recipe: source.recipe,
+          ingredients: source.ingredients.filter((i) => i.name.trim()),
+        }),
+      },
+    )
+    return { calories: n.calories, protein_g: n.protein_g, fat_g: n.fat_g, carbs_g: n.carbs_g }
+  }
+
+  async function fillNutrition() {
+    if (!premium) {
+      window.dispatchEvent(new CustomEvent('plan-limit', { detail: 'premium_required' }))
+      return
+    }
+    setEstimating(true)
+    setStatus('')
+    try {
+      setForm({ ...form, ...(await estimateNutrition(form)) })
+      setStatus('КБЖВ розраховано ШІ. Це оцінка, її можна виправити')
+    } catch (e) {
+      setStatus(nutritionError(e))
+    } finally {
+      setEstimating(false)
+    }
   }
 
   async function drawPhoto(d: Dish) {
@@ -139,9 +190,24 @@ export default function Dishes() {
 
   async function save(e: FormEvent) {
     e.preventDefault()
+    let data = form
+    let estimated = false
+    let failureNote = ''
+    const noNutrition =
+      form.calories == null && form.protein_g == null && form.fat_g == null && form.carbs_g == null
+    if (premium && noNutrition && form.name.trim()) {
+      // premium: fill calories and macros automatically when they were left empty
+      setStatus('Рахуємо КБЖВ…')
+      try {
+        data = { ...form, ...(await estimateNutrition(form)) }
+        estimated = true
+      } catch (err) {
+        failureNote = nutritionError(err)
+      }
+    }
     const body = JSON.stringify({
-      ...form,
-      ingredients: form.ingredients.filter((i) => i.name.trim()),
+      ...data,
+      ingredients: data.ingredients.filter((i) => i.name.trim()),
     })
     const init = { headers: { 'Content-Type': 'application/json' }, body }
     try {
@@ -155,7 +221,13 @@ export default function Dishes() {
       if (editedPhoto && editedPhoto !== form.photo_url) await deleteDishPhoto(editedPhoto)
       setForm(EMPTY)
       setEditingId(null)
-      setStatus('Збережено')
+      setStatus(
+        estimated
+          ? 'Збережено, КБЖВ розраховано ШІ'
+          : failureNote
+            ? `Збережено без КБЖВ: ${failureNote}`
+            : 'Збережено',
+      )
       refresh()
     } catch {
       setStatus('Не вдалося зберегти')
@@ -245,6 +317,17 @@ export default function Dishes() {
             } />
         </label>
         </div>
+        <p className="actions" style={{ margin: '-6px 0 18px' }}>
+          <button type="button" onClick={fillNutrition} disabled={estimating || !form.name.trim()}>
+            {estimating ? 'Рахуємо…' : 'Порахувати КБЖВ (ШІ)'}
+            {!premium && <span className="badge paid" style={{ marginLeft: 8 }}>преміум</span>}
+          </button>
+          {premium && (
+            <small className="muted">
+              Якщо залишити порожнім, ШІ порахує автоматично під час збереження
+            </small>
+          )}
+        </p>
         <fieldset>
           <legend>Інгредієнти</legend>
           {form.ingredients.map((ing, i) => (

@@ -56,3 +56,16 @@ class DishImageIn(BaseModel):
 
 class DishImageOut(BaseModel):
     image_base64: str
+
+
+class DishNutritionIn(BaseModel):
+    name: str = Field(min_length=1, max_length=100)
+    ingredients: list[Ingredient] = Field(default_factory=list, max_length=30)
+    recipe: str = Field(default="", max_length=2000)
+
+
+class NutritionOut(BaseModel):
+    calories: int = Field(ge=0, le=5000)
+    protein_g: float = Field(ge=0, le=1000)
+    fat_g: float = Field(ge=0, le=1000)
+    carbs_g: float = Field(ge=0, le=1000)
