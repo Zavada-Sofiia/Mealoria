@@ -126,6 +126,9 @@ export default function Nav() {
             <button type="button" className="secondary" onClick={() => supabase.auth.signOut()}>
               Вийти
             </button>
+            <p className="sheet-legal">
+              <NavLink to="/terms">Умови</NavLink> · <NavLink to="/privacy">Конфіденційність</NavLink>
+            </p>
           </div>
         </>
       )}

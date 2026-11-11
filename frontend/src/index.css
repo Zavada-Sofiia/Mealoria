@@ -1277,3 +1277,25 @@ table.week.single .entry button {
     margin: 10px 0 4px;
   }
 }
+
+.legal {
+  max-width: 720px;
+  margin: 0 auto;
+}
+.legal h2 {
+  font-size: 1.1rem;
+}
+.legal li {
+  margin-bottom: 6px;
+}
+.sheet .sheet-legal {
+  margin: 8px 0 0;
+  text-align: center;
+  font-size: 0.85rem;
+}
+.sheet .sheet-legal a {
+  display: inline;
+  padding: 4px;
+  font-weight: 500;
+  color: var(--muted);
+}

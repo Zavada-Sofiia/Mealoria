@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../api/supabase'
 import { passwordProblems } from '../password'
 
@@ -76,6 +76,10 @@ export default function Auth() {
       <button type="button" onClick={signInWithGoogle} style={{ width: '100%' }}>
         Увійти через Google
       </button>
+      <p className="muted" style={{ marginTop: 16, fontSize: '0.85rem' }}>
+        Продовжуючи, ви погоджуєтесь з <Link to="/terms">Умовами</Link> і{' '}
+        <Link to="/privacy">Політикою конфіденційності</Link>.
+      </p>
       {message && <p className="status" style={{ marginTop: 16 }}>{message}</p>}
     </form>
   )

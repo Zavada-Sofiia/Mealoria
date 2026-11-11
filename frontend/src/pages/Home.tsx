@@ -78,6 +78,8 @@ export default function Home({ signedIn }: { signedIn: boolean }) {
           </>
         )}
         <br />
+        <Link to="/terms">Умови</Link> · <Link to="/privacy">Конфіденційність</Link>
+        <br />
         Питання й відгуки: <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
       </footer>
     </div>
