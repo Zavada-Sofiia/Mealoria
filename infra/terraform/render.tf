@@ -29,6 +29,7 @@ resource "render_web_service" "backend" {
       CORS_ORIGINS             = { value = "${var.site_url},http://localhost:5173" }
     },
     var.gemini_model == "" ? {} : { GEMINI_MODEL = { value = var.gemini_model } },
+    var.sentry_dsn == "" ? {} : { SENTRY_DSN = { value = var.sentry_dsn } },
   )
 
   lifecycle {

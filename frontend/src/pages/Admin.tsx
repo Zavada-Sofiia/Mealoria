@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { ApiError, apiFetch } from '../api/client'
 import NotFound from './NotFound'
+import { reportError } from '../monitoring'
 
 type Day = { day: string; signups: number; preorders: number }
 type UserRow = {
@@ -61,6 +62,7 @@ export default function Admin() {
   const [plan, setPlan] = useState('premium')
   const [days, setDays] = useState('30')
   const [planMessage, setPlanMessage] = useState('')
+  const [testMessage, setTestMessage] = useState('')
 
   useEffect(() => {
     let current = true
@@ -79,6 +81,16 @@ export default function Admin() {
       current = false
     }
   }, [version])
+
+  async function testMonitoring() {
+    reportError(new Error('Sentry test error from the Mealoria website'))
+    try {
+      await apiFetch('/api/admin/sentry-test', { method: 'POST' })
+    } catch {
+      // the backend answers with an error on purpose
+    }
+    setTestMessage('Тестові помилки надіслано (сайт і сервер). Перевірте Sentry за хвилину.')
+  }
 
   async function changePlan(e: FormEvent) {
     e.preventDefault()
@@ -148,6 +160,16 @@ export default function Admin() {
             <Bars days={stats.daily} field="signups" title="Реєстрації за 14 днів" />
             <Bars days={stats.daily} field="preorders" title="Передзамовлення за 14 днів" />
           </div>
+
+          <section className="card">
+            <h3>Моніторинг помилок (Sentry)</h3>
+            <p className="muted">
+              Надсилає по одній тестовій помилці з сайту й із сервера, щоб перевірити, що Sentry їх
+              отримує.
+            </p>
+            <button onClick={testMonitoring}>Надіслати тестову помилку</button>
+            {testMessage && <p className="status" style={{ marginTop: 12 }}>{testMessage}</p>}
+          </section>
 
           <section className="card">
             <h3>Тарифи користувачів</h3>

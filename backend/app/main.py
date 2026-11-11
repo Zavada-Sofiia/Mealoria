@@ -12,8 +12,11 @@ from app.dishes.recipes_router import router as recipes_router
 from app.dishes.router import router as dishes_router
 from app.limits.plan_router import router as plans_router
 from app.limits.router import router as limits_router
+from app.monitoring import init_sentry
 from app.profile.router import router as profile_router
 from app.shopping.router import router as shopping_router
+
+init_sentry()  # no-op unless SENTRY_DSN is set
 
 app = FastAPI(title="Mealoria API")
 

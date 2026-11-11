@@ -15,6 +15,7 @@ gemini_api_key = "..."
 
 # Optional
 # gemini_model         = "gemini-flash-lite-latest"
+# sentry_dsn           = "https://...@o0.ingest.sentry.io/0"
 # confirm_email        = true
 # google_client_id     = "....apps.googleusercontent.com"
 # google_client_secret = "..."

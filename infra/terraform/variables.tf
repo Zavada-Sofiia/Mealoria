@@ -83,6 +83,12 @@ variable "cf_images_api_token" {
   sensitive   = true
 }
 
+variable "sentry_dsn" {
+  description = "Sentry DSN for the backend (an address, not a password); empty keeps error reporting off."
+  type        = string
+  default     = ""
+}
+
 variable "gemini_model" {
   description = "Pin a Gemini model; empty uses the backend default (gemini-flash-lite-latest)."
   type        = string

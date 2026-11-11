@@ -60,6 +60,13 @@ def stats(_: str = Depends(current_user_id), store: SupabaseAdminStore = Depends
         raise HTTPException(status_code=502, detail="Could not load statistics")
 
 
+@router.post("/sentry-test")
+def sentry_test(_: str = Depends(current_user_id), store: SupabaseAdminStore = Depends(get_store)):
+    """Admin-only: raise an unexpected error on purpose to check that Sentry receives it."""
+    _admin_only(store.premium_users)  # refuses (404) anyone who is not an admin
+    raise RuntimeError("Sentry test error from the Mealoria backend")
+
+
 class PlanChange(BaseModel):
     email: str = Field(min_length=3, max_length=200)
     plan: str = Field(pattern="^(free|premium)$")
