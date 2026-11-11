@@ -143,30 +143,77 @@ def test_generate_json_parses_gemini_response(monkeypatch):
     assert parts[1]["inline_data"]["data"] == "QUJD"
 
 
-def test_generate_json_wraps_failures(monkeypatch):
+def _resp(url, status, text="", payload=None):
+    return httpx.Response(status, request=httpx.Request("POST", url), text=text, json=payload) if payload else \
+        httpx.Response(status, request=httpx.Request("POST", url), text=text)
+
+
+OK = {"candidates": [{"content": {"parts": [{"text": '{"a": 1}'}]}}]}
+
+
+def test_overloaded_model_falls_back_to_the_next_one(monkeypatch):
     monkeypatch.setenv("GEMINI_API_KEY", "k")
+    monkeypatch.delenv("GEMINI_MODEL", raising=False)
+    monkeypatch.delenv("GEMINI_FALLBACK_MODELS", raising=False)
+    tried = []
 
-    def fail(url, headers, json, timeout):
-        return httpx.Response(429, request=httpx.Request("POST", url))
+    def fake_post(url, headers, json, timeout):
+        tried.append(url.split("/models/")[1].split(":")[0])
+        if len(tried) == 1:
+            return httpx.Response(503, request=httpx.Request("POST", url), text="high demand")
+        return httpx.Response(200, request=httpx.Request("POST", url), json=OK)
 
-    monkeypatch.setattr(gemini.httpx, "post", fail)
-    with pytest.raises(gemini.AIError):
-        gemini.generate_json("hi", {})
-    monkeypatch.delenv("GEMINI_API_KEY")
-    with pytest.raises(gemini.AIError):
-        gemini.generate_json("hi", {})
+    monkeypatch.setattr(gemini.httpx, "post", fake_post)
+    assert gemini.generate_json("hi", {}) == {"a": 1}
+    assert tried == ["gemini-flash-lite-latest", "gemini-3.1-flash-lite"]
 
 
-def test_gemini_error_body_is_kept_for_the_logs(monkeypatch):
+def test_timeout_also_falls_back(monkeypatch):
     monkeypatch.setenv("GEMINI_API_KEY", "k")
+    calls = []
 
-    def bad_model(url, headers, json, timeout):
-        return httpx.Response(
-            404, request=httpx.Request("POST", url), text='{"error": {"message": "model not found"}}'
-        )
+    def fake_post(url, headers, json, timeout):
+        calls.append(url)
+        if len(calls) == 1:
+            raise httpx.ReadTimeout("slow")
+        return httpx.Response(200, request=httpx.Request("POST", url), json=OK)
 
-    monkeypatch.setattr(gemini.httpx, "post", bad_model)
-    with pytest.raises(gemini.AIError, match=r"\[gemini-flash-lite-latest\] Gemini returned 404.*model not found"):
+    monkeypatch.setattr(gemini.httpx, "post", fake_post)
+    assert gemini.generate_json("hi", {}) == {"a": 1} and len(calls) == 2
+
+
+def test_bad_key_does_not_retry(monkeypatch):
+    monkeypatch.setenv("GEMINI_API_KEY", "k")
+    calls = []
+
+    def fake_post(url, headers, json, timeout):
+        calls.append(url)
+        return httpx.Response(400, request=httpx.Request("POST", url), text="API key not valid")
+
+    monkeypatch.setattr(gemini.httpx, "post", fake_post)
+    with pytest.raises(gemini.AIError, match="400.*API key not valid"):
+        gemini.generate_json("hi", {})
+    assert len(calls) == 1
+
+
+def test_all_models_failing_lists_every_reason(monkeypatch):
+    monkeypatch.setenv("GEMINI_API_KEY", "k")
+    monkeypatch.setenv("GEMINI_MODEL", "m1")
+    monkeypatch.setenv("GEMINI_FALLBACK_MODELS", "m2, m3, m4")
+
+    def fake_post(url, headers, json, timeout):
+        return httpx.Response(503, request=httpx.Request("POST", url), text="busy")
+
+    monkeypatch.setattr(gemini.httpx, "post", fake_post)
+    with pytest.raises(gemini.AIError) as err:
+        gemini.generate_json("hi", {})
+    text = str(err.value)
+    assert "[m1]" in text and "[m2]" in text and "[m3]" in text and "[m4]" not in text
+
+
+def test_missing_key_raises(monkeypatch):
+    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+    with pytest.raises(gemini.AIError):
         gemini.generate_json("hi", {})
 
 
