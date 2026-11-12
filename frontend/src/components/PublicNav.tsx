@@ -13,6 +13,7 @@ export default function PublicNav() {
         <span style={{ flex: 1 }} />
         <nav className="nav-links right desktop-only">
           <NavLink to="/pricing">{t('Тарифи')}</NavLink>
+          <NavLink to="/help">{t('Допомога')}</NavLink>
           <NavLink to="/support">{t('Підтримати')}</NavLink>
         </nav>
         <LangToggle />

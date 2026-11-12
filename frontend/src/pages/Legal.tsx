@@ -5,12 +5,14 @@ import { usePageMeta } from '../seo'
 
 const UPDATED = '11 листопада 2026'
 const UPDATED_EN = '11 November 2026'
+const PRIVACY_UPDATED = '12 листопада 2026'
+const PRIVACY_UPDATED_EN = '12 November 2026'
 
 function PrivacyUk() {
   return (
     <div className="legal">
       <h1>Політика конфіденційності</h1>
-      <p className="muted">Оновлено: {UPDATED}</p>
+      <p className="muted">Оновлено: {PRIVACY_UPDATED}</p>
       <p>
         Mealoria — сервіс для планування харчування. Тут написано, які дані ми зберігаємо, навіщо і що
         ви можете з ними зробити.
@@ -28,6 +30,14 @@ function PrivacyUk() {
         <li>Журнал ваги, якщо ви його ведете.</li>
         <li>Лічильники використання ШІ (скільки запитів за день), ваш тариф і промокоди, які ви активували.</li>
         <li>Позначку «передзамовив преміум», якщо ви натиснули відповідну кнопку.</li>
+        <li>
+          Замовлення на оплату преміуму: код замовлення, період, сума й час оплати. Дані вашої банківської картки ми не
+          бачимо й не зберігаємо, переказ ви робите самі у своєму банку.
+        </li>
+        <li>
+          Повідомлення, які ви надсилаєте через форму на сторінці «Допомога»: текст, вибрана тема, ваша пошта й час. Ми
+          читаємо їх, щоб відповісти й покращити сервіс.
+        </li>
       </ul>
 
       <h2>Кому ми передаємо дані</h2>
@@ -138,7 +148,7 @@ function PrivacyEn() {
   return (
     <div className="legal">
       <h1>Privacy Policy</h1>
-      <p className="muted">Updated: {UPDATED_EN}</p>
+      <p className="muted">Updated: {PRIVACY_UPDATED_EN}</p>
       <p>
         Mealoria is a meal-planning service. This page explains which data we store, why, and what you
         can do with it.
@@ -156,6 +166,14 @@ function PrivacyEn() {
         <li>Your weight journal, if you keep one.</li>
         <li>AI usage counters (how many requests per day), your plan and the promo codes you activated.</li>
         <li>A “pre-ordered Premium” flag, if you pressed the corresponding button.</li>
+        <li>
+          Premium payment orders: the order code, period, amount and time of payment. We do not see or store your bank
+          card details; you make the transfer yourself in your bank.
+        </li>
+        <li>
+          Messages you send through the form on the Help page: the text, the chosen topic, your email and the time. We
+          read them to reply and to improve the service.
+        </li>
       </ul>
 
       <h2>Who we share data with</h2>

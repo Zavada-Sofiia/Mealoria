@@ -54,6 +54,16 @@ type PayStatus = {
 }
 const randomSecret = () =>
   Array.from(crypto.getRandomValues(new Uint8Array(32)), (b) => b.toString(16).padStart(2, '0')).join('')
+type FeedbackItem = {
+  id: string
+  email: string | null
+  category: 'bug' | 'idea' | 'question' | 'other'
+  message: string
+  page: string
+  status: 'new' | 'done'
+  created_at: string
+}
+const FEEDBACK_KINDS = { bug: 'Щось не працює', idea: 'Ідея', question: 'Питання', other: 'Інше' }
 type PreorderCount = { months: number | null; count: number }
 type PremiumUser = { email: string; premium_until: string | null; active: boolean }
 type Stats = {
@@ -114,6 +124,7 @@ const RAIL = [
   { id: 'adm-plans', label: 'Преміум' },
   { id: 'adm-promo', label: 'Промокоди' },
   { id: 'adm-pay', label: 'Оплата карткою' },
+  { id: 'adm-feedback', label: 'Відгуки' },
   { id: 'adm-users', label: 'Користувачі' },
 ]
 
@@ -137,6 +148,7 @@ export default function Admin() {
   const [promoMessage, setPromoMessage] = useState('')
   const [created, setCreated] = useState('')
   const [pay, setPay] = useState<PayStatus | null>(null)
+  const [feedback, setFeedback] = useState<{ new_count: number; items: FeedbackItem[] } | null>(null)
   const [newSecret, setNewSecret] = useState('')
   const [payMessage, setPayMessage] = useState('')
   const [noticeOn, setNoticeOn] = useState(false)
@@ -169,6 +181,9 @@ export default function Admin() {
       .catch(() => {})
     apiFetch<PayStatus>('/api/admin/payments')
       .then((p) => current && setPay(p))
+      .catch(() => {})
+    apiFetch<{ new_count: number; items: FeedbackItem[] }>('/api/admin/feedback')
+      .then((f) => current && setFeedback(f))
       .catch(() => {})
     return () => {
       current = false
@@ -240,6 +255,24 @@ export default function Admin() {
             ? 'Перевірте код (літери, цифри, - і _; 3–40 символів) і кількість днів'
             : 'Не вдалося створити промокод',
       )
+    }
+  }
+
+  async function setFeedbackStatus(item: FeedbackItem, status: 'new' | 'done') {
+    setFeedback((f) =>
+      f && {
+        new_count: f.new_count + (status === 'new' ? 1 : -1) * (item.status === status ? 0 : 1),
+        items: f.items.map((x) => (x.id === item.id ? { ...x, status } : x)),
+      },
+    )
+    try {
+      await apiFetch(`/api/admin/feedback/${item.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status }),
+      })
+    } catch {
+      setVersion((v) => v + 1) // show what is really saved
     }
   }
 
@@ -702,6 +735,36 @@ export default function Admin() {
                   </tbody>
                 </table>
               </div>
+            )}
+          </section>
+
+          <section className="card" id="adm-feedback">
+            <h3>
+              Відгуки{' '}
+              {feedback && feedback.new_count > 0 && <span className="badge paid">нових: {feedback.new_count}</span>}
+            </h3>
+            <p className="muted">
+              Повідомлення з форми на сторінці «Допомога». Відповісти можна на пошту автора, натиснувши на неї. Коли
+              опрацювали, натисніть «Опрацьовано».
+            </p>
+            {feedback && feedback.items.length === 0 && <p className="muted">Поки що відгуків немає.</p>}
+            {feedback && feedback.items.length > 0 && (
+              <ul className="cards">
+                {feedback.items.map((f) => (
+                  <li key={f.id} style={{ opacity: f.status === 'done' ? 0.6 : 1 }}>
+                    <strong>{FEEDBACK_KINDS[f.category]}</strong>
+                    {' · '}
+                    {f.email ? <a href={`mailto:${f.email}`}>{f.email}</a> : 'без пошти'}
+                    {' · '}
+                    <span className="muted">{fmt(f.created_at)}</span>
+                    {f.page && <span className="muted"> · {f.page}</span>}
+                    <p style={{ whiteSpace: 'pre-wrap', margin: '8px 0' }}>{f.message}</p>
+                    <button type="button" onClick={() => void setFeedbackStatus(f, f.status === 'done' ? 'new' : 'done')}>
+                      {f.status === 'done' ? 'Повернути в нові' : 'Опрацьовано'}
+                    </button>
+                  </li>
+                ))}
+              </ul>
             )}
           </section>
 

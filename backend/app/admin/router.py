@@ -1,5 +1,6 @@
 import os
 import secrets
+from uuid import UUID
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException
@@ -80,6 +81,12 @@ class SupabaseAdminStore:
 
     def confirm_order(self, code: str, note: str) -> dict:
         return self._rpc("admin_confirm_order", {"order_code": code, "admin_note": note})
+
+    def feedback_list(self) -> dict:
+        return self._rpc("admin_feedback_list")
+
+    def set_feedback_status(self, feedback_id: str, status: str) -> dict:
+        return self._rpc("admin_set_feedback_status", {"fb_id": feedback_id, "new_status": status})
 
     def set_notice(self, active: bool, level: str, message_uk: str, message_en: str) -> dict:
         return self._rpc(
@@ -301,6 +308,28 @@ def confirm_order(
 ):
     """Admin-only: the money arrived but the order was not matched by itself; add the Premium by hand."""
     result = _admin_only(lambda: store.confirm_order(code, body.note))
+    if not result.get("ok"):
+        raise HTTPException(status_code=404, detail="Not Found")
+    return result
+
+
+@router.get("/feedback")
+def feedback_list(_: str = Depends(current_user_id), store: SupabaseAdminStore = Depends(get_store)):
+    return _admin_only(store.feedback_list)
+
+
+class FeedbackStatus(BaseModel):
+    status: str = Field(pattern="^(new|done)$")
+
+
+@router.put("/feedback/{feedback_id}")
+def set_feedback_status(
+    feedback_id: UUID,
+    body: FeedbackStatus,
+    _: str = Depends(current_user_id),
+    store: SupabaseAdminStore = Depends(get_store),
+):
+    result = _admin_only(lambda: store.set_feedback_status(str(feedback_id), body.status))
     if not result.get("ok"):
         raise HTTPException(status_code=404, detail="Not Found")
     return result

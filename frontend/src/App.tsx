@@ -17,6 +17,7 @@ import Home from './pages/Home'
 import NotFound from './pages/NotFound'
 import Pricing from './pages/Pricing'
 import Support from './pages/Support'
+import Help from './pages/Help'
 import { Privacy, Terms } from './pages/Legal'
 import ResetPassword from './pages/ResetPassword'
 import Profile from './pages/Profile'
@@ -100,6 +101,7 @@ function App() {
         <Route path="/staff" element={session ? <Admin /> : <NotFound />} />
         <Route path="/pricing" element={<Pricing session={session} />} />
         <Route path="/support" element={<Support />} />
+        <Route path="/help" element={<Help session={session} />} />
         <Route path="/privacy" element={<Privacy />} />
         <Route path="/reset" element={<ResetPassword />} />
         <Route path="/terms" element={<Terms />} />
