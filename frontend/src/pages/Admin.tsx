@@ -316,8 +316,8 @@ export default function Admin() {
                   <thead>
                     <tr>
                       <th>Код</th>
-                      <th>Днів</th>
-                      <th>Активовано</th>
+                      <th className="num">Днів</th>
+                      <th className="num">Активовано</th>
                       <th>Створено</th>
                       <th />
                     </tr>
@@ -326,8 +326,8 @@ export default function Admin() {
                     {promos.map((p) => (
                       <tr key={p.code}>
                         <td><strong>{p.code}</strong></td>
-                        <td>{p.days}</td>
-                        <td>
+                        <td className="num">{p.days}</td>
+                        <td className="num">
                           {p.used_count} / {p.max_uses ?? '∞'}
                         </td>
                         <td>{fmt(p.created_at)}</td>
@@ -352,10 +352,10 @@ export default function Admin() {
                     <th>Вхід</th>
                     <th>Реєстрація</th>
                     <th>Остання активність</th>
-                    <th>Профіль</th>
-                    <th>Страв</th>
-                    <th>У календарі</th>
-                    <th>Передзамовив</th>
+                    <th className="num">Профіль</th>
+                    <th className="num">Страв</th>
+                    <th className="num">У календарі</th>
+                    <th className="num">Передзамовив</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -365,10 +365,10 @@ export default function Admin() {
                       <td>{u.provider ?? '—'}</td>
                       <td>{fmt(u.created_at)}</td>
                       <td>{fmt(u.last_sign_in_at)}</td>
-                      <td>{u.has_profile ? '✓' : ''}</td>
-                      <td>{u.dishes}</td>
-                      <td>{u.planned}</td>
-                      <td>{u.preordered ? '✓' : ''}</td>
+                      <td className="num">{u.has_profile && <span className="ok">✓</span>}</td>
+                      <td className="num">{u.dishes}</td>
+                      <td className="num">{u.planned}</td>
+                      <td className="num">{u.preordered && <span className="ok">✓</span>}</td>
                     </tr>
                   ))}
                 </tbody>

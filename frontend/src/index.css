@@ -923,6 +923,26 @@ table.data th {
   background: var(--teal-soft);
   color: var(--teal-dark);
 }
+table.data td {
+  height: 44px;
+  line-height: 1.2;
+  vertical-align: middle;
+}
+table.data th.num,
+table.data td.num {
+  text-align: center;
+}
+table.data tbody tr:hover {
+  background: var(--teal-soft);
+}
+table.data .ok {
+  color: var(--teal);
+  font-weight: 700;
+}
+table.data td button {
+  min-height: 32px;
+  padding: 2px 12px;
+}
 .bars {
   display: flex;
   align-items: flex-end;
