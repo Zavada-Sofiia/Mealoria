@@ -1,12 +1,13 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { apiFetch } from '../api/client'
+import { ApiError, apiFetch } from '../api/client'
+import BarcodeScanner from '../components/BarcodeScanner'
 import { BarChart, LineChart } from '../components/Charts'
 import MealPhotoCard from '../components/MealPhotoCard'
 import SectionRail from '../components/SectionRail'
 import { addDays, fmtDate, fmtShortDate, iso } from '../dates'
 import { t } from '../i18n'
 import { targetsFromProfile, type Targets } from '../nutrition'
-import { energyUnit, showEnergy } from '../units'
+import { energyUnit, showEnergy, storeEnergy } from '../units'
 import { gramUnit, showGrams, showWater, showWeight, storeGrams, storeWeight, weightUnit } from '../units'
 import { macrosLine } from '../macros'
 
@@ -139,6 +140,52 @@ function DishCalculator() {
   const [servings, setServings] = useState(1)
   const [name, setName] = useState('')
   const [status, setStatus] = useState('')
+  const [scanning, setScanning] = useState(false)
+  const [manualOpen, setManualOpen] = useState(false)
+  const [manual, setManual] = useState({ name: '', kcal: '', protein: '', fat: '', carbs: '', fiber: '' })
+  const canScan = typeof navigator !== 'undefined' && !!navigator.mediaDevices?.getUserMedia
+
+  async function findByBarcode(code: string) {
+    setScanning(false)
+    setStatus(t('Шукаємо…'))
+    try {
+      const food = await apiFetch<Food>(`/api/calories/barcode/${code}`)
+      setResults([food])
+      setStatus('')
+    } catch (err) {
+      setResults([])
+      if (err instanceof ApiError && err.status === 404) {
+        setStatus(t('Продукт зі штрихкодом {code} не знайдено в базі. Додайте його вручну нижче.', { code }))
+        setManualOpen(true)
+      } else if (err instanceof ApiError && err.status === 422) {
+        setStatus(t('Продукт є в базі, але без калорій. Додайте його вручну нижче.'))
+        setManualOpen(true)
+      } else {
+        setStatus(t('База продуктів зараз недоступна, спробуйте за хвилину'))
+      }
+    }
+  }
+
+  function addManual(e: FormEvent) {
+    e.preventDefault()
+    const num = (v: string) => Math.max(0, Number(v.replace(',', '.')) || 0)
+    if (!manual.name.trim() || manual.kcal.trim() === '') return
+    setLines([
+      ...lines,
+      {
+        name: manual.name.trim().slice(0, 100),
+        kcal_100g: storeEnergy(num(manual.kcal)),
+        protein_100g: num(manual.protein),
+        fat_100g: num(manual.fat),
+        carbs_100g: num(manual.carbs),
+        fiber_100g: num(manual.fiber),
+        grams: 100,
+      },
+    ])
+    setManual({ name: '', kcal: '', protein: '', fat: '', carbs: '', fiber: '' })
+    setManualOpen(false)
+    setStatus('')
+  }
 
   async function search(e: FormEvent) {
     e.preventDefault()
@@ -194,7 +241,9 @@ function DishCalculator() {
         <input placeholder={t('Продукт, наприклад гречка')} value={query} style={{ maxWidth: 320 }}
           onChange={(e) => setQuery(e.target.value)} />
         <button type="submit">{t('Знайти')}</button>
+        {canScan && <button type="button" onClick={() => setScanning(true)}>{t('Сканувати')}</button>}
       </form>
+      {scanning && <BarcodeScanner onCode={(c) => void findByBarcode(c)} onClose={() => setScanning(false)} />}
       {status && <p className="status">{status}</p>}
 
       <ul className="cards">
@@ -205,6 +254,41 @@ function DishCalculator() {
           </li>
         ))}
       </ul>
+
+      <details open={manualOpen} onToggle={(e) => setManualOpen((e.target as HTMLDetailsElement).open)} style={{ margin: '10px 0' }}>
+        <summary>{t('Додати продукт вручну')}</summary>
+        <form onSubmit={addManual} style={{ marginTop: 8 }}>
+          <div className="row">
+            <label>
+              {t('Назва')}
+              <input value={manual.name} maxLength={100} onChange={(e) => setManual({ ...manual, name: e.target.value })} />
+            </label>
+            <label>
+              {t('{unit} на 100 г', { unit: energyUnit() })}
+              <input inputMode="decimal" value={manual.kcal} onChange={(e) => setManual({ ...manual, kcal: e.target.value })} />
+            </label>
+          </div>
+          <div className="row">
+            <label>
+              {t('Білки, г')}
+              <input inputMode="decimal" value={manual.protein} onChange={(e) => setManual({ ...manual, protein: e.target.value })} />
+            </label>
+            <label>
+              {t('Жири, г')}
+              <input inputMode="decimal" value={manual.fat} onChange={(e) => setManual({ ...manual, fat: e.target.value })} />
+            </label>
+            <label>
+              {t('Вуглеводи, г')}
+              <input inputMode="decimal" value={manual.carbs} onChange={(e) => setManual({ ...manual, carbs: e.target.value })} />
+            </label>
+            <label>
+              {t('Клітковина, г')}
+              <input inputMode="decimal" value={manual.fiber} onChange={(e) => setManual({ ...manual, fiber: e.target.value })} />
+            </label>
+          </div>
+          <button type="submit" disabled={!manual.name.trim() || manual.kcal.trim() === ''}>{t('Додати до складу')}</button>
+        </form>
+      </details>
 
       {lines.length > 0 && (
         <>
@@ -238,7 +322,7 @@ function DishCalculator() {
       )}
       <p>
         <small>
-          {t('Дані про продукти з Open Food Facts, показуємо лише українські назви. Значення можуть бути неточними.')}
+          {t('Дані про продукти з Open Food Facts, показуємо лише українські назви. Значення можуть бути неточними. За штрихкодом назва може бути іншою мовою.')}
         </small>
       </p>
     </section>

@@ -6,10 +6,12 @@ import httpx
 from pydantic import BaseModel
 
 OFF_URL = "https://world.openfoodfacts.org/cgi/search.pl"
+OFF_PRODUCT_URL = "https://world.openfoodfacts.org/api/v2/product/{code}.json"
 USER_AGENT = "Mealoria/0.1 (student project)"
 CACHE_TTL = 24 * 3600
 
 _cache: dict[str, tuple[float, list["FoodItem"]]] = {}
+_barcode_cache: dict[str, tuple[float, "FoodItem | str"]] = {}
 
 
 class FoodItem(BaseModel):
@@ -108,3 +110,65 @@ def search_food(query: str) -> list[FoodItem]:
             time.sleep(1)
     _cache[key] = (time.time(), items)
     return items
+
+
+NOT_FOUND = "not_found"
+NO_NUTRITION = "no_nutrition"
+KJ_PER_KCAL = 4.184
+
+
+def parse_barcode_product(payload: dict) -> "FoodItem | str":
+    """The product behind a barcode, or NOT_FOUND / NO_NUTRITION when there is nothing to show.
+
+    Unlike the text search, any language is accepted: the person holds this very package, so a
+    foreign name is better than nothing. A Ukrainian name is preferred when there is one.
+    """
+    product = payload.get("product") if payload.get("status") == 1 else None
+    if not product:
+        return NOT_FOUND
+    names = [html.unescape(product.get(k) or "").strip() for k in ("product_name_uk", "product_name", "product_name_en")]
+    uk = ukrainian_name(product)
+    name = uk or next((n for n in names if n), "")
+    if not name:
+        return NOT_FOUND
+    brand = html.unescape((product.get("brands") or "").split(",")[0]).strip()
+    if brand and brand.lower() not in name.lower():
+        name = f"{name} ({brand})"
+    n = product.get("nutriments") or {}
+    kcal = n.get("energy-kcal_100g")
+    if kcal is None and n.get("energy_100g") is not None:
+        kcal = round(n["energy_100g"] / KJ_PER_KCAL)  # only kilojoules are given
+    if kcal is None:
+        return NO_NUTRITION
+    return FoodItem(
+        name=name[:100],
+        kcal_100g=kcal,
+        protein_100g=n.get("proteins_100g") or 0,
+        fat_100g=n.get("fat_100g") or 0,
+        carbs_100g=n.get("carbohydrates_100g") or 0,
+        fiber_100g=n.get("fiber_100g") or 0,
+    )
+
+
+def lookup_barcode(code: str) -> "FoodItem | str":
+    cached = _barcode_cache.get(code)
+    if cached and time.time() - cached[0] < CACHE_TTL:
+        return cached[1]
+    params = {"fields": "product_name,product_name_uk,product_name_en,brands,lang,nutriments"}
+    for attempt in range(2):
+        try:
+            r = httpx.get(
+                OFF_PRODUCT_URL.format(code=code), params=params, headers={"User-Agent": USER_AGENT}, timeout=20
+            )
+            if r.status_code == 404:
+                result = NOT_FOUND  # Open Food Facts answers 404 for a barcode it does not know
+            else:
+                r.raise_for_status()
+                result = parse_barcode_product(r.json())
+            break
+        except (httpx.HTTPError, ValueError) as e:
+            if attempt == 1:
+                raise FoodSearchError(str(e)) from e
+            time.sleep(1)
+    _barcode_cache[code] = (time.time(), result)
+    return result
