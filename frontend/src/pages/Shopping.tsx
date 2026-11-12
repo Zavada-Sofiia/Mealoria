@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { apiFetch } from '../api/client'
 import ServingsPicker from '../components/ServingsPicker'
+import ShareList from '../components/ShareList'
 import { addDays, fmtDate, iso, mondayOf } from '../dates'
 import { scaleAmount, useServings } from '../servings'
 import { t } from '../i18n'
@@ -176,6 +177,11 @@ export default function Shopping() {
 
   const todo = data.items.filter((i) => !i.checked)
   const done = data.items.filter((i) => i.checked)
+  // what is still to buy, as lines of text for a chat message
+  const toShare = [
+    ...todo.map((i) => (i.amount ? `${i.name} — ${convertAmount(scaleAmount(i.amount, servings))}` : i.name)),
+    ...manual.filter((m) => !m.checked).map((m) => m.name),
+  ]
 
   return (
     <div>
@@ -232,6 +238,10 @@ export default function Shopping() {
           ),
         )}
       </ul>
+      <ShareList
+        title={t('Список продуктів: {from} — {to}', { from: fmtDate(start), to: fmtDate(iso(addDays(weekStart, 6))) })}
+        lines={toShare}
+      />
       {manual.some((m) => m.checked) && (
         <p>
           <button type="button" onClick={() => void clearBought()}>
