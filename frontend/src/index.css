@@ -1727,3 +1727,49 @@ button.add-dish:hover {
     color: var(--muted);
   }
 }
+
+/* ---------- settings ---------- */
+.choice-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 10px;
+  margin: 14px 0;
+}
+.choice-cards button {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  min-height: 0;
+  padding: 14px 16px;
+  border: 2px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--ink);
+  text-align: left;
+}
+.choice-cards button small {
+  color: var(--muted);
+  font-weight: 400;
+}
+.choice-cards button.on,
+:root[data-theme='dark'] .choice-cards button.on {
+  border-color: var(--teal);
+  background: var(--teal-soft);
+  color: var(--teal-dark);
+}
+:root[data-theme='dark'] .choice-cards button {
+  color: var(--ink);
+}
+.settings .seg button {
+  min-height: 40px;
+}
+.profile-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.profile-head h1 {
+  margin-bottom: 12px;
+}

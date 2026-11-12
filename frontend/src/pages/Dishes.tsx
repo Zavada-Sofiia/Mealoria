@@ -6,6 +6,7 @@ import PhotoPicker from '../components/PhotoPicker'
 import { usePlan } from '../plan/context'
 import { oneStepPerLine } from '../steps'
 import { locale, t } from '../i18n'
+import { convertAmount } from '../units'
 import { askConfirm } from '../confirm'
 import { macrosLine } from '../macros'
 
@@ -670,7 +671,7 @@ export default function Dishes() {
               ` · ${macrosLine(d.protein_g, d.fat_g, d.carbs_g, d.fiber_g)}`}
             {d.servings > 1 && ` · ${t('Порцій: {n}', { n: d.servings })}`}
             {d.ingredients.length > 0 && (
-              <div>{d.ingredients.map((i) => `${i.name}${i.amount ? ` (${i.amount})` : ''}`).join(', ')}</div>
+              <div>{d.ingredients.map((i) => `${i.name}${i.amount ? ` (${convertAmount(i.amount)})` : ''}`).join(', ')}</div>
             )}
             <div className="actions" style={{ marginTop: 8 }}>
             <button onClick={() => drawPhoto(d)} disabled={drawing !== null}>

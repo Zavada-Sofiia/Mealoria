@@ -1,0 +1,88 @@
+import { getLang, t } from './i18n'
+
+export type Units = 'metric' | 'imperial'
+
+const KEY = 'units'
+
+function detect(): Units {
+  try {
+    const saved = localStorage.getItem(KEY)
+    if (saved === 'metric' || saved === 'imperial') return saved
+  } catch {
+    // no storage: metric
+  }
+  return 'metric'
+}
+
+let current: Units = detect()
+
+export const getUnits = () => current
+export const isImperial = () => current === 'imperial'
+
+export function setUnits(units: Units) {
+  current = units
+  try {
+    localStorage.setItem(KEY, units)
+  } catch {
+    // the choice just lasts until the page is closed
+  }
+}
+
+const KG_TO_LB = 2.2046226218
+const CM_TO_IN = 0.3937007874
+const G_TO_OZ = 0.0352739619
+const ML_TO_FLOZ = 0.0338140227
+
+const round = (n: number, digits = 1) => Math.round(n * 10 ** digits) / 10 ** digits
+
+/** Number for the screen: a decimal comma in Ukrainian, a point in English. */
+export function num(n: number, digits = 1): string {
+  const text = String(round(n, digits))
+  return getLang() === 'en' ? text : text.replace('.', ',')
+}
+
+// body weight: stored in kg
+export const weightUnit = () => (isImperial() ? t('фунтів') : t('кг'))
+export const showWeight = (kg: number) => (isImperial() ? round(kg * KG_TO_LB) : round(kg))
+export const storeWeight = (shown: number) => (isImperial() ? round(shown / KG_TO_LB) : shown)
+
+// height: stored in cm, shown in inches
+export const heightUnit = () => (isImperial() ? t('дюймів') : t('см'))
+export const showHeight = (cm: number) => (isImperial() ? Math.round(cm * CM_TO_IN) : Math.round(cm))
+export const storeHeight = (shown: number) => (isImperial() ? Math.round(shown / CM_TO_IN) : shown)
+
+/** "5 ft 6 in" next to a height in inches. */
+export function feetInches(cm: number): string {
+  const total = Math.round(cm * CM_TO_IN)
+  return `${Math.floor(total / 12)} ${t('фт')} ${total % 12} ${t('дюйм.')}`
+}
+
+// grams of a food (calculator): stored in g
+export const gramUnit = () => (isImperial() ? t('унц.') : t('г'))
+export const showGrams = (g: number) => (isImperial() ? round(g * G_TO_OZ) : g)
+export const storeGrams = (shown: number) => (isImperial() ? round(shown / G_TO_OZ, 0) : shown)
+
+const AMOUNT = /(\d+(?:[.,]\d+)?)\s*(кг|г|мл|л|kg|g|ml|l)(?![A-Za-zА-Яа-яІіЇїЄєҐґ])/gi
+
+/** "150 г" -> "5.3 унц." in imperial units; metric text and text without a quantity stay as they are. */
+export function convertAmount(text: string): string {
+  if (!isImperial() || !text) return text
+  return text.replace(AMOUNT, (_m, n: string, unit: string) => {
+    const value = Number(n.replace(',', '.'))
+    switch (unit.toLowerCase()) {
+      case 'кг':
+      case 'kg':
+        return `${num(value * KG_TO_LB)} ${t('фнт')}`
+      case 'г':
+      case 'g': {
+        const lb = value / 453.592
+        return value >= 454 ? `${num(lb)} ${t('фнт')}` : `${num(value * G_TO_OZ)} ${t('унц.')}`
+      }
+      case 'мл':
+      case 'ml':
+        return `${num(value * ML_TO_FLOZ)} ${t('рід. унц.')}`
+      default:
+        return `${num(value * 33.814)} ${t('рід. унц.')}`
+    }
+  })
+}

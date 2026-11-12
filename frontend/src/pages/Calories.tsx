@@ -5,6 +5,7 @@ import MealPhotoCard from '../components/MealPhotoCard'
 import SectionRail from '../components/SectionRail'
 import { addDays, fmtDate, iso } from '../dates'
 import { t } from '../i18n'
+import { gramUnit, showGrams, showWeight, storeGrams, storeWeight, weightUnit } from '../units'
 import { macrosLine } from '../macros'
 
 type Macros = { kcal: number; protein_g: number; fat_g: number; carbs_g: number; fiber_g: number }
@@ -176,11 +177,11 @@ function DishCalculator() {
             {lines.map((l, i) => (
               <li key={i}>
                 {l.name}{' '}
-                <input type="number" min={1} max={5000} value={l.grams} style={{ width: 80 }}
+                <input type="number" min={0} max={showGrams(5000)} step="any" value={showGrams(l.grams)} style={{ width: 80 }}
                   onChange={(e) =>
-                    setLines(lines.map((x, j) => (j === i ? { ...x, grams: Number(e.target.value) } : x)))
+                    setLines(lines.map((x, j) => (j === i ? { ...x, grams: storeGrams(Number(e.target.value)) } : x)))
                   } />{' '}
-                {t('г')} <button onClick={() => setLines(lines.filter((_, j) => j !== i))}>×</button>
+                {gramUnit()} <button onClick={() => setLines(lines.filter((_, j) => j !== i))}>×</button>
               </li>
             ))}
           </ul>
@@ -277,12 +278,14 @@ function WeightJournal() {
   async function save(e: FormEvent) {
     e.preventDefault()
     const value = Number(weight.replace(',', '.'))
-    if (!(value >= 20 && value <= 400)) return setStatus(t('Вкажіть вагу від 20 до 400 кг'))
+    const kg = storeWeight(value)
+    if (!(kg >= 20 && kg <= 400))
+      return setStatus(t('Вкажіть вагу від {min} до {max} {unit}', { min: showWeight(20), max: showWeight(400), unit: weightUnit() }))
     try {
       const saved = await apiFetch<WeightPoint>('/api/weight', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ day, weight_kg: value }),
+        body: JSON.stringify({ day, weight_kg: kg }),
       })
       setPoints((ps) => [...ps.filter((p) => p.day !== saved.day), saved].sort((a, b) => a.day.localeCompare(b.day)))
       setWeight('')
@@ -303,26 +306,26 @@ function WeightJournal() {
 
   const first = points[0]
   const last = points[points.length - 1]
-  const change = first && last && first !== last ? Math.round((last.weight_kg - first.weight_kg) * 10) / 10 : null
+  const change = first && last && first !== last ? Math.round((showWeight(last.weight_kg) - showWeight(first.weight_kg)) * 10) / 10 : null
 
   return (
     <section className="card red" id="cal-calc">
       <h2 style={{ marginTop: 0 }}>{t('Журнал ваги')}</h2>
       <form onSubmit={save} className="actions" style={{ marginBottom: 12 }}>
         <input type="date" value={day} max={today} onChange={(e) => e.target.value && setDay(e.target.value)} />
-        <input inputMode="decimal" placeholder={t('Вага, кг')} value={weight} style={{ maxWidth: 120 }}
+        <input inputMode="decimal" placeholder={`${t('Вага')}, ${weightUnit()}`} value={weight} style={{ maxWidth: 120 }}
           onChange={(e) => setWeight(e.target.value)} />
         <button type="submit">{t('Записати')}</button>
       </form>
       {status && <p className="status">{status}</p>}
       {points.length >= 2 && (
-        <LineChart points={points.map((p) => ({ label: shortDate(p.day), value: p.weight_kg }))} />
+        <LineChart points={points.map((p) => ({ label: shortDate(p.day), value: showWeight(p.weight_kg) }))} />
       )}
       {points.length === 1 && <p className="muted">{t('Додайте ще один запис, щоб побачити графік.')}</p>}
       {change !== null && (
         <p className="muted">
           {t('Зміна з {date}:', { date: fmtDate(first.day) })} {change > 0 ? '+' : ''}
-          {change} {t('кг')}
+          {change} {weightUnit()}
         </p>
       )}
       {points.length > 0 && (
@@ -331,7 +334,7 @@ function WeightJournal() {
           <ul className="cards">
             {[...points].reverse().map((p) => (
               <li key={p.day}>
-                {fmtDate(p.day)}: <strong>{p.weight_kg} {t('кг')}</strong>{' '}
+                {fmtDate(p.day)}: <strong>{showWeight(p.weight_kg)} {weightUnit()}</strong>{' '}
                 <button type="button" onClick={() => remove(p.day)} aria-label={t('Видалити запис')}>
                   ×
                 </button>

@@ -5,6 +5,7 @@ import DeleteAccount from '../components/DeleteAccount'
 import RangeField from '../components/RangeField'
 import { estimateCalories } from '../calories'
 import { t } from '../i18n'
+import { feetInches, heightUnit, isImperial, showHeight, showWeight, storeHeight, storeWeight, weightUnit } from '../units'
 
 type ProfileData = {
   first_name: string
@@ -201,7 +202,12 @@ export default function Profile() {
   return (
     <>
     <form onSubmit={save}>
-      <h1>{t('Профіль')}</h1>
+      <div className="profile-head">
+        <h1>{t('Профіль')}</h1>
+        <Link to="/settings">
+          <button type="button" className="secondary">⚙ {t('Налаштування')}</button>
+        </Link>
+      </div>
 
       <section className="card">
       <h2 style={{ marginTop: 0 }}>{t('Про вас')}</h2>
@@ -226,10 +232,17 @@ export default function Profile() {
       </label>
       <RangeField label={t('Вік')} unit={t('років')} min={10} max={100} value={form.age}
         placeholder="—" onChange={(v) => set('age', v)} />
-      <RangeField label={t('Зріст')} unit={t('см')} min={100} max={250} value={form.height_cm}
-        placeholder="—" onChange={(v) => set('height_cm', v)} />
-      <RangeField label={t('Вага')} unit={t('кг')} min={30} max={200} value={form.weight_kg}
-        placeholder="—" decimals onChange={(v) => set('weight_kg', v)} />
+      <RangeField label={t('Зріст')} unit={heightUnit()} min={showHeight(100)} max={showHeight(250)}
+        value={form.height_cm === null ? null : showHeight(form.height_cm)}
+        placeholder="—" onChange={(v) => set('height_cm', v === null ? null : storeHeight(v))} />
+      {isImperial() && form.height_cm !== null && (
+        <p className="muted" style={{ margin: '-8px 0 12px' }}>
+          <small>{t('≈ {value}', { value: feetInches(form.height_cm) })}</small>
+        </p>
+      )}
+      <RangeField label={t('Вага')} unit={weightUnit()} min={Math.ceil(showWeight(30))} max={Math.floor(showWeight(200))}
+        value={form.weight_kg === null ? null : showWeight(form.weight_kg)}
+        placeholder="—" decimals onChange={(v) => set('weight_kg', v === null ? null : storeWeight(v))} />
       <label>
         {t('Активність')}
         <select value={form.activity}

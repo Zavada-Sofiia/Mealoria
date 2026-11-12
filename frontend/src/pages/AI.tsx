@@ -8,6 +8,7 @@ import { oneStepPerLine } from '../steps'
 import { aiErrorText as errorText } from '../aiError'
 import { kcalMacros as macros } from '../macros'
 import { t } from '../i18n'
+import { convertAmount } from '../units'
 
 type Ingredient = { name: string; amount: string }
 type Idea = {
@@ -69,7 +70,7 @@ function IdeaList({ ideas, saved, onSave }: { ideas: Idea[]; saved: string[]; on
           )}
           <details>
             <summary>{t('Рецепт')}</summary>
-            <div>{i.ingredients.map((x) => `${x.name} (${x.amount})`).join(', ')}</div>
+            <div>{i.ingredients.map((x) => `${x.name} (${convertAmount(x.amount)})`).join(', ')}</div>
             <p style={{ whiteSpace: 'pre-line' }}>{oneStepPerLine(i.recipe)}</p>
           </details>
           <div className="actions" style={{ marginTop: 8 }}>

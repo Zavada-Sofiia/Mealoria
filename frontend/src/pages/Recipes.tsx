@@ -5,6 +5,7 @@ import ServingsPicker from '../components/ServingsPicker'
 import { scaleAmount, useServings } from '../servings'
 import { oneStepPerLine } from '../steps'
 import { t } from '../i18n'
+import { convertAmount } from '../units'
 import { macrosLine } from '../macros'
 
 type Recipe = {
@@ -177,7 +178,7 @@ export default function Recipes() {
               <summary>{t('Рецепт')}</summary>
               <div>
                 {servings > 1 && <strong>{t('На {n}: ', { n: servings })}</strong>}
-                {r.ingredients.map((i) => `${i.name} (${scaleAmount(i.amount, servings)})`).join(', ')}
+                {r.ingredients.map((i) => `${i.name} (${convertAmount(scaleAmount(i.amount, servings))})`).join(', ')}
               </div>
               <p style={{ whiteSpace: 'pre-line' }}>{oneStepPerLine(r.recipe)}</p>
             </details>

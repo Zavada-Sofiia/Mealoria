@@ -5,6 +5,7 @@ import ServingsPicker from '../components/ServingsPicker'
 import { addDays, fmtDate, iso, mondayOf } from '../dates'
 import { scaleAmount, useServings } from '../servings'
 import { t } from '../i18n'
+import { convertAmount } from '../units'
 
 type Item = { name: string; amount: string; checked: boolean }
 type ShoppingResponse = { items: Item[]; at_home: string[] }
@@ -211,7 +212,7 @@ export default function Shopping() {
             <li key={`p-${row.item.name}`} style={{ textDecoration: row.item.checked ? 'line-through' : undefined, opacity: row.item.checked ? 0.6 : 1 }}>
               <label className="inline" style={{ margin: 0 }}>
                 <input type="checkbox" checked={row.item.checked} onChange={() => toggle(row.item)} /> {row.item.name}
-                {row.item.amount && ` — ${scaleAmount(row.item.amount, servings)}`}
+                {row.item.amount && ` — ${convertAmount(scaleAmount(row.item.amount, servings))}`}
               </label>
               {!row.item.checked && (
                 <button type="button" className="have-it" onClick={() => void addNames([row.item.name])}>

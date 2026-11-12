@@ -1,4 +1,5 @@
 import { t } from '../i18n'
+import { weightUnit } from '../units'
 
 type Bar = { label: string; value: number }
 
@@ -82,7 +83,7 @@ export function LineChart({ points }: { points: { label: string; value: number }
       {points.map((p, i) => (
         <g key={i}>
           <circle cx={x(i)} cy={y(p.value)} r={3} className="chart-dot">
-            <title>{`${p.label}: ${p.value} ${t('кг')}`}</title>
+            <title>{`${p.label}: ${p.value} ${weightUnit()}`}</title>
           </circle>
           {i % every === 0 && (
             <text x={x(i)} y={H - 6} textAnchor="middle" className="chart-text">

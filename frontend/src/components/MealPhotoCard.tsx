@@ -5,6 +5,7 @@ import { supabase } from '../api/supabase'
 import { aiErrorText } from '../aiError'
 import { kcalMacros } from '../macros'
 import { t } from '../i18n'
+import { convertAmount } from '../units'
 import PhotoPicker from './PhotoPicker'
 
 type Ingredient = { name: string; amount: string }
@@ -144,7 +145,7 @@ export default function MealPhotoCard() {
           <p>
             <strong>{kcalMacros(meal)}</strong>
           </p>
-          <p className="muted">{meal.ingredients.map((x) => `${x.name} (${x.amount})`).join(', ')}</p>
+          <p className="muted">{meal.ingredients.map((x) => `${x.name} (${convertAmount(x.amount)})`).join(', ')}</p>
           {meal.comment && <p className="muted">{meal.comment}</p>}
           <p>
             <small>{t('Це лише оцінка, реальні значення можуть відрізнятися.')}</small>

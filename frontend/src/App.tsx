@@ -25,12 +25,19 @@ import Shopping from './pages/Shopping'
 import ConfirmHost from './components/ConfirmHost'
 import { getLang, setLang, type Lang } from './i18n'
 import { LangContext } from './i18n/context'
+import { getUnits, setUnits, type Units } from './units'
+import Settings from './pages/Settings'
 
 function App() {
   const [lang, setLangState] = useState(getLang)
   const changeLang = (l: Lang) => {
     setLang(l)
     setLangState(l)
+  }
+  const [units, setUnitsState] = useState(getUnits)
+  const changeUnits = (u: Units) => {
+    setUnits(u)
+    setUnitsState(u)
   }
   const [session, setSession] = useState<Session | null | undefined>(undefined)
 
@@ -43,8 +50,8 @@ function App() {
   if (session === undefined) return null
 
   return (
-    <LangContext.Provider value={{ lang, changeLang }}>
-    <BrowserRouter key={lang}>
+    <LangContext.Provider value={{ lang, changeLang, units, changeUnits }}>
+    <BrowserRouter key={`${lang}-${units}`}>
       <PlanProvider signedIn={!!session}>
       {session ? <Nav /> : <PublicNav />}
       <ConfirmHost />
@@ -65,6 +72,7 @@ function App() {
           path="/calendar"
           element={session ? <Calendar /> : <Navigate to="/auth" />}
         />
+        <Route path="/settings" element={session ? <Settings /> : <Navigate to="/auth" />} />
         <Route path="/staff" element={session ? <Admin /> : <NotFound />} />
         <Route path="/pricing" element={<Pricing session={session} />} />
         <Route path="/support" element={<Support />} />
