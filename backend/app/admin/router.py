@@ -54,6 +54,18 @@ class SupabaseAdminStore:
     def list_promos(self) -> list[dict]:
         return self._rpc("admin_list_promos")
 
+    def grant_premium(self, email: str, months: int, days: int, unlimited: bool) -> dict:
+        return self._rpc(
+            "admin_grant_premium",
+            {"target_email": email, "add_months": months, "add_days": days, "make_unlimited": unlimited},
+        )
+
+    def premium_history(self) -> list[dict]:
+        return self._rpc("admin_premium_history", {"max_rows": 100})
+
+    def preorders_by_period(self) -> list[dict]:
+        return self._rpc("admin_preorders_by_period")
+
     def set_notice(self, active: bool, level: str, message_uk: str, message_en: str) -> dict:
         return self._rpc(
             "admin_set_notice",
@@ -194,3 +206,35 @@ def set_notice(
 
     forget_cache()  # the change shows up at once, not after the cache runs out
     return result
+
+
+class PremiumGrant(BaseModel):
+    email: str = Field(min_length=3, max_length=200)
+    months: int = Field(default=0, ge=0, le=120)
+    days: int = Field(default=0, ge=0, le=3650)
+    unlimited: bool = False
+
+
+@router.post("/premium/grant")
+def grant_premium(
+    body: PremiumGrant,
+    _: str = Depends(current_user_id),
+    store: SupabaseAdminStore = Depends(get_store),
+):
+    """Admin-only: add a period (months and/or days) to a user's Premium; the end date is extended, never replaced."""
+    result = _admin_only(
+        lambda: store.grant_premium(body.email.strip(), body.months, body.days, body.unlimited)
+    )
+    if not result.get("ok"):
+        raise HTTPException(status_code=422, detail=result.get("error", "failed"))
+    return result
+
+
+@router.get("/premium/history")
+def premium_history(_: str = Depends(current_user_id), store: SupabaseAdminStore = Depends(get_store)):
+    return _admin_only(store.premium_history)
+
+
+@router.get("/preorders")
+def preorders_by_period(_: str = Depends(current_user_id), store: SupabaseAdminStore = Depends(get_store)):
+    return _admin_only(store.preorders_by_period)

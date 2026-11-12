@@ -6,8 +6,14 @@ import { usePageMeta } from '../seo'
 import { formatDate, limitLines, usePlan } from '../plan/context'
 import { t } from '../i18n'
 
-// Shown to visitors; change here when the real price is decided.
-const PREMIUM_PRICE = '49 грн / міс'
+// Shown to visitors; change here when the real prices are decided (hryvnias).
+const MONTHLY = 49
+const PERIODS = [
+  { months: 1, price: 49 },
+  { months: 3, price: 129 },
+  { months: 6, price: 239 },
+  { months: 12, price: 449 },
+]
 
 const FREE_FEATURES = [
   'Профіль, норма калорій і вподобання (дієта, алергени, кухні)',
@@ -35,12 +41,18 @@ export default function Pricing({ session }: { session: Session | null }) {
   const [promoMessage, setPromoMessage] = useState('')
   const [promoBusy, setPromoBusy] = useState(false)
   const [preordered, setPreordered] = useState(false)
+  const [preorderedMonths, setPreorderedMonths] = useState<number | null>(null)
+  const [months, setMonths] = useState(1)
   const [status, setStatus] = useState('')
 
   useEffect(() => {
     if (!session) return
-    apiFetch<{ preordered: boolean }>('/api/preorder')
-      .then((r) => setPreordered(r.preordered))
+    apiFetch<{ preordered: boolean; months: number | null }>('/api/preorder')
+      .then((r) => {
+        setPreordered(r.preordered)
+        setPreorderedMonths(r.months)
+        if (r.months) setMonths(r.months)
+      })
       .catch(() => setStatus(t('Не вдалося перевірити передзамовлення')))
   }, [session])
 
@@ -80,10 +92,18 @@ export default function Pricing({ session }: { session: Session | null }) {
     }
   }
 
+  const chosen = PERIODS.find((p) => p.months === months) ?? PERIODS[0]
+  const saving = Math.round(100 * (1 - chosen.price / (MONTHLY * chosen.months)))
+
   async function preorder() {
     try {
-      await apiFetch('/api/preorder', { method: 'POST' })
+      await apiFetch('/api/preorder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ months }),
+      })
       setPreordered(true)
+      setPreorderedMonths(months)
       setStatus('')
     } catch {
       setStatus(t('Не вдалося зберегти. Спробуйте ще раз'))
@@ -112,7 +132,19 @@ export default function Pricing({ session }: { session: Session | null }) {
 
         <section className="card red">
           <span className="badge paid">{t('Преміум')}</span>
-          <div className="price">{t(PREMIUM_PRICE)}</div>
+          <div className="seg" role="radiogroup" aria-label={t('Період')} style={{ margin: '4px 0 12px' }}>
+            {PERIODS.map((p) => (
+              <button key={p.months} type="button" role="radio" aria-checked={months === p.months}
+                className={months === p.months ? 'on' : ''} onClick={() => setMonths(p.months)}>
+                {t('{n} міс', { n: p.months })}
+              </button>
+            ))}
+          </div>
+          <div className="price">{t('{price} грн / {n} міс', { price: chosen.price, n: chosen.months })}</div>
+          <p className="muted" style={{ marginTop: 0 }}>
+            {t('{n} грн на місяць', { n: Math.round(chosen.price / chosen.months) })}
+            {saving > 0 && <span className="badge paid" style={{ marginLeft: 10 }}>{t('Економія {pct}%', { pct: saving })}</span>}
+          </p>
           <p className="muted">
             {t('Більші ліміти вже працюють. Оплату підключимо найближчим часом: передзамовте, і ми повідомимо.')}
           </p>
@@ -131,11 +163,15 @@ export default function Pricing({ session }: { session: Session | null }) {
             </p>
           ) : !session ? (
             <Link to="/auth">{t('Увійдіть, щоб передзамовити')}</Link>
-          ) : preordered ? (
-            <p className="status">{t('Дякуємо! Ви в списку передзамовлень. Гроші зараз не списуються.')}</p>
+          ) : preordered && preorderedMonths === months ? (
+            <p className="status">{t('Дякуємо! Ви в списку передзамовлень на {n} міс. Гроші зараз не списуються.', { n: months })}</p>
           ) : (
             <>
-              <button onClick={preorder}>{t('Передзамовити преміум')}</button>
+              <button onClick={preorder}>
+                {preordered
+                  ? t('Змінити період на {n} міс', { n: months })
+                  : t('Передзамовити преміум на {n} міс', { n: months })}
+              </button>
               <p>
                 <small>{t('Гроші зараз не списуються.')}</small>
               </p>

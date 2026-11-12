@@ -19,6 +19,19 @@ type UserRow = {
   preordered: boolean
 }
 type Promo = { code: string; days: number; max_uses: number | null; used_count: number; created_at: string }
+type Grant = {
+  email: string | null
+  source: 'admin' | 'promo' | 'reset'
+  months: number
+  days: number
+  unlimited: boolean
+  note: string
+  was_active: boolean
+  previous_until: string | null
+  new_until: string | null
+  granted_at: string
+}
+type PreorderCount = { months: number | null; count: number }
 type PremiumUser = { email: string; premium_until: string | null; active: boolean }
 type Stats = {
   users_total: number
@@ -38,6 +51,19 @@ const fmt = (iso: string | null) =>
   iso
     ? new Date(iso).toLocaleString('uk-UA', { dateStyle: 'short', timeStyle: 'short' })
     : '—'
+
+const grantLabel = (g: Grant) =>
+  g.source === 'reset'
+    ? '—'
+    : g.months && g.days
+      ? `${g.months} міс + ${g.days} дн`
+      : g.months
+        ? g.months === 12
+          ? '1 рік'
+          : `${g.months} міс`
+        : g.days
+          ? `${g.days} дн`
+          : 'безстроково'
 
 function Bars({ days, field, title }: { days: Day[]; field: 'signups' | 'preorders'; title: string }) {
   const max = Math.max(1, ...days.map((d) => d[field]))
@@ -62,7 +88,7 @@ const RAIL = [
   { id: 'adm-charts', label: 'Графіки' },
   { id: 'adm-notice', label: 'Оголошення' },
   { id: 'adm-sentry', label: 'Помилки (Sentry)' },
-  { id: 'adm-plans', label: 'Тарифи користувачів' },
+  { id: 'adm-plans', label: 'Преміум' },
   { id: 'adm-promo', label: 'Промокоди' },
   { id: 'adm-users', label: 'Користувачі' },
 ]
@@ -74,8 +100,10 @@ export default function Admin() {
   const [version, setVersion] = useState(0)
   const [premium, setPremium] = useState<PremiumUser[]>([])
   const [email, setEmail] = useState('')
-  const [plan, setPlan] = useState('premium')
+  const [period, setPeriod] = useState('3')
   const [days, setDays] = useState('30')
+  const [grants, setGrants] = useState<Grant[]>([])
+  const [preorders, setPreorders] = useState<PreorderCount[]>([])
   const [planMessage, setPlanMessage] = useState('')
   const [testMessage, setTestMessage] = useState('')
   const [promos, setPromos] = useState<Promo[]>([])
@@ -102,6 +130,12 @@ export default function Admin() {
     // a failure here (for example, the plans SQL is not applied yet) must not hide the stats
     apiFetch<PremiumUser[]>('/api/admin/premium')
       .then((p) => current && setPremium(p))
+      .catch(() => {})
+    apiFetch<Grant[]>('/api/admin/premium/history')
+      .then((g) => current && setGrants(g))
+      .catch(() => {})
+    apiFetch<PreorderCount[]>('/api/admin/preorders')
+      .then((p) => current && setPreorders(p))
       .catch(() => {})
     apiFetch<Promo[]>('/api/admin/promos')
       .then((p) => current && setPromos(p))
@@ -196,25 +230,59 @@ export default function Admin() {
     }
   }
 
-  async function changePlan(e: FormEvent) {
+  async function grantPremium(e: FormEvent) {
     e.preventDefault()
     setPlanMessage('')
+    const body =
+      period === 'unlimited'
+        ? { email: email.trim(), unlimited: true }
+        : period === 'days'
+          ? { email: email.trim(), days: Number(days) }
+          : { email: email.trim(), months: Number(period) }
     try {
-      await apiFetch('/api/admin/plan', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: email.trim(),
-          plan,
-          days: plan === 'premium' && days ? Number(days) : null,
-        }),
-      })
-      setPlanMessage(plan === 'premium' ? 'Преміум видано' : 'Користувача повернуто на безкоштовний тариф')
+      const r = await apiFetch<{ was_active: boolean; previous_until: string | null; new_until: string | null; unlimited: boolean }>(
+        '/api/admin/premium/grant',
+        { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) },
+      )
+      setPlanMessage(
+        r.unlimited
+          ? 'Готово: преміум безстроковий'
+          : `Готово: ${r.was_active ? `було до ${fmt(r.previous_until)}, ` : 'раніше преміуму не було, '}тепер до ${fmt(r.new_until)}`,
+      )
       setVersion((v) => v + 1)
     } catch (err) {
       setPlanMessage(
         err instanceof ApiError && err.detail === 'user_not_found'
           ? 'Користувача з такою поштою не знайдено (він має хоч раз увійти на сайт)'
+          : err instanceof ApiError && err.detail === 'bad_period'
+            ? 'Вкажіть коректний період'
+            : 'Не вдалося видати преміум',
+      )
+    }
+  }
+
+  async function resetToFree() {
+    if (!email.trim()) return setPlanMessage('Спочатку вкажіть пошту користувача')
+    const ok = await askConfirm({
+      title: `Повернути ${email.trim()} на безкоштовний тариф?`,
+      text: 'Решта оплаченого преміуму зникне. Це буде записано в історії.',
+      confirmLabel: 'Повернути',
+      cancelLabel: 'Скасувати',
+      danger: true,
+    })
+    if (!ok) return
+    try {
+      await apiFetch('/api/admin/plan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.trim(), plan: 'free', days: null }),
+      })
+      setPlanMessage('Користувача повернуто на безкоштовний тариф')
+      setVersion((v) => v + 1)
+    } catch (err) {
+      setPlanMessage(
+        err instanceof ApiError && err.detail === 'user_not_found'
+          ? 'Користувача з такою поштою не знайдено'
           : 'Не вдалося змінити тариф',
       )
     }
@@ -328,30 +396,48 @@ export default function Admin() {
           </section>
 
           <section className="card" id="adm-plans">
-            <h3>Тарифи користувачів</h3>
-            <form onSubmit={changePlan}>
-              <div className="row">
+            <h3>Преміум користувачів</h3>
+            <p className="muted">
+              Період завжди <strong>додається</strong> до того, що в людини вже є: якщо преміум діє до 1 грудня, а ви додали
+              3 місяці, він діятиме до 1 березня. Якщо преміум уже закінчився, відлік іде від сьогодні.
+            </p>
+            <form onSubmit={grantPremium}>
+              <div className="row align-end">
                 <label>
                   Email користувача
                   <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
                 </label>
                 <label>
-                  Тариф
-                  <select value={plan} onChange={(e) => setPlan(e.target.value)}>
-                    <option value="premium">Преміум</option>
-                    <option value="free">Безкоштовний</option>
+                  Скільки додати
+                  <select value={period} onChange={(e) => setPeriod(e.target.value)}>
+                    <option value="1">1 місяць</option>
+                    <option value="3">3 місяці</option>
+                    <option value="6">6 місяців</option>
+                    <option value="12">1 рік (12 місяців)</option>
+                    <option value="days">Власна кількість днів</option>
+                    <option value="unlimited">Безстроково</option>
                   </select>
                 </label>
-                {plan === 'premium' && (
+                {period === 'days' && (
                   <label>
-                    Днів (порожньо = безстроково)
-                    <input type="number" min={1} max={3650} value={days} onChange={(e) => setDays(e.target.value)} />
+                    Днів
+                    <input type="number" min={1} max={3650} required value={days} onChange={(e) => setDays(e.target.value)} />
                   </label>
                 )}
               </div>
-              <button type="submit">Застосувати</button>
-              {planMessage && <span className="muted"> {planMessage}</span>}
+              <div className="actions">
+                <button type="submit">Додати преміум</button>
+                <button type="button" className="danger" onClick={() => void resetToFree()}>Повернути на безкоштовний</button>
+              </div>
+              {planMessage && <p className="status" style={{ marginTop: 12 }}>{planMessage}</p>}
             </form>
+
+            {preorders.length > 0 && (
+              <p style={{ marginTop: 16 }}>
+                <strong>Передзамовлення за періодами:</strong>{' '}
+                {preorders.map((p) => `${p.months ? `${p.months} міс` : 'без періоду'}: ${p.count}`).join(' · ')}
+              </p>
+            )}
             {premium.length > 0 && (
               <div className="week-scroll" style={{ boxShadow: 'none', marginTop: 16 }}>
                 <table className="data">
@@ -368,6 +454,37 @@ export default function Admin() {
                         <td>{p.email}</td>
                         <td>{p.premium_until ? fmt(p.premium_until) : 'безстроково'}</td>
                         <td>{p.active ? 'діє' : 'закінчився'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+            <h4 style={{ margin: '22px 0 8px' }}>Історія видачі преміуму</h4>
+            {grants.length === 0 ? (
+              <p className="muted">Поки що нічого не видавали.</p>
+            ) : (
+              <div className="week-scroll" style={{ boxShadow: 'none' }}>
+                <table className="data">
+                  <thead>
+                    <tr>
+                      <th>Коли</th>
+                      <th>Email</th>
+                      <th>Як</th>
+                      <th>Що додано</th>
+                      <th>Було до</th>
+                      <th>Стало до</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {grants.map((g, i) => (
+                      <tr key={`${g.granted_at}-${i}`}>
+                        <td>{fmt(g.granted_at)}</td>
+                        <td>{g.email ?? '—'}</td>
+                        <td>{g.source === 'promo' ? `промокод ${g.note}` : g.source === 'admin' ? 'вручну' : 'повернуто на безкоштовний'}</td>
+                        <td>{grantLabel(g)}</td>
+                        <td>{g.source === 'reset' ? (g.was_active ? (g.previous_until ? fmt(g.previous_until) : 'безстроково') : '—') : g.was_active ? (g.previous_until ? fmt(g.previous_until) : 'безстроково') : 'не було'}</td>
+                        <td>{g.source === 'reset' ? 'безкоштовний' : g.new_until ? fmt(g.new_until) : 'безстроково'}</td>
                       </tr>
                     ))}
                   </tbody>

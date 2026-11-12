@@ -8,13 +8,13 @@ from app.main import app
 
 class FakeStore:
     def __init__(self):
-        self.users = set()
+        self.users = {}
 
-    def exists(self, user_id):
-        return user_id in self.users
+    def get(self, user_id):
+        return {"user_id": user_id, "months": self.users[user_id]} if user_id in self.users else None
 
-    def add(self, user_id):
-        self.users.add(user_id)
+    def add(self, user_id, months=None):
+        self.users[user_id] = months
 
 
 @pytest.fixture
@@ -28,11 +28,26 @@ def client():
 
 def test_preorder_flow_is_idempotent(client):
     c, store = client
-    assert c.get("/api/preorder").json() == {"preordered": False}
+    assert c.get("/api/preorder").json() == {"preordered": False, "months": None}
     assert c.post("/api/preorder").status_code == 201
     assert c.post("/api/preorder").status_code == 201
-    assert c.get("/api/preorder").json() == {"preordered": True}
-    assert store.users == {"user-1"}
+    assert c.get("/api/preorder").json() == {"preordered": True, "months": 1}
+    assert set(store.users) == {"user-1"}
+
+
+def test_the_chosen_period_is_saved_and_can_be_changed(client):
+    c, store = client
+    assert c.post("/api/preorder", json={"months": 6}).json() == {"preordered": True, "months": 6}
+    assert c.get("/api/preorder").json()["months"] == 6
+    assert c.post("/api/preorder", json={"months": 12}).status_code == 201
+    assert store.users == {"user-1": 12}
+
+
+def test_only_the_offered_periods_are_accepted(client):
+    c, store = client
+    for bad in (0, 2, 5, 24):
+        assert c.post("/api/preorder", json={"months": bad}).status_code == 422
+    assert store.users == {}
 
 
 def test_requires_login():
