@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { apiFetch } from '../api/client'
 import DeleteAccount from '../components/DeleteAccount'
 import RangeField from '../components/RangeField'
@@ -151,7 +151,9 @@ function Multi({
 }
 
 export default function Profile() {
+  const navigate = useNavigate()
   const [form, setForm] = useState<ProfileData>(EMPTY)
+  const [hadProfile, setHadProfile] = useState(true) // false only for a brand-new account
   const [status, setStatus] = useState(t('Завантаження…'))
   // null = follow the live recommendation; a string = the user's own target
   const [targetText, setTargetText] = useState<string | null>(null)
@@ -159,6 +161,7 @@ export default function Profile() {
   useEffect(() => {
     apiFetch<ProfileResponse>('/api/profile')
       .then((r) => {
+        setHadProfile(r.profile !== null)
         if (r.profile) {
           setForm(r.profile)
           setTargetText(r.profile.target_calories ? String(showEnergy(r.profile.target_calories)) : null)
@@ -200,6 +203,10 @@ export default function Profile() {
         body: JSON.stringify({ ...form, target_calories: ownTarget }),
       })
       setStatus(t('Збережено'))
+      if (!hadProfile) {
+        setHadProfile(true)
+        navigate('/today') // first save: carry on with the menu
+      }
     } catch {
       setStatus(t('Не вдалося зберегти'))
     }

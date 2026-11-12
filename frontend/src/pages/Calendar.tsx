@@ -16,6 +16,7 @@ import { mealName, slotCategory } from '../meals'
 import PrintableWeek from '../components/PrintableWeek'
 import { download, weekToIcs } from '../ics'
 import { t } from '../i18n'
+import { autoPlanMessage, autoPlanWeek } from '../autoplan'
 import { energyUnit, showEnergy } from '../units'
 
 type Dish = {
@@ -153,23 +154,14 @@ export default function Calendar() {
     setFilling(true)
     setStatus(t('Підбираємо страви…'))
     try {
-      const r = await apiFetch<{ entries: Entry[]; added: number; saved_from_catalog: number; unfilled: number; limited: boolean }>(
-        `/api/calendar/auto-plan?start=${iso(weekStart)}&since=${iso(new Date())}`,
-        { method: 'POST' },
-      )
+      const r = await autoPlanWeek<Entry>(weekStart)
       setEntries(r.entries)
       if (r.saved_from_catalog > 0) {
         apiFetch<Dish[]>('/api/dishes')
           .then((d) => setDishes([...d].sort((a, b) => Number(!!b.favorite) - Number(!!a.favorite))))
           .catch(() => {})
       }
-      const parts: string[] = []
-      if (r.added > 0) parts.push(t('Заповнено прийомів їжі: {n}.', { n: r.added }))
-      else if (r.unfilled === 0) parts.push(t('Усі прийоми їжі цього тижня вже заповнені.'))
-      if (r.saved_from_catalog > 0) parts.push(t('Додали {n} страв із каталогу в «Мої страви».', { n: r.saved_from_catalog }))
-      if (r.unfilled > 0) parts.push(t('Для {n} прийомів не знайшлося підходящої страви: додайте свої страви або рецепти з каталогу.', { n: r.unfilled }))
-      if (r.limited) parts.push(t('Частину днів не заповнено: на вашому тарифі планувати можна лише на обмежену кількість днів уперед.'))
-      setStatus(parts.join(' '))
+      setStatus(autoPlanMessage(r))
     } catch {
       setStatus(t('Не вдалося заповнити тиждень'))
     } finally {

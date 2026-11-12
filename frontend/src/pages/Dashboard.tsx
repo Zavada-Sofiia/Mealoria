@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { apiFetch } from '../api/client'
+import { supabase } from '../api/supabase'
+import GettingStarted from '../components/GettingStarted'
 import { iso, mondayOf } from '../dates'
 import { mealName } from '../meals'
 import { locale, t } from '../i18n'
@@ -23,12 +25,37 @@ export default function Dashboard() {
   const [day, setDay] = useState<Day | null>(null)
   const [profile, setProfile] = useState<Profile | null>(null)
   const [toBuy, setToBuy] = useState<number | null>(null)
+  const [weekPlanned, setWeekPlanned] = useState<boolean | null>(null)
+  const [dismissKey, setDismissKey] = useState<string | null>(null)
+  const [dismissed, setDismissed] = useState<boolean | null>(null)
   const [status, setStatus] = useState(t('Завантаження…'))
   const [dateLabel] = useState(() =>
     new Date()
       .toLocaleDateString(locale(), { weekday: 'long', day: 'numeric', month: 'long' })
       .replace(/^./, (c) => c.toUpperCase()),
   )
+
+  // the checklist can be hidden; this is remembered in this browser, per account
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      const key = `mealoria.started.v1.${data.session?.user.id ?? ''}`
+      setDismissKey(key)
+      try {
+        setDismissed(localStorage.getItem(key) === '1')
+      } catch {
+        setDismissed(false)
+      }
+    })
+  }, [])
+
+  function dismissChecklist() {
+    setDismissed(true)
+    try {
+      if (dismissKey) localStorage.setItem(dismissKey, '1')
+    } catch {
+      // not remembered: it will show again next time
+    }
+  }
 
   useEffect(() => {
     const today = iso(new Date())
@@ -38,8 +65,10 @@ export default function Dashboard() {
       apiFetch<Shopping>(`/api/shopping?start=${iso(mondayOf(new Date()))}`),
       // products added by hand also count; a failure here must not hide the rest of the page
       apiFetch<{ checked: boolean }[]>('/api/shopping/manual').catch(() => []),
+      apiFetch<unknown[]>(`/api/calendar?start=${iso(mondayOf(new Date()))}`).catch(() => null),
     ])
-      .then(([d, p, s, own]) => {
+      .then(([d, p, s, own, week]) => {
+        setWeekPlanned(week ? week.length > 0 : null)
         setDay(d)
         setProfile(p)
         setToBuy(s.items.filter((i) => !i.checked).length + own.filter((i) => !i.checked).length)
@@ -59,7 +88,10 @@ export default function Dashboard() {
       <p className="muted">{dateLabel}</p>
       {status && <p className="status">{status}</p>}
 
-      {profile && !profile.profile && (
+      {profile && weekPlanned === false && dismissed === false && (
+        <GettingStarted hasProfile={!!profile.profile} onDismiss={dismissChecklist} />
+      )}
+      {profile && !profile.profile && dismissed === true && (
         <section className="card red">
           <h3>{t('Почніть із профілю')}</h3>
           <p>
