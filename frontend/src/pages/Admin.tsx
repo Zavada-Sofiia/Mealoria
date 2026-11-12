@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { ApiError, apiFetch } from '../api/client'
+import { API_URL, ApiError, apiFetch } from '../api/client'
 import NotFound from './NotFound'
 import { reportError } from '../monitoring'
 import { askConfirm } from '../confirm'
@@ -21,7 +21,7 @@ type UserRow = {
 type Promo = { code: string; days: number; max_uses: number | null; used_count: number; created_at: string }
 type Grant = {
   email: string | null
-  source: 'admin' | 'promo' | 'reset'
+  source: 'admin' | 'promo' | 'reset' | 'card'
   months: number
   days: number
   unlimited: boolean
@@ -31,6 +31,29 @@ type Grant = {
   new_until: string | null
   granted_at: string
 }
+type PayOrder = {
+  email: string | null
+  code: string
+  months: number
+  amount_uah: number
+  status: 'pending' | 'paid' | 'cancelled'
+  paid_by: 'auto' | 'admin' | null
+  created_at: string
+  paid_at: string | null
+}
+type PayStatus = {
+  secret_set: boolean
+  pending: number
+  paid: number
+  paid_uah: number
+  card_set: boolean
+  secret_in_environment: boolean
+  secret_matches: boolean
+  bank_check: boolean
+  orders: PayOrder[]
+}
+const randomSecret = () =>
+  Array.from(crypto.getRandomValues(new Uint8Array(32)), (b) => b.toString(16).padStart(2, '0')).join('')
 type PreorderCount = { months: number | null; count: number }
 type PremiumUser = { email: string; premium_until: string | null; active: boolean }
 type Stats = {
@@ -90,6 +113,7 @@ const RAIL = [
   { id: 'adm-sentry', label: 'Помилки (Sentry)' },
   { id: 'adm-plans', label: 'Преміум' },
   { id: 'adm-promo', label: 'Промокоди' },
+  { id: 'adm-pay', label: 'Оплата карткою' },
   { id: 'adm-users', label: 'Користувачі' },
 ]
 
@@ -112,6 +136,9 @@ export default function Admin() {
   const [promoUses, setPromoUses] = useState('1')
   const [promoMessage, setPromoMessage] = useState('')
   const [created, setCreated] = useState('')
+  const [pay, setPay] = useState<PayStatus | null>(null)
+  const [newSecret, setNewSecret] = useState('')
+  const [payMessage, setPayMessage] = useState('')
   const [noticeOn, setNoticeOn] = useState(false)
   const [noticeLevel, setNoticeLevel] = useState<'info' | 'warning'>('warning')
   const [noticeUk, setNoticeUk] = useState('')
@@ -139,6 +166,9 @@ export default function Admin() {
       .catch(() => {})
     apiFetch<Promo[]>('/api/admin/promos')
       .then((p) => current && setPromos(p))
+      .catch(() => {})
+    apiFetch<PayStatus>('/api/admin/payments')
+      .then((p) => current && setPay(p))
       .catch(() => {})
     return () => {
       current = false
@@ -210,6 +240,54 @@ export default function Admin() {
             ? 'Перевірте код (літери, цифри, - і _; 3–40 символів) і кількість днів'
             : 'Не вдалося створити промокод',
       )
+    }
+  }
+
+  async function makeSecret() {
+    if (
+      pay?.secret_set &&
+      !(await askConfirm({
+        title: 'Створити новий секрет?',
+        text: 'Старий перестане діяти: його треба буде замінити в Render і заново зареєструвати адресу в monobank.',
+        confirmLabel: 'Створити',
+        cancelLabel: 'Скасувати',
+        danger: true,
+      }))
+    )
+      return
+    const secret = randomSecret()
+    try {
+      await apiFetch('/api/admin/payments/secret', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ secret }),
+      })
+      setNewSecret(secret)
+      setPayMessage('')
+      setVersion((v) => v + 1)
+    } catch {
+      setPayMessage('Не вдалося зберегти секрет. Спробуйте ще раз.')
+    }
+  }
+
+  async function confirmOrder(o: PayOrder) {
+    const ok = await askConfirm({
+      title: `Гроші за ${o.code} справді надійшли?`,
+      text: `${o.amount_uah} грн, ${o.email ?? '—'}, ${o.months} міс. Преміум буде додано одразу.`,
+      confirmLabel: 'Так, підтвердити',
+      cancelLabel: 'Ні',
+    })
+    if (!ok) return
+    try {
+      await apiFetch(`/api/admin/payments/orders/${o.code}/confirm`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ note: 'підтверджено вручну' }),
+      })
+      setPayMessage(`Замовлення ${o.code} підтверджено, преміум додано.`)
+      setVersion((v) => v + 1)
+    } catch {
+      setPayMessage('Не вдалося підтвердити замовлення.')
     }
   }
 
@@ -481,7 +559,7 @@ export default function Admin() {
                       <tr key={`${g.granted_at}-${i}`}>
                         <td>{fmt(g.granted_at)}</td>
                         <td>{g.email ?? '—'}</td>
-                        <td>{g.source === 'promo' ? `промокод ${g.note}` : g.source === 'admin' ? 'вручну' : 'повернуто на безкоштовний'}</td>
+                        <td>{g.source === 'promo' ? `промокод ${g.note}` : g.source === 'card' ? `оплата карткою ${g.note}` : g.source === 'admin' ? 'вручну' : 'повернуто на безкоштовний'}</td>
                         <td>{grantLabel(g)}</td>
                         <td>{g.source === 'reset' ? (g.was_active ? (g.previous_until ? fmt(g.previous_until) : 'безстроково') : '—') : g.was_active ? (g.previous_until ? fmt(g.previous_until) : 'безстроково') : 'не було'}</td>
                         <td>{g.source === 'reset' ? 'безкоштовний' : g.new_until ? fmt(g.new_until) : 'безстроково'}</td>
@@ -550,6 +628,74 @@ export default function Admin() {
                         <td>{fmt(p.created_at)}</td>
                         <td>
                           <button type="button" className="danger" onClick={() => void deletePromo(p.code)}>Видалити</button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </section>
+
+          <section className="card" id="adm-pay">
+            <h3>Оплата карткою</h3>
+            <p className="muted">
+              Людина обирає період на сторінці «Тарифи», отримує код замовлення (ML-XXXXXX), переказує гроші на вашу
+              картку monobank і пише код у коментарі. monobank повідомляє сервер, і преміум додається сам.
+            </p>
+            {pay && (
+              <ul className="muted" style={{ listStyle: 'none', paddingLeft: 0 }}>
+                <li>{pay.card_set ? '✓' : '✗'} Номер картки задано (змінна PAYMENT_CARD у Render)</li>
+                <li>{pay.secret_set ? '✓' : '✗'} Секрет створено тут</li>
+                <li>{pay.secret_in_environment ? '✓' : '✗'} Секрет додано в Render (PAYMENTS_SECRET)</li>
+                <li>{pay.secret_matches ? '✓' : '✗'} Секрет у Render збігається з тим, що тут</li>
+                <li>{pay.bank_check ? '✓' : '–'} Додаткова перевірка виписки (MONOBANK_TOKEN, необов’язково)</li>
+              </ul>
+            )}
+            <div className="actions">
+              <button type="button" onClick={() => void makeSecret()}>
+                {pay?.secret_set ? 'Створити новий секрет' : 'Створити секрет'}
+              </button>
+            </div>
+            {newSecret && (
+              <div className="card" style={{ marginTop: 12 }}>
+                <p><strong>Секрет показано один раз, збережіть його зараз:</strong></p>
+                <p><code style={{ wordBreak: 'break-all' }}>{newSecret}</code></p>
+                <p className="muted">1. У Render додайте змінну <code>PAYMENTS_SECRET</code> з цим значенням.</p>
+                <p className="muted">2. Адреса для monobank (зареєструйте її за інструкцією в README):</p>
+                <p><code style={{ wordBreak: 'break-all' }}>{`${API_URL}/api/payments/monobank/${newSecret}`}</code></p>
+              </div>
+            )}
+            {pay && (
+              <p style={{ marginTop: 12 }}>
+                Очікують: <strong>{pay.pending}</strong> · Оплачено: <strong>{pay.paid}</strong> · Усього:{' '}
+                <strong>{pay.paid_uah} грн</strong>
+              </p>
+            )}
+            {payMessage && <p className="status">{payMessage}</p>}
+            {pay && pay.orders.length > 0 && (
+              <div className="week-scroll" style={{ boxShadow: 'none', marginTop: 16 }}>
+                <table className="data">
+                  <thead>
+                    <tr><th>Код</th><th>Пошта</th><th>Період</th><th>Сума</th><th>Статус</th><th>Створено</th><th /></tr>
+                  </thead>
+                  <tbody>
+                    {pay.orders.map((o) => (
+                      <tr key={o.code}>
+                        <td><code>{o.code}</code></td>
+                        <td>{o.email ?? '—'}</td>
+                        <td>{o.months} міс</td>
+                        <td>{o.amount_uah} грн</td>
+                        <td>
+                          {o.status === 'paid'
+                            ? `оплачено (${o.paid_by === 'auto' ? 'автоматично' : 'вручну'})`
+                            : o.status === 'pending' ? 'очікує' : 'скасовано'}
+                        </td>
+                        <td>{fmt(o.created_at)}</td>
+                        <td>
+                          {o.status === 'pending' && (
+                            <button type="button" onClick={() => void confirmOrder(o)}>Підтвердити</button>
+                          )}
                         </td>
                       </tr>
                     ))}

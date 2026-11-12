@@ -66,6 +66,21 @@ class SupabaseAdminStore:
     def preorders_by_period(self) -> list[dict]:
         return self._rpc("admin_preorders_by_period")
 
+    def payment_status(self) -> dict:
+        return self._rpc("admin_payment_status")
+
+    def payment_orders(self) -> list[dict]:
+        return self._rpc("admin_payment_orders")
+
+    def set_payment_secret(self, secret: str) -> dict:
+        return self._rpc("admin_set_payment_secret", {"new_secret": secret})
+
+    def payment_secret_matches(self, secret: str) -> bool:
+        return bool(self._rpc("admin_check_payment_secret", {"candidate": secret}))
+
+    def confirm_order(self, code: str, note: str) -> dict:
+        return self._rpc("admin_confirm_order", {"order_code": code, "admin_note": note})
+
     def set_notice(self, active: bool, level: str, message_uk: str, message_en: str) -> dict:
         return self._rpc(
             "admin_set_notice",
@@ -238,3 +253,54 @@ def premium_history(_: str = Depends(current_user_id), store: SupabaseAdminStore
 @router.get("/preorders")
 def preorders_by_period(_: str = Depends(current_user_id), store: SupabaseAdminStore = Depends(get_store)):
     return _admin_only(store.preorders_by_period)
+
+
+class PaymentSecretIn(BaseModel):
+    secret: str = Field(min_length=32, max_length=200)
+
+
+@router.put("/payments/secret")
+def set_payment_secret(
+    body: PaymentSecretIn,
+    _: str = Depends(current_user_id),
+    store: SupabaseAdminStore = Depends(get_store),
+):
+    """Admin-only: store the hash of the secret that the backend (PAYMENTS_SECRET) must use."""
+    result = _admin_only(lambda: store.set_payment_secret(body.secret))
+    if not result.get("ok"):
+        raise HTTPException(status_code=422, detail=result.get("error", "failed"))
+    return {"ok": True}
+
+
+@router.get("/payments")
+def payments_status(_: str = Depends(current_user_id), store: SupabaseAdminStore = Depends(get_store)):
+    """Admin-only: the set-up state, whether the backend's secret matches the database, and the orders."""
+    from app.payments.router import card_number, shared_secret
+
+    secret = shared_secret()
+    return {
+        **_admin_only(store.payment_status),
+        "card_set": bool(card_number()),
+        "secret_in_environment": bool(secret),
+        "secret_matches": bool(secret) and _admin_only(lambda: store.payment_secret_matches(secret)),
+        "bank_check": bool(os.environ.get("MONOBANK_TOKEN")),
+        "orders": _admin_only(store.payment_orders),
+    }
+
+
+class OrderConfirm(BaseModel):
+    note: str = Field(default="", max_length=200)
+
+
+@router.post("/payments/orders/{code}/confirm")
+def confirm_order(
+    code: str,
+    body: OrderConfirm,
+    _: str = Depends(current_user_id),
+    store: SupabaseAdminStore = Depends(get_store),
+):
+    """Admin-only: the money arrived but the order was not matched by itself; add the Premium by hand."""
+    result = _admin_only(lambda: store.confirm_order(code, body.note))
+    if not result.get("ok"):
+        raise HTTPException(status_code=404, detail="Not Found")
+    return result
