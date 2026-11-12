@@ -48,3 +48,19 @@ jobs:
       - run: terraform fmt -check -recursive
       - run: terraform init -backend=false -input=false
       - run: terraform validate
+
+  sql:
+    # runs the real migrations in an in-memory Postgres and checks the plan, promo and premium logic
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: infra/tests
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: infra/tests/package-lock.json
+      - run: npm ci
+      - run: npm test

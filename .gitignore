@@ -15,3 +15,6 @@ infra/scripts/out_web/
 # Terraform: real variable files hold secrets; the example is committed
 infra/terraform/*.tfvars
 !infra/terraform/*.tfvars.example
+
+# SQL tests
+infra/tests/node_modules/
