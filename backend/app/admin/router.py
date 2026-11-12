@@ -54,6 +54,12 @@ class SupabaseAdminStore:
     def list_promos(self) -> list[dict]:
         return self._rpc("admin_list_promos")
 
+    def set_notice(self, active: bool, level: str, message_uk: str, message_en: str) -> dict:
+        return self._rpc(
+            "admin_set_notice",
+            {"new_active": active, "new_level": level, "new_uk": message_uk, "new_en": message_en},
+        )
+
     def delete_promo(self, code: str) -> dict:
         return self._rpc("admin_delete_promo", {"target_code": code})
 
@@ -161,3 +167,30 @@ def delete_promo(
     result = _admin_only(lambda: store.delete_promo(code))
     if not result.get("ok"):
         raise HTTPException(status_code=404, detail="promo_not_found")
+
+
+class NoticeIn(BaseModel):
+    active: bool
+    level: str = Field(default="info", pattern="^(info|warning)$")
+    message_uk: str = Field(default="", max_length=500)
+    message_en: str = Field(default="", max_length=500)
+
+
+@router.put("/notice")
+def set_notice(
+    body: NoticeIn,
+    _: str = Depends(current_user_id),
+    store: SupabaseAdminStore = Depends(get_store),
+):
+    """Admin-only: switch the message for the whole site on or off and change its text."""
+    if body.active and not (body.message_uk.strip() or body.message_en.strip()):
+        raise HTTPException(status_code=422, detail="message_required")
+    result = _admin_only(
+        lambda: store.set_notice(body.active, body.level, body.message_uk, body.message_en)
+    )
+    if not result.get("ok"):
+        raise HTTPException(status_code=422, detail=result.get("error", "failed"))
+    from app.notice.router import forget_cache
+
+    forget_cache()  # the change shows up at once, not after the cache runs out
+    return result

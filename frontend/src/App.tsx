@@ -23,6 +23,7 @@ import Profile from './pages/Profile'
 import Recipes from './pages/Recipes'
 import Shopping from './pages/Shopping'
 import ConfirmHost from './components/ConfirmHost'
+import NoticeBanner from './components/NoticeBanner'
 import { getLang, setLang, type Lang } from './i18n'
 import { LangContext } from './i18n/context'
 import {
@@ -76,6 +77,7 @@ function App() {
       {session ? <Nav /> : <PublicNav />}
       <ConfirmHost />
       <main className="page">
+      <NoticeBanner />
       {session && <PlanLimitBanner />}
       <Routes>
         <Route path="/auth" element={session ? <Navigate to="/today" /> : <Auth />} />

@@ -4,6 +4,8 @@ import NotFound from './NotFound'
 import { reportError } from '../monitoring'
 import { askConfirm } from '../confirm'
 import SectionRail from '../components/SectionRail'
+import { NoticeBar } from '../components/NoticeBanner'
+import { fetchNotice } from '../notice'
 
 type Day = { day: string; signups: number; preorders: number }
 type UserRow = {
@@ -58,6 +60,7 @@ function Bars({ days, field, title }: { days: Day[]; field: 'signups' | 'preorde
 const RAIL = [
   { id: 'adm-stats', label: 'Огляд' },
   { id: 'adm-charts', label: 'Графіки' },
+  { id: 'adm-notice', label: 'Оголошення' },
   { id: 'adm-sentry', label: 'Помилки (Sentry)' },
   { id: 'adm-plans', label: 'Тарифи користувачів' },
   { id: 'adm-promo', label: 'Промокоди' },
@@ -81,6 +84,11 @@ export default function Admin() {
   const [promoUses, setPromoUses] = useState('1')
   const [promoMessage, setPromoMessage] = useState('')
   const [created, setCreated] = useState('')
+  const [noticeOn, setNoticeOn] = useState(false)
+  const [noticeLevel, setNoticeLevel] = useState<'info' | 'warning'>('warning')
+  const [noticeUk, setNoticeUk] = useState('')
+  const [noticeEn, setNoticeEn] = useState('')
+  const [noticeMessage, setNoticeMessage] = useState('')
 
   useEffect(() => {
     let current = true
@@ -111,6 +119,36 @@ export default function Admin() {
       // the backend answers with an error on purpose
     }
     setTestMessage('Тестові помилки надіслано (сайт і сервер). Перевірте Sentry за хвилину.')
+  }
+
+  // fill the form with the notice that is on the site now
+  useEffect(() => {
+    void fetchNotice().then((n) => {
+      if (!n) return
+      setNoticeOn(n.active)
+      setNoticeLevel(n.level)
+      setNoticeUk(n.message_uk)
+      setNoticeEn(n.message_en)
+    })
+  }, [])
+
+  async function saveNotice(e: FormEvent) {
+    e.preventDefault()
+    setNoticeMessage('')
+    try {
+      await apiFetch('/api/admin/notice', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ active: noticeOn, level: noticeLevel, message_uk: noticeUk, message_en: noticeEn }),
+      })
+      setNoticeMessage(noticeOn ? 'Збережено: оголошення зараз видно всім на сайті' : 'Збережено: оголошення вимкнено')
+    } catch (err) {
+      setNoticeMessage(
+        err instanceof ApiError && err.detail === 'message_required'
+          ? 'Напишіть текст оголошення, перш ніж його вмикати'
+          : 'Не вдалося зберегти',
+      )
+    }
   }
 
   async function createPromo(e: FormEvent) {
@@ -227,6 +265,57 @@ export default function Admin() {
             <Bars days={stats.daily} field="signups" title="Реєстрації за 14 днів" />
             <Bars days={stats.daily} field="preorders" title="Передзамовлення за 14 днів" />
           </div>
+
+          <section className="card" id="adm-notice">
+            <h3>Оголошення на всьому сайті</h3>
+            <p className="muted">
+              Повідомлення зверху на кожній сторінці для всіх відвідувачів, також для тих, хто ще не ввійшов. Наприклад,
+              «у нас технічні проблеми». Користувач може закрити його до кінця візиту.
+            </p>
+            <form onSubmit={saveNotice}>
+              <label className="inline" style={{ marginBottom: 12 }}>
+                <input type="checkbox" checked={noticeOn} onChange={(e) => setNoticeOn(e.target.checked)} /> Показувати на сайті
+              </label>
+              <div className="actions" style={{ marginBottom: 10 }}>
+                <span className="muted">Заготовки:</span>
+                <button type="button" onClick={() => {
+                  setNoticeLevel('warning')
+                  setNoticeUk('У нас технічні проблеми. Ми вже працюємо над виправленням, дякуємо за терпіння.')
+                  setNoticeEn('We are having technical problems. We are already working on a fix, thank you for your patience.')
+                }}>Технічні проблеми</button>
+                <button type="button" onClick={() => {
+                  setNoticeLevel('info')
+                  setNoticeUk('Сьогодні можливі короткі перерви в роботі сайту через планові технічні роботи.')
+                  setNoticeEn('Short interruptions are possible today because of planned maintenance.')
+                }}>Планові роботи</button>
+              </div>
+              <label>
+                Вигляд
+                <select value={noticeLevel} onChange={(e) => setNoticeLevel(e.target.value as 'info' | 'warning')} style={{ maxWidth: 320 }}>
+                  <option value="warning">Попередження (жовте)</option>
+                  <option value="info">Інформація (бірюзове)</option>
+                </select>
+              </label>
+              <label>
+                Текст українською
+                <textarea maxLength={500} value={noticeUk} onChange={(e) => setNoticeUk(e.target.value)} />
+              </label>
+              <label>
+                Текст англійською (необов’язково: якщо порожньо, англомовні побачать український)
+                <textarea maxLength={500} value={noticeEn} onChange={(e) => setNoticeEn(e.target.value)} />
+              </label>
+              {(noticeUk.trim() || noticeEn.trim()) && (
+                <div style={{ marginBottom: 14 }}>
+                  <small className="muted">Так це виглядатиме:</small>
+                  <div style={{ marginTop: 6 }}>
+                    <NoticeBar level={noticeLevel} text={noticeUk.trim() || noticeEn.trim()} />
+                  </div>
+                </div>
+              )}
+              <button type="submit">Зберегти</button>
+              {noticeMessage && <span className="muted"> {noticeMessage}</span>}
+            </form>
+          </section>
 
           <section className="card" id="adm-sentry">
             <h3>Моніторинг помилок (Sentry)</h3>
