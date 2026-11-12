@@ -5,8 +5,9 @@ import MealPhotoCard from '../components/MealPhotoCard'
 import SectionRail from '../components/SectionRail'
 import { addDays, fmtDate, fmtShortDate, iso } from '../dates'
 import { t } from '../i18n'
+import { targetsFromProfile, type Targets } from '../nutrition'
 import { energyUnit, showEnergy } from '../units'
-import { gramUnit, showGrams, showWeight, storeGrams, storeWeight, weightUnit } from '../units'
+import { gramUnit, showGrams, showWater, showWeight, storeGrams, storeWeight, weightUnit } from '../units'
 import { macrosLine } from '../macros'
 
 type Macros = { kcal: number; protein_g: number; fat_g: number; carbs_g: number; fiber_g: number }
@@ -31,7 +32,14 @@ function DaySummary() {
   const [date, setDate] = useState(() => new Date())
   const [data, setData] = useState<DayResponse | null>(null)
   const [status, setStatus] = useState(t('Завантаження…'))
+  const [targets, setTargets] = useState<Targets | null>(null)
   const day = iso(date)
+
+  useEffect(() => {
+    apiFetch<Parameters<typeof targetsFromProfile>[0]>('/api/profile')
+      .then((r) => setTargets(targetsFromProfile(r)))
+      .catch(() => {})
+  }, [])
 
   useEffect(() => {
     let current = true
@@ -77,9 +85,36 @@ function DaySummary() {
           {diff !== null && (
             <p>{diff > 0 ? t('Перевищення на {n} {unit}', { n: showEnergy(diff), unit: energyUnit() }) : t('Залишилось {n} {unit}', { n: showEnergy(-diff), unit: energyUnit() })}</p>
           )}
-          <p>
-            {t('Білки {p} г · Жири {f} г · Вуглеводи {c} г · Клітковина {k} г', { p: data.total.protein_g, f: data.total.fat_g, c: data.total.carbs_g, k: data.total.fiber_g ?? 0 })}
-          </p>
+          {!targets && (
+            <p>
+              {t('Білки {p} г · Жири {f} г · Вуглеводи {c} г · Клітковина {k} г', { p: data.total.protein_g, f: data.total.fat_g, c: data.total.carbs_g, k: data.total.fiber_g ?? 0 })}
+            </p>
+          )}
+          {targets && (
+            <div className="nutrients">
+              {(
+                [
+                  ['Білки', 'protein_g'],
+                  ['Жири', 'fat_g'],
+                  ['Вуглеводи', 'carbs_g'],
+                  ['Клітковина', 'fiber_g'],
+                ] as const
+              ).map(([label, key]) => {
+                const eaten = data.total[key] ?? 0
+                return (
+                  <div key={key}>
+                    <div className="nutrient-head">
+                      <span>{t(label)}</span>
+                      <span>{t('{value} з {target} г', { value: eaten, target: targets[key] })}</span>
+                    </div>
+                    <progress value={Math.min(eaten, targets[key])} max={targets[key]}
+                      className={key !== 'fiber_g' && eaten > targets[key] * 1.15 ? 'over' : undefined} />
+                  </div>
+                )
+              })}
+              <p className="muted" style={{ margin: '4px 0 0' }}>{t('Норма води: {amount}', { amount: showWater(targets.water_ml) })}</p>
+            </div>
+          )}
           {data.meals.length === 0 ? (
             <p>{t('На цей день у календарі немає страв.')}</p>
           ) : (

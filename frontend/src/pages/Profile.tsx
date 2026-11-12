@@ -3,9 +3,10 @@ import { Link } from 'react-router-dom'
 import { apiFetch } from '../api/client'
 import DeleteAccount from '../components/DeleteAccount'
 import RangeField from '../components/RangeField'
+import { dailyTargets } from '../nutrition'
 import { estimateCalories } from '../calories'
 import { t } from '../i18n'
-import { energyUnit, feetInches, heightUnit, isImperial, showEnergy, storeEnergy, showHeight, showWeight, storeHeight, storeWeight, weightUnit } from '../units'
+import { energyUnit, feetInches, heightUnit, isImperial, showEnergy, showWater, storeEnergy, showHeight, showWeight, storeHeight, storeWeight, weightUnit } from '../units'
 
 type ProfileData = {
   first_name: string
@@ -175,6 +176,11 @@ export default function Profile() {
   const recommended = estimate?.recommended ?? null
   const ownTarget = targetText === null || targetText === '' ? null : storeEnergy(Number(targetText))
   const customTarget = ownTarget !== null && ownTarget !== recommended
+  const kcalForTargets = ownTarget !== null && ownTarget >= 800 && ownTarget <= 6000 ? ownTarget : recommended
+  const targets =
+    kcalForTargets && form.weight_kg !== null
+      ? dailyTargets({ weight_kg: form.weight_kg, goal: form.goal, activity: form.activity }, kcalForTargets)
+      : null
 
   async function save(e: FormEvent) {
     e.preventDefault()
@@ -286,6 +292,21 @@ export default function Profile() {
                 onClick={() => setTargetText(null)}>
                 {t('Повернути рекомендований ({n})', { n: showEnergy(estimate.recommended) })}
               </button>
+            )}
+            {targets && (
+              <div className="targets">
+                <h3>{t('Добова норма поживних речовин і води')}</h3>
+                <div className="target-grid">
+                  <div><strong>{targets.protein_g} {t('г')}</strong><span>{t('Білки')}</span></div>
+                  <div><strong>{targets.fat_g} {t('г')}</strong><span>{t('Жири')}</span></div>
+                  <div><strong>{targets.carbs_g} {t('г')}</strong><span>{t('Вуглеводи')}</span></div>
+                  <div><strong>{targets.fiber_g} {t('г')}</strong><span>{t('Клітковина')}</span></div>
+                  <div><strong>{showWater(targets.water_ml)}</strong><span>{t('Вода')}</span></div>
+                </div>
+                <p className="muted" style={{ margin: '10px 0 0' }}>
+                  <small>{t('Білки рахуються від ваги, активності та мети (1,0–2,0 г на кг), жири це 30% калорій, вуглеводи решта, клітковина 14 г на кожні 1000 ккал, вода 30–40 мл на кг ваги. Це орієнтир для здорової дорослої людини, а не медична порада.')}</small>
+                </p>
+              </div>
             )}
           </>
         ) : (

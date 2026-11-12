@@ -1823,3 +1823,52 @@ button.add-dish:hover {
 :root[data-theme='dark'] .notice button {
   color: inherit;
 }
+
+/* ---------- daily targets ---------- */
+.targets {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--teal-line);
+}
+.targets h3 {
+  margin: 0 0 10px;
+  font-size: 0.98rem;
+}
+.target-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+  gap: 8px;
+}
+.target-grid div {
+  display: flex;
+  flex-direction: column;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: var(--card);
+  border: 1px solid var(--line);
+}
+.target-grid strong {
+  font-size: 1.1rem;
+}
+.target-grid span {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+.nutrients {
+  display: grid;
+  gap: 8px;
+  margin: 10px 0 12px;
+}
+.nutrient-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.9rem;
+}
+.nutrient-head span:last-child {
+  color: var(--muted);
+}
+.nutrients progress {
+  width: 100%;
+  height: 8px;
+}

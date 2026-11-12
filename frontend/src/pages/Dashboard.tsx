@@ -5,14 +5,18 @@ import { iso, mondayOf } from '../dates'
 import { mealName } from '../meals'
 import { locale, t } from '../i18n'
 import { energyUnit, showEnergy } from '../units'
-import { macrosLine } from '../macros'
+import { macrosLine, macrosVsTargets } from '../macros'
+import { targetsFromProfile } from '../nutrition'
 
 type Day = {
   target: number | null
   total: { kcal: number; protein_g: number; fat_g: number; carbs_g: number; fiber_g: number }
   meals: { slot: number; kcal: number; dishes: string[] }[]
 }
-type Profile = { profile: { meals_per_day: number } | null }
+type Profile = {
+  profile: { meals_per_day: number; weight_kg: number; goal: string; activity: string; target_calories: number | null } | null
+  recommended_calories: number | null
+}
 type Shopping = { items: { checked: boolean }[] }
 
 export default function Dashboard() {
@@ -45,6 +49,7 @@ export default function Dashboard() {
   }, [])
 
   const meals = profile?.profile?.meals_per_day ?? 3
+  const targets = targetsFromProfile(profile)
   const total = Math.round(day?.total.kcal ?? 0)
   const target = day?.target
 
@@ -101,7 +106,9 @@ export default function Dashboard() {
               <progress className={total > target ? 'over' : undefined} value={Math.min(total, target)} max={target} />
             ) : null}
             <p className="muted">
-              {macrosLine(day.total.protein_g, day.total.fat_g, day.total.carbs_g, day.total.fiber_g, true)}
+              {targets
+                ? macrosVsTargets(day.total, targets)
+                : macrosLine(day.total.protein_g, day.total.fat_g, day.total.carbs_g, day.total.fiber_g, true)}
             </p>
             <Link to="/calories">{t('Деталі →')}</Link>
           </section>

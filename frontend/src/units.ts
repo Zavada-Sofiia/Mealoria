@@ -129,3 +129,8 @@ export function setDateFormat(value: DateFormat) {
 export const energyUnit = () => (energy === 'kj' ? t('кДж') : t('ккал'))
 export const showEnergy = (kcal: number) => Math.round(energy === 'kj' ? kcal * KJ_PER_KCAL : kcal)
 export const storeEnergy = (shown: number) => Math.round(energy === 'kj' ? shown / KJ_PER_KCAL : shown)
+
+/** A volume of water: litres, or fluid ounces in the imperial system. */
+export function showWater(ml: number): string {
+  return isImperial() ? `${Math.round(ml * ML_TO_FLOZ)} ${t('рід. унц.')}` : `${num(ml / 1000)} ${t('л')}`
+}
