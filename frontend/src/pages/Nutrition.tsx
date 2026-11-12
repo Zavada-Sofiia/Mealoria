@@ -190,7 +190,7 @@ export default function Nutrition() {
             <div><strong>{targets.fiber_g} {t('г')}</strong><span>{t('Клітковина')}</span></div>
             <div><strong>{showWater(targets.water_ml)}</strong><span>{t('Вода')}</span></div>
           </div>
-          <p style={{ marginBottom: 0 }}>
+          <p style={{ margin: '14px 0 0' }}>
             <Link to="/profile">{t('Змінити в профілі')}</Link>
           </p>
         </section>

@@ -1878,6 +1878,9 @@ button.add-dish:hover {
   width: 100%;
   height: 12px;
 }
+.water-presets {
+  margin-bottom: 4px;
+}
 .water-presets button {
   min-width: 96px;
 }
