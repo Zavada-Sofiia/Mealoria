@@ -4,7 +4,7 @@ import { t } from '../i18n'
 export type RailItem = { id: string; label: string }
 
 /** Tabs that stay under the header: the highlighted one is the block you are on, a tap jumps to another block. */
-export default function SectionRail({ items }: { items: RailItem[] }) {
+export default function SectionRail({ items, side = false }: { items: RailItem[]; side?: boolean }) {
   const [active, setActive] = useState(items[0]?.id ?? '')
   const [thumb, setThumb] = useState({ left: 4, width: 0 })
   const bar = useRef<HTMLElement>(null)
@@ -54,7 +54,8 @@ export default function SectionRail({ items }: { items: RailItem[] }) {
   }
 
   return (
-    <nav className="section-tabs" aria-label={t('Блоки сторінки')} ref={bar}>
+    <>
+    <nav className={`section-tabs${side ? ' has-side' : ''}`} aria-label={t('Блоки сторінки')} ref={bar}>
       <span
         className="section-tabs-thumb"
         aria-hidden="true"
@@ -75,5 +76,21 @@ export default function SectionRail({ items }: { items: RailItem[] }) {
         </button>
       ))}
     </nav>
+    {side && (
+      <nav className="side-rail" aria-label={t('Блоки сторінки')}>
+        {items.map((i) => (
+          <button
+            key={i.id}
+            type="button"
+            className={i.id === active ? 'on' : ''}
+            aria-current={i.id === active ? 'true' : undefined}
+            onClick={() => go(i.id)}
+          >
+            {t(i.label)}
+          </button>
+        ))}
+      </nav>
+    )}
+    </>
   )
 }

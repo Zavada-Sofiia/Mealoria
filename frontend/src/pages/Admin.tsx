@@ -3,6 +3,7 @@ import { ApiError, apiFetch } from '../api/client'
 import NotFound from './NotFound'
 import { reportError } from '../monitoring'
 import { askConfirm } from '../confirm'
+import SectionRail from '../components/SectionRail'
 
 type Day = { day: string; signups: number; preorders: number }
 type UserRow = {
@@ -53,6 +54,15 @@ function Bars({ days, field, title }: { days: Day[]; field: 'signups' | 'preorde
     </section>
   )
 }
+
+const RAIL = [
+  { id: 'adm-stats', label: 'Огляд' },
+  { id: 'adm-charts', label: 'Графіки' },
+  { id: 'adm-sentry', label: 'Помилки (Sentry)' },
+  { id: 'adm-plans', label: 'Тарифи користувачів' },
+  { id: 'adm-promo', label: 'Промокоди' },
+  { id: 'adm-users', label: 'Користувачі' },
+]
 
 export default function Admin() {
   const [stats, setStats] = useState<Stats | null>(null)
@@ -203,7 +213,8 @@ export default function Admin() {
 
       {stats && (
         <>
-          <div className="grid" style={{ marginBottom: 20 }}>
+          <SectionRail items={RAIL} side />
+          <div className="grid" id="adm-stats" style={{ marginBottom: 20 }}>
             {cards.map(([label, value]) => (
               <section key={label} className="card" style={{ padding: 16 }}>
                 <div className="muted">{label}</div>
@@ -212,12 +223,12 @@ export default function Admin() {
             ))}
           </div>
 
-          <div className="grid" style={{ marginBottom: 20 }}>
+          <div className="grid" id="adm-charts" style={{ marginBottom: 20 }}>
             <Bars days={stats.daily} field="signups" title="Реєстрації за 14 днів" />
             <Bars days={stats.daily} field="preorders" title="Передзамовлення за 14 днів" />
           </div>
 
-          <section className="card">
+          <section className="card" id="adm-sentry">
             <h3>Моніторинг помилок (Sentry)</h3>
             <p className="muted">
               Надсилає по одній тестовій помилці з сайту й із сервера, щоб перевірити, що Sentry їх
@@ -227,7 +238,7 @@ export default function Admin() {
             {testMessage && <p className="status" style={{ marginTop: 12 }}>{testMessage}</p>}
           </section>
 
-          <section className="card">
+          <section className="card" id="adm-plans">
             <h3>Тарифи користувачів</h3>
             <form onSubmit={changePlan}>
               <div className="row">
@@ -276,7 +287,7 @@ export default function Admin() {
             )}
           </section>
 
-          <section className="card">
+          <section className="card" id="adm-promo">
             <h3>Промокоди</h3>
             <p className="muted">
               Код дає преміум на вказану кількість днів і додається до того, що в людини вже є. Людина вводить його на
@@ -342,7 +353,7 @@ export default function Admin() {
             )}
           </section>
 
-          <section className="card red">
+          <section className="card red" id="adm-users">
             <h3>Користувачі (останні 200)</h3>
             <div className="week-scroll" style={{ boxShadow: 'none' }}>
               <table className="data">
