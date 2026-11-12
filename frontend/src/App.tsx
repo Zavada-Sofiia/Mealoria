@@ -38,6 +38,7 @@ import {
   type Units,
 } from './units'
 import Settings from './pages/Settings'
+import Nutrition from './pages/Nutrition'
 
 function App() {
   const [lang, setLangState] = useState(getLang)
@@ -94,6 +95,7 @@ function App() {
           path="/calendar"
           element={session ? <Calendar /> : <Navigate to="/auth" />}
         />
+        <Route path="/nutrition" element={session ? <Nutrition /> : <Navigate to="/auth" />} />
         <Route path="/settings" element={session ? <Settings /> : <Navigate to="/auth" />} />
         <Route path="/staff" element={session ? <Admin /> : <NotFound />} />
         <Route path="/pricing" element={<Pricing session={session} />} />

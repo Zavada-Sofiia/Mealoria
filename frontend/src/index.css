@@ -1872,3 +1872,33 @@ button.add-dish:hover {
   width: 100%;
   height: 8px;
 }
+
+/* ---------- daily goals page ---------- */
+.water-bar {
+  width: 100%;
+  height: 12px;
+}
+.water-presets button {
+  min-width: 96px;
+}
+.water-list {
+  display: grid;
+  gap: 6px;
+  margin-top: 14px;
+}
+.water-list li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--card);
+}
+.water-list li strong {
+  flex: 1;
+}
+.water-list button {
+  min-height: 32px;
+  padding: 0 10px;
+}

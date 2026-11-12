@@ -134,3 +134,9 @@ export const storeEnergy = (shown: number) => Math.round(energy === 'kj' ? shown
 export function showWater(ml: number): string {
   return isImperial() ? `${Math.round(ml * ML_TO_FLOZ)} ${t('рід. унц.')}` : `${num(ml / 1000)} ${t('л')}`
 }
+
+/** A small amount of water (a glass): millilitres, or fluid ounces in the imperial system. */
+export const showMl = (ml: number) => (isImperial() ? `${num(ml * ML_TO_FLOZ)} ${t('рід. унц.')}` : `${ml} ${t('мл')}`)
+
+/** Quick amounts for the water buttons: common glass sizes in each system. */
+export const waterPresets = () => (isImperial() ? [237, 355, 473, 591] : [150, 250, 330, 500])

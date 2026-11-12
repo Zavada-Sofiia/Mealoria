@@ -18,6 +18,7 @@ from app.notice.router import router as notice_router
 from app.profile.router import router as profile_router
 from app.promo.router import router as promo_router
 from app.shopping.router import router as shopping_router
+from app.water.router import router as water_router
 from app.weight.router import router as weight_router
 
 init_sentry()  # no-op unless SENTRY_DSN is set
@@ -47,6 +48,7 @@ app.include_router(notice_router)
 app.include_router(ai_router)
 app.include_router(admin_router)
 app.include_router(weight_router)
+app.include_router(water_router)
 app.include_router(account_router)
 
 

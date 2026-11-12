@@ -23,6 +23,7 @@ const TABS = [
 const MORE = [
   ['/recipes', 'Рецепти'],
   ['/calories', 'Калорії'],
+  ['/nutrition', 'Норма дня'],
   ['/ai', 'ШІ-помічник'],
   ['/profile', 'Профіль'],
   ['/pricing', 'Тарифи'],
@@ -43,6 +44,7 @@ const MAIN = [
   ['/recipes', 'Рецепти'],
   ['/shopping', 'Список продуктів'],
   ['/calories', 'Калорії'],
+  ['/nutrition', 'Норма дня'],
   ['/ai', 'ШІ-помічник'],
 ]
 const RIGHT = [
