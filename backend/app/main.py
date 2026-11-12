@@ -15,6 +15,7 @@ from app.limits.plan_router import router as plans_router
 from app.limits.router import router as limits_router
 from app.monitoring import init_sentry
 from app.profile.router import router as profile_router
+from app.promo.router import router as promo_router
 from app.shopping.router import router as shopping_router
 from app.weight.router import router as weight_router
 
@@ -40,6 +41,7 @@ app.include_router(shopping_router)
 app.include_router(calories_router)
 app.include_router(limits_router)
 app.include_router(plans_router)
+app.include_router(promo_router)
 app.include_router(ai_router)
 app.include_router(admin_router)
 app.include_router(weight_router)

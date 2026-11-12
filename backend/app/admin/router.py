@@ -1,4 +1,5 @@
 import os
+import secrets
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException
@@ -43,6 +44,18 @@ class SupabaseAdminStore:
         return self._rpc(
             "admin_set_plan", {"target_email": email, "new_plan": plan, "days": days}
         )
+
+
+    def create_promo(self, code: str, days: int, max_uses: int | None) -> dict:
+        return self._rpc(
+            "admin_create_promo", {"new_code": code, "new_days": days, "new_max_uses": max_uses}
+        )
+
+    def list_promos(self) -> list[dict]:
+        return self._rpc("admin_list_promos")
+
+    def delete_promo(self, code: str) -> dict:
+        return self._rpc("admin_delete_promo", {"target_code": code})
 
 
 def get_store(creds: HTTPAuthorizationCredentials = Depends(bearer)) -> SupabaseAdminStore:
@@ -97,3 +110,54 @@ def set_plan(
     if not result.get("ok"):
         raise HTTPException(status_code=422, detail=result.get("error", "failed"))
     return result
+
+
+class PromoCreate(BaseModel):
+    code: str = Field(default="", max_length=40)  # empty = generate one
+    days: int = Field(ge=1, le=3650)
+    max_uses: int | None = Field(default=1, ge=1, le=100000)  # None = unlimited
+
+
+# no 0, O, 1, I: a code read from a screen or a message cannot be mistyped
+CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+
+
+def generate_code() -> str:
+    def chunk() -> str:
+        return "".join(secrets.choice(CODE_ALPHABET) for _ in range(4))
+
+    return f"MEAL-{chunk()}-{chunk()}"
+
+
+@router.get("/promos")
+def list_promos(_: str = Depends(current_user_id), store: SupabaseAdminStore = Depends(get_store)):
+    return _admin_only(store.list_promos)
+
+
+@router.post("/promo", status_code=201)
+def create_promo(
+    body: PromoCreate,
+    _: str = Depends(current_user_id),
+    store: SupabaseAdminStore = Depends(get_store),
+):
+    own = body.code.strip()
+    for _attempt in range(1 if own else 5):
+        code = own or generate_code()
+        result = _admin_only(lambda: store.create_promo(code, body.days, body.max_uses))
+        if result.get("ok"):
+            return result
+        if result.get("error") != "exists" or own:
+            break  # a generated code that already exists is simply replaced by another one
+    error = result.get("error", "failed")
+    raise HTTPException(status_code=409 if error == "exists" else 422, detail=error)
+
+
+@router.delete("/promo/{code}", status_code=204)
+def delete_promo(
+    code: str,
+    _: str = Depends(current_user_id),
+    store: SupabaseAdminStore = Depends(get_store),
+):
+    result = _admin_only(lambda: store.delete_promo(code))
+    if not result.get("ok"):
+        raise HTTPException(status_code=404, detail="promo_not_found")

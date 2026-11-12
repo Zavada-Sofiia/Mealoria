@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import type { Session } from '@supabase/supabase-js'
-import { apiFetch } from '../api/client'
+import { ApiError, apiFetch } from '../api/client'
 import { usePageMeta } from '../seo'
 import { formatDate, limitLines, usePlan } from '../plan/context'
 import { t } from '../i18n'
@@ -30,7 +30,10 @@ export default function Pricing({ session }: { session: Session | null }) {
     t('Тарифи Mealoria: безкоштовний і преміум'),
     t('Що входить у безкоштовний тариф Mealoria і що додає преміум: ліміти страв і ШІ-запитів, планування на рік, ШІ-фото та автоматичні калорії.'),
   )
-  const { me, table } = usePlan()
+  const { me, table, refresh } = usePlan()
+  const [promo, setPromo] = useState('')
+  const [promoMessage, setPromoMessage] = useState('')
+  const [promoBusy, setPromoBusy] = useState(false)
   const [preordered, setPreordered] = useState(false)
   const [status, setStatus] = useState('')
 
@@ -40,6 +43,42 @@ export default function Pricing({ session }: { session: Session | null }) {
       .then((r) => setPreordered(r.preordered))
       .catch(() => setStatus(t('Не вдалося перевірити передзамовлення')))
   }, [session])
+
+  async function redeem(e: FormEvent) {
+    e.preventDefault()
+    if (!promo.trim() || promoBusy) return
+    setPromoBusy(true)
+    setPromoMessage('')
+    try {
+      const r = await apiFetch<{ days: number; premium_until: string | null; unlimited: boolean }>('/api/promo/redeem', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: promo }),
+      })
+      setPromo('')
+      setPromoMessage(
+        r.unlimited || !r.premium_until
+          ? t('Преміум активовано на {days} дн. Він у вас безстроковий, нічого додавати не треба.', { days: r.days })
+          : t('Преміум активовано на {days} дн. Діє до {date}.', { days: r.days, date: formatDate(r.premium_until) }),
+      )
+      refresh()
+    } catch (err) {
+      const detail = err instanceof ApiError ? err.detail : ''
+      setPromoMessage(
+        detail === 'promo_not_found'
+          ? t('Такого промокоду немає. Перевірте, чи правильно його введено.')
+          : detail === 'promo_already_used'
+            ? t('Ви вже використовували цей промокод.')
+            : detail === 'promo_used_up'
+              ? t('Цей промокод уже використано максимальну кількість разів.')
+              : detail === 'promo_too_many'
+                ? t('Забагато невдалих спроб. Спробуйте за годину.')
+                : t('Не вдалося застосувати промокод. Спробуйте ще раз.'),
+      )
+    } finally {
+      setPromoBusy(false)
+    }
+  }
 
   async function preorder() {
     try {
@@ -104,6 +143,20 @@ export default function Pricing({ session }: { session: Session | null }) {
           )}
         </section>
       </div>
+      {session && (
+        <section className="card">
+          <h2 style={{ marginTop: 0 }}>{t('Маєте промокод?')}</h2>
+          <p className="muted">{t('Введіть код, і преміум активується на вказану кількість днів.')}</p>
+          <form onSubmit={redeem} className="actions">
+            <input value={promo} maxLength={40} placeholder={t('Промокод')} autoCapitalize="characters" autoComplete="off"
+              style={{ maxWidth: 260, textTransform: 'uppercase' }} onChange={(e) => setPromo(e.target.value)} />
+            <button type="submit" disabled={promoBusy || !promo.trim()}>
+              {promoBusy ? t('Перевіряємо…') : t('Активувати')}
+            </button>
+          </form>
+          {promoMessage && <p className="status" style={{ marginTop: 12 }}>{promoMessage}</p>}
+        </section>
+      )}
       {status && <p className="status">{status}</p>}
       <p>
         <Link to="/support">{t('Підтримати проєкт донатом')}</Link>

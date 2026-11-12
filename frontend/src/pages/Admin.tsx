@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { ApiError, apiFetch } from '../api/client'
 import NotFound from './NotFound'
 import { reportError } from '../monitoring'
+import { askConfirm } from '../confirm'
 
 type Day = { day: string; signups: number; preorders: number }
 type UserRow = {
@@ -14,6 +15,7 @@ type UserRow = {
   planned: number
   preordered: boolean
 }
+type Promo = { code: string; days: number; max_uses: number | null; used_count: number; created_at: string }
 type PremiumUser = { email: string; premium_until: string | null; active: boolean }
 type Stats = {
   users_total: number
@@ -63,6 +65,12 @@ export default function Admin() {
   const [days, setDays] = useState('30')
   const [planMessage, setPlanMessage] = useState('')
   const [testMessage, setTestMessage] = useState('')
+  const [promos, setPromos] = useState<Promo[]>([])
+  const [promoCode, setPromoCode] = useState('')
+  const [promoDays, setPromoDays] = useState('30')
+  const [promoUses, setPromoUses] = useState('1')
+  const [promoMessage, setPromoMessage] = useState('')
+  const [created, setCreated] = useState('')
 
   useEffect(() => {
     let current = true
@@ -77,6 +85,9 @@ export default function Admin() {
     apiFetch<PremiumUser[]>('/api/admin/premium')
       .then((p) => current && setPremium(p))
       .catch(() => {})
+    apiFetch<Promo[]>('/api/admin/promos')
+      .then((p) => current && setPromos(p))
+      .catch(() => {})
     return () => {
       current = false
     }
@@ -90,6 +101,51 @@ export default function Admin() {
       // the backend answers with an error on purpose
     }
     setTestMessage('Тестові помилки надіслано (сайт і сервер). Перевірте Sentry за хвилину.')
+  }
+
+  async function createPromo(e: FormEvent) {
+    e.preventDefault()
+    setPromoMessage('')
+    setCreated('')
+    try {
+      const r = await apiFetch<{ code: string }>('/api/admin/promo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          code: promoCode.trim(),
+          days: Number(promoDays),
+          max_uses: promoUses.trim() === '' ? null : Number(promoUses),
+        }),
+      })
+      setCreated(r.code)
+      setPromoCode('')
+      setVersion((v) => v + 1)
+    } catch (err) {
+      setPromoMessage(
+        err instanceof ApiError && err.status === 409
+          ? 'Такий код уже існує'
+          : err instanceof ApiError && err.status === 422
+            ? 'Перевірте код (літери, цифри, - і _; 3–40 символів) і кількість днів'
+            : 'Не вдалося створити промокод',
+      )
+    }
+  }
+
+  async function deletePromo(code: string) {
+    const ok = await askConfirm({
+      title: `Видалити промокод ${code}?`,
+      text: 'Хто вже активував його, лишиться з преміумом, але нові активації стануть неможливі.',
+      confirmLabel: 'Видалити',
+      cancelLabel: 'Скасувати',
+      danger: true,
+    })
+    if (!ok) return
+    try {
+      await apiFetch<void>(`/api/admin/promo/${encodeURIComponent(code)}`, { method: 'DELETE' })
+      setVersion((v) => v + 1)
+    } catch {
+      setPromoMessage('Не вдалося видалити')
+    }
   }
 
   async function changePlan(e: FormEvent) {
@@ -212,6 +268,69 @@ export default function Admin() {
                         <td>{p.email}</td>
                         <td>{p.premium_until ? fmt(p.premium_until) : 'безстроково'}</td>
                         <td>{p.active ? 'діє' : 'закінчився'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </section>
+
+          <section className="card">
+            <h3>Промокоди</h3>
+            <p className="muted">
+              Код дає преміум на вказану кількість днів і додається до того, що в людини вже є. Людина вводить його на
+              сторінці «Тарифи». Залиште поле коду порожнім, і він згенерується сам.
+            </p>
+            <form onSubmit={createPromo}>
+              <div className="row">
+                <label>
+                  Код (необов’язково)
+                  <input value={promoCode} maxLength={40} placeholder="наприклад, FRIENDS30"
+                    style={{ textTransform: 'uppercase' }} onChange={(e) => setPromoCode(e.target.value)} />
+                </label>
+                <label>
+                  На скільки днів
+                  <input type="number" min={1} max={3650} required value={promoDays} onChange={(e) => setPromoDays(e.target.value)} />
+                </label>
+                <label>
+                  Скільки активацій (порожньо = без обмежень)
+                  <input type="number" min={1} max={100000} value={promoUses} onChange={(e) => setPromoUses(e.target.value)} />
+                </label>
+              </div>
+              <button type="submit">Створити промокод</button>
+              {promoMessage && <span className="muted"> {promoMessage}</span>}
+            </form>
+            {created && (
+              <p className="status" style={{ marginTop: 14 }}>
+                Створено: <strong style={{ fontSize: '1.2rem', letterSpacing: '0.05em' }}>{created}</strong>{' '}
+                <button type="button" onClick={() => void navigator.clipboard?.writeText(created)}>Копіювати</button>
+              </p>
+            )}
+            {promos.length > 0 && (
+              <div className="week-scroll" style={{ boxShadow: 'none', marginTop: 16 }}>
+                <table className="data">
+                  <thead>
+                    <tr>
+                      <th>Код</th>
+                      <th>Днів</th>
+                      <th>Активовано</th>
+                      <th>Створено</th>
+                      <th />
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {promos.map((p) => (
+                      <tr key={p.code}>
+                        <td><strong>{p.code}</strong></td>
+                        <td>{p.days}</td>
+                        <td>
+                          {p.used_count} / {p.max_uses ?? '∞'}
+                        </td>
+                        <td>{fmt(p.created_at)}</td>
+                        <td>
+                          <button type="button" className="danger" onClick={() => void deletePromo(p.code)}>Видалити</button>
+                        </td>
                       </tr>
                     ))}
                   </tbody>

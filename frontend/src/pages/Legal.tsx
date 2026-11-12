@@ -26,7 +26,7 @@ function PrivacyUk() {
         </li>
         <li>Ваші страви, фото страв, меню в календарі, список продуктів і продукти «вже є вдома».</li>
         <li>Журнал ваги, якщо ви його ведете.</li>
-        <li>Лічильники використання ШІ (скільки запитів за день) і ваш тариф.</li>
+        <li>Лічильники використання ШІ (скільки запитів за день), ваш тариф і промокоди, які ви активували.</li>
         <li>Позначку «передзамовив преміум», якщо ви натиснули відповідну кнопку.</li>
       </ul>
 
@@ -154,7 +154,7 @@ function PrivacyEn() {
         </li>
         <li>Your dishes, dish photos, calendar menu, shopping list and “already at home” products.</li>
         <li>Your weight journal, if you keep one.</li>
-        <li>AI usage counters (how many requests per day) and your plan.</li>
+        <li>AI usage counters (how many requests per day), your plan and the promo codes you activated.</li>
         <li>A “pre-ordered Premium” flag, if you pressed the corresponding button.</li>
       </ul>
 
