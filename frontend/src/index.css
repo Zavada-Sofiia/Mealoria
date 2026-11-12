@@ -511,6 +511,10 @@ legend {
 .row input[type='number'] {
   max-width: none;
 }
+/* fields with labels of different length still line up at the bottom */
+.row.align-end {
+  align-items: end;
+}
 
 /* ---------- buttons ---------- */
 button {

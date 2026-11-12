@@ -283,7 +283,7 @@ export default function Admin() {
               сторінці «Тарифи». Залиште поле коду порожнім, і він згенерується сам.
             </p>
             <form onSubmit={createPromo}>
-              <div className="row">
+              <div className="row align-end">
                 <label>
                   Код (необов’язково)
                   <input value={promoCode} maxLength={40} placeholder="наприклад, FRIENDS30"
@@ -294,10 +294,13 @@ export default function Admin() {
                   <input type="number" min={1} max={3650} required value={promoDays} onChange={(e) => setPromoDays(e.target.value)} />
                 </label>
                 <label>
-                  Скільки активацій (порожньо = без обмежень)
+                  Кількість активацій
                   <input type="number" min={1} max={100000} value={promoUses} onChange={(e) => setPromoUses(e.target.value)} />
                 </label>
               </div>
+              <p className="muted" style={{ margin: '0 0 12px' }}>
+                <small>Якщо залишити кількість активацій порожньою, код можна використовувати без обмежень.</small>
+              </p>
               <button type="submit">Створити промокод</button>
               {promoMessage && <span className="muted"> {promoMessage}</span>}
             </form>
