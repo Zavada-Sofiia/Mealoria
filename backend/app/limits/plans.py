@@ -27,11 +27,16 @@ class SupabasePlanStore:
         return self._rpc("plan_table")
 
 
-def raise_if_plan_limit(error: httpx.HTTPStatusError) -> None:
+def plan_limit_of(error: httpx.HTTPStatusError) -> str | None:
     """The database refuses writes over the plan limits with a message like 'plan_limit:dishes'."""
     try:
         message = error.response.json().get("message", "")
     except ValueError:
-        return
-    if isinstance(message, str) and message.startswith("plan_limit:"):
-        raise HTTPException(status_code=403, detail=message) from error
+        return None
+    return message if isinstance(message, str) and message.startswith("plan_limit:") else None
+
+
+def raise_if_plan_limit(error: httpx.HTTPStatusError) -> None:
+    limit = plan_limit_of(error)
+    if limit:
+        raise HTTPException(status_code=403, detail=limit) from error

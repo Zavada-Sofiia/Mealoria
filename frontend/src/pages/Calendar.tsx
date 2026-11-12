@@ -88,6 +88,7 @@ export default function Calendar() {
   const [target, setTarget] = useState<number | null>(null)
   const [hasProfile, setHasProfile] = useState(true)
   const [status, setStatus] = useState(t('Завантаження…'))
+  const [filling, setFilling] = useState(false)
   const mobile = useIsMobile()
   const [dayIdx, setDayIdx] = useState(todayIndex)
   const [picking, setPicking] = useState<{ date: string; slot: number } | null>(null)
@@ -145,6 +146,34 @@ export default function Calendar() {
       setStatus('')
     } catch {
       setStatus(t('Не вдалося скопіювати тиждень'))
+    }
+  }
+
+  async function autoPlan() {
+    setFilling(true)
+    setStatus(t('Підбираємо страви…'))
+    try {
+      const r = await apiFetch<{ entries: Entry[]; added: number; saved_from_catalog: number; unfilled: number; limited: boolean }>(
+        `/api/calendar/auto-plan?start=${iso(weekStart)}&since=${iso(new Date())}`,
+        { method: 'POST' },
+      )
+      setEntries(r.entries)
+      if (r.saved_from_catalog > 0) {
+        apiFetch<Dish[]>('/api/dishes')
+          .then((d) => setDishes([...d].sort((a, b) => Number(!!b.favorite) - Number(!!a.favorite))))
+          .catch(() => {})
+      }
+      const parts: string[] = []
+      if (r.added > 0) parts.push(t('Заповнено прийомів їжі: {n}.', { n: r.added }))
+      else if (r.unfilled === 0) parts.push(t('Усі прийоми їжі цього тижня вже заповнені.'))
+      if (r.saved_from_catalog > 0) parts.push(t('Додали {n} страв із каталогу в «Мої страви».', { n: r.saved_from_catalog }))
+      if (r.unfilled > 0) parts.push(t('Для {n} прийомів не знайшлося підходящої страви: додайте свої страви або рецепти з каталогу.', { n: r.unfilled }))
+      if (r.limited) parts.push(t('Частину днів не заповнено: на вашому тарифі планувати можна лише на обмежену кількість днів уперед.'))
+      setStatus(parts.join(' '))
+    } catch {
+      setStatus(t('Не вдалося заповнити тиждень'))
+    } finally {
+      setFilling(false)
     }
   }
 
@@ -341,6 +370,9 @@ export default function Calendar() {
       </DndContext>
 
       <div className="actions" style={{ marginTop: 16 }}>
+        <button type="button" onClick={autoPlan} disabled={filling}>
+          {filling ? t('Підбираємо страви…') : t('Заповнити тиждень')}
+        </button>
         <button type="button" onClick={copyPreviousWeek}>
           {t('Повторити минулий тиждень')}
         </button>
