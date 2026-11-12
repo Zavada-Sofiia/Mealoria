@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom'
 import { currentTheme, applyTheme } from '../theme'
 import { useLang } from '../i18n/context'
-import { convertAmount, feetInches, heightUnit, num, showHeight, showWeight, weightUnit, type Units } from '../units'
+import { convertAmount, energyUnit, feetInches, heightUnit, num, showEnergy, showHeight, showWeight, weightUnit, type Units } from '../units'
+import { fmtDate } from '../dates'
 import { t } from '../i18n'
 import { useState } from 'react'
 
@@ -11,7 +12,7 @@ const OPTIONS: [Units, string, string][] = [
 ]
 
 export default function Settings() {
-  const { lang, changeLang, units, changeUnits } = useLang()
+  const { lang, changeLang, units, changeUnits, energy, changeEnergy, dateFormat, changeDateFormat } = useLang()
   const [theme, setTheme] = useState(currentTheme)
 
   return (
@@ -49,6 +50,30 @@ export default function Settings() {
           <br />
           {t('Приклад: 150 г = {amount}', { amount: convertAmount('150 г') })}
         </p>
+      </section>
+
+      <section className="card">
+        <h2 style={{ marginTop: 0 }}>{t('Енергія')}</h2>
+        <p className="muted">{t('Калорії в кілокалоріях (ккал) або кілоджоулях (кДж). 1 ккал = 4,184 кДж.')}</p>
+        <div className="seg">
+          {(['kcal', 'kj'] as const).map((e) => (
+            <button key={e} type="button" className={energy === e ? 'on' : ''} onClick={() => changeEnergy(e)}>
+              {e === 'kcal' ? t('ккал') : t('кДж')}
+            </button>
+          ))}
+        </div>
+        <p className="muted" style={{ marginBottom: 0 }}>
+          {t('Приклад: {date}', { date: `100 ${t('ккал')} = ${showEnergy(100)} ${energyUnit()}` })}
+        </p>
+        <h2>{t('Формат дати')}</h2>
+        <div className="seg">
+          {([['dmy', 'День, місяць, рік'], ['mdy', 'Місяць, день, рік']] as const).map(([key, label]) => (
+            <button key={key} type="button" className={dateFormat === key ? 'on' : ''} onClick={() => changeDateFormat(key)}>
+              {t(label)}
+            </button>
+          ))}
+        </div>
+        <p className="muted" style={{ marginBottom: 0 }}>{t('Приклад: {date}', { date: fmtDate('2026-11-09') })}</p>
       </section>
 
       <section className="card">

@@ -25,7 +25,17 @@ import Shopping from './pages/Shopping'
 import ConfirmHost from './components/ConfirmHost'
 import { getLang, setLang, type Lang } from './i18n'
 import { LangContext } from './i18n/context'
-import { getUnits, setUnits, type Units } from './units'
+import {
+  getDateFormat,
+  getEnergy,
+  getUnits,
+  setDateFormat,
+  setEnergy,
+  setUnits,
+  type DateFormat,
+  type Energy,
+  type Units,
+} from './units'
 import Settings from './pages/Settings'
 
 function App() {
@@ -39,6 +49,16 @@ function App() {
     setUnits(u)
     setUnitsState(u)
   }
+  const [energy, setEnergyState] = useState(getEnergy)
+  const changeEnergy = (e: Energy) => {
+    setEnergy(e)
+    setEnergyState(e)
+  }
+  const [dateFormat, setDateFormatState] = useState(getDateFormat)
+  const changeDateFormat = (f: DateFormat) => {
+    setDateFormat(f)
+    setDateFormatState(f)
+  }
   const [session, setSession] = useState<Session | null | undefined>(undefined)
 
   useEffect(() => {
@@ -50,8 +70,8 @@ function App() {
   if (session === undefined) return null
 
   return (
-    <LangContext.Provider value={{ lang, changeLang, units, changeUnits }}>
-    <BrowserRouter key={`${lang}-${units}`}>
+    <LangContext.Provider value={{ lang, changeLang, units, changeUnits, energy, changeEnergy, dateFormat, changeDateFormat }}>
+    <BrowserRouter key={`${lang}-${units}-${energy}-${dateFormat}`}>
       <PlanProvider signedIn={!!session}>
       {session ? <Nav /> : <PublicNav />}
       <ConfirmHost />

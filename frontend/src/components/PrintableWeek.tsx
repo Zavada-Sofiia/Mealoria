@@ -1,6 +1,7 @@
-import { addDays, fmtDate, iso } from '../dates'
+import { addDays, fmtDate, fmtShortDate, iso } from '../dates'
 import { mealName } from '../meals'
 import { t } from '../i18n'
+import { energyUnit, showEnergy } from '../units'
 import { macrosLine } from '../macros'
 
 type Dish = {
@@ -46,12 +47,12 @@ export default function PrintableWeek({
       </div>
       <div className="print-summary">
         <div>
-          <strong>{sum(planned, 'calories')}</strong>
-          <span>{t('ккал за тиждень')}</span>
+          <strong>{showEnergy(sum(planned, 'calories'))}</strong>
+          <span>{t('{unit} за тиждень', { unit: energyUnit() })}</span>
         </div>
         <div>
-          <strong>{average}</strong>
-          <span>{target ? t('ккал на день, норма {n}', { n: target }) : t('ккал на день')}</span>
+          <strong>{showEnergy(average)}</strong>
+          <span>{target ? t('{unit} на день, норма {n}', { n: showEnergy(target), unit: energyUnit() }) : t('{unit} на день', { unit: energyUnit() })}</span>
         </div>
         <div>
           <strong>{averageFiber}</strong>
@@ -71,9 +72,9 @@ export default function PrintableWeek({
             <section key={date} className="print-day">
               <header>
                 <span>
-                  <strong>{t(FULL_DAYS[i])}</strong> {fmtDate(date).slice(0, 5)}
+                  <strong>{t(FULL_DAYS[i])}</strong> {fmtShortDate(date)}
                 </span>
-                {list.length > 0 && <span>{sum(list, 'calories')} {t('ккал')}</span>}
+                {list.length > 0 && <span>{showEnergy(sum(list, 'calories'))} {energyUnit()}</span>}
               </header>
               {list.length === 0 ? (
                 <p className="print-empty">{t('Нічого не заплановано')}</p>
@@ -84,7 +85,7 @@ export default function PrintableWeek({
                       <li key={e.id}>
                         <small>{mealName(meals, e.slot)}</small>
                         <span>{e.dish?.name}</span>
-                        <em>{e.dish?.calories != null ? `${e.dish.calories} ${t('ккал')}` : ''}</em>
+                        <em>{e.dish?.calories != null ? `${showEnergy(e.dish.calories)} ${energyUnit()}` : ''}</em>
                       </li>
                     ))}
                   </ul>

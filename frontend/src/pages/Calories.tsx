@@ -3,8 +3,9 @@ import { apiFetch } from '../api/client'
 import { BarChart, LineChart } from '../components/Charts'
 import MealPhotoCard from '../components/MealPhotoCard'
 import SectionRail from '../components/SectionRail'
-import { addDays, fmtDate, iso } from '../dates'
+import { addDays, fmtDate, fmtShortDate, iso } from '../dates'
 import { t } from '../i18n'
+import { energyUnit, showEnergy } from '../units'
 import { gramUnit, showGrams, showWeight, storeGrams, storeWeight, weightUnit } from '../units'
 import { macrosLine } from '../macros'
 
@@ -67,14 +68,14 @@ function DaySummary() {
       {data && (
         <>
           <p>
-            <strong>{Math.round(total)}</strong>
-            {target ? ` / ${target} ${t('ккал')}` : t(' ккал (задайте ціль у профілі)')}
+            <strong>{showEnergy(total)}</strong>
+            {target ? ` / ${showEnergy(target)} ${energyUnit()}` : t(' {unit} (задайте ціль у профілі)', { unit: energyUnit() })}
           </p>
           {target ? (
             <progress className={total > target ? 'over' : undefined} value={Math.min(total, target)} max={target} />
           ) : null}
           {diff !== null && (
-            <p>{diff > 0 ? t('Перевищення на {n} ккал', { n: diff }) : t('Залишилось {n} ккал', { n: -diff })}</p>
+            <p>{diff > 0 ? t('Перевищення на {n} {unit}', { n: showEnergy(diff), unit: energyUnit() }) : t('Залишилось {n} {unit}', { n: showEnergy(-diff), unit: energyUnit() })}</p>
           )}
           <p>
             {t('Білки {p} г · Жири {f} г · Вуглеводи {c} г · Клітковина {k} г', { p: data.total.protein_g, f: data.total.fat_g, c: data.total.carbs_g, k: data.total.fiber_g ?? 0 })}
@@ -85,7 +86,7 @@ function DaySummary() {
             <ul>
               {data.meals.map((m) => (
                 <li key={m.slot}>
-                  {t('{n}: {kcal} ккал — {dishes}', { n: t('Прийом {n}', { n: m.slot + 1 }), kcal: Math.round(m.kcal), dishes: m.dishes.join(', ') })}
+                  {t('{n}: {kcal} {unit} — {dishes}', { n: t('Прийом {n}', { n: m.slot + 1 }), kcal: showEnergy(m.kcal), unit: energyUnit(), dishes: m.dishes.join(', ') })}
                 </li>
               ))}
             </ul>
@@ -164,7 +165,7 @@ function DishCalculator() {
       <ul className="cards">
         {results.map((f) => (
           <li key={f.name}>
-            {t('{name} · {n} ккал / 100 г', { name: f.name, n: f.kcal_100g })}{' '}
+            {t('{name} · {n} {unit} / 100 г', { name: f.name, n: showEnergy(f.kcal_100g), unit: energyUnit() })}{' '}
             <button onClick={() => setLines([...lines, { ...f, grams: 100 }])}>{t('Додати')}</button>
           </li>
         ))}
@@ -191,7 +192,7 @@ function DishCalculator() {
               onChange={(e) => setServings(Math.max(1, Number(e.target.value)))} />
           </p>
           <p>
-            {t('На порцію:')} <strong>{kcal} {t('ккал')}</strong> · {macrosLine(protein, fat, carbs, fiber)}
+            {t('На порцію:')} <strong>{showEnergy(kcal)} {energyUnit()}</strong> · {macrosLine(protein, fat, carbs, fiber)}
           </p>
           <p>
             <input placeholder={t('Назва страви')} value={name} maxLength={100}
@@ -210,7 +211,6 @@ function DishCalculator() {
 }
 
 type RangeResponse = { target: number | null; days: ({ date: string } & Macros)[] }
-const shortDate = (d: string) => `${d.slice(8)}.${d.slice(5, 7)}`
 
 function Trends() {
   const [span, setSpan] = useState(7)
@@ -245,14 +245,14 @@ function Trends() {
       {data && (
         <>
           <BarChart
-            bars={data.days.map((d) => ({ label: shortDate(d.date), value: Math.round(d.kcal) }))}
-            target={data.target}
+            bars={data.days.map((d) => ({ label: fmtShortDate(d.date), value: showEnergy(d.kcal) }))}
+            target={data.target ? showEnergy(data.target) : data.target}
           />
           <p className="muted">
             {planned.length
-              ? t('У середньому {avg} ккал на день із запланованих ({days} дн.)', { avg: average, days: planned.length })
+              ? t('У середньому {avg} {unit} на день із запланованих ({days} дн.)', { avg: showEnergy(average), unit: energyUnit(), days: planned.length })
               : t('У цьому періоді немає запланованих страв.')}
-            {data.target ? t(' Пунктир: ваша норма {n} ккал.', { n: data.target }) : ''}
+            {data.target ? t(' Пунктир: ваша норма {n} {unit}.', { n: showEnergy(data.target), unit: energyUnit() }) : ''}
           </p>
         </>
       )}
@@ -319,7 +319,7 @@ function WeightJournal() {
       </form>
       {status && <p className="status">{status}</p>}
       {points.length >= 2 && (
-        <LineChart points={points.map((p) => ({ label: shortDate(p.day), value: showWeight(p.weight_kg) }))} />
+        <LineChart points={points.map((p) => ({ label: fmtShortDate(p.day), value: showWeight(p.weight_kg) }))} />
       )}
       {points.length === 1 && <p className="muted">{t('Додайте ще один запис, щоб побачити графік.')}</p>}
       {change !== null && (

@@ -6,6 +6,7 @@ import PhotoPicker from '../components/PhotoPicker'
 import { usePlan } from '../plan/context'
 import { oneStepPerLine } from '../steps'
 import { locale, t } from '../i18n'
+import { energyUnit, showEnergy, storeEnergy } from '../units'
 import { convertAmount } from '../units'
 import { askConfirm } from '../confirm'
 import { macrosLine } from '../macros'
@@ -494,10 +495,10 @@ export default function Dishes() {
         </p>
         <div className="row">
         <label>
-          {t('Калорії на порцію')}
-          <input type="number" min={0} max={5000} value={form.calories ?? ''}
+          {t('Калорії на порцію')}, {energyUnit()}
+          <input type="number" min={0} max={showEnergy(5000)} value={form.calories === null ? '' : showEnergy(form.calories)}
             onChange={(e) =>
-              setForm({ ...form, calories: e.target.value ? Number(e.target.value) : null })
+              setForm({ ...form, calories: e.target.value ? storeEnergy(Number(e.target.value)) : null })
             } />
         </label>
         <label>
@@ -666,7 +667,7 @@ export default function Dishes() {
             {(d.categories ?? []).map((c) => (
               <span key={c} className="badge" style={{ marginLeft: 6 }}>{t(c)}</span>
             ))}
-            {d.calories != null && ` · ${d.calories} ${t('ккал')}`}
+            {d.calories != null && ` · ${showEnergy(d.calories)} ${energyUnit()}`}
             {(d.protein_g != null || d.fat_g != null || d.carbs_g != null) &&
               ` · ${macrosLine(d.protein_g, d.fat_g, d.carbs_g, d.fiber_g)}`}
             {d.servings > 1 && ` · ${t('Порцій: {n}', { n: d.servings })}`}

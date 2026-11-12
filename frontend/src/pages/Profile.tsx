@@ -5,7 +5,7 @@ import DeleteAccount from '../components/DeleteAccount'
 import RangeField from '../components/RangeField'
 import { estimateCalories } from '../calories'
 import { t } from '../i18n'
-import { feetInches, heightUnit, isImperial, showHeight, showWeight, storeHeight, storeWeight, weightUnit } from '../units'
+import { energyUnit, feetInches, heightUnit, isImperial, showEnergy, storeEnergy, showHeight, showWeight, storeHeight, storeWeight, weightUnit } from '../units'
 
 type ProfileData = {
   first_name: string
@@ -160,7 +160,7 @@ export default function Profile() {
       .then((r) => {
         if (r.profile) {
           setForm(r.profile)
-          setTargetText(r.profile.target_calories ? String(r.profile.target_calories) : null)
+          setTargetText(r.profile.target_calories ? String(showEnergy(r.profile.target_calories)) : null)
         }
         setStatus('')
       })
@@ -173,7 +173,7 @@ export default function Profile() {
 
   const estimate = estimateCalories(form)
   const recommended = estimate?.recommended ?? null
-  const ownTarget = targetText === null || targetText === '' ? null : Number(targetText)
+  const ownTarget = targetText === null || targetText === '' ? null : storeEnergy(Number(targetText))
   const customTarget = ownTarget !== null && ownTarget !== recommended
 
   async function save(e: FormEvent) {
@@ -183,7 +183,7 @@ export default function Profile() {
       return
     }
     if (ownTarget !== null && (ownTarget < 800 || ownTarget > 6000)) {
-      setStatus(t('Бажаний калораж має бути від 800 до 6000 ккал'))
+      setStatus(t('Бажаний калораж має бути від {min} до {max} {unit}', { min: showEnergy(800), max: showEnergy(6000), unit: energyUnit() }))
       return
     }
     setStatus(t('Зберігаємо…'))
@@ -268,22 +268,23 @@ export default function Profile() {
         {estimate ? (
           <>
             <div className="calc-main">
-              <span className="calc-num">{ownTarget ?? estimate.recommended}</span>
-              <span>{t('ккал на добу')}{customTarget ? t(' (ваша ціль)') : ''}</span>
+              <span className="calc-num">{showEnergy(ownTarget ?? estimate.recommended)}</span>
+              <span>{t('{unit} на добу', { unit: energyUnit() })}{customTarget ? t(' (ваша ціль)') : ''}</span>
             </div>
             <p className="muted" style={{ margin: '6px 0 0' }}>
-              {t('Рекомендовано {rec} ккал: базовий обмін {bmr} ккал × активність {act} = {tdee} ккал{goal}. Розрахунок за формулою Міффліна–Сан-Жеора.', {
-                rec: estimate.recommended,
-                bmr: estimate.bmr,
+              {t('Рекомендовано {rec} {unit}: базовий обмін {bmr} {unit} × активність {act} = {tdee} {unit}{goal}. Розрахунок за формулою Міффліна–Сан-Жеора.', {
+                rec: showEnergy(estimate.recommended),
+                bmr: showEnergy(estimate.bmr),
                 act: estimate.activityFactor,
-                tdee: estimate.tdee,
+                tdee: showEnergy(estimate.tdee),
+                unit: energyUnit(),
                 goal: estimate.goalFactor !== 1 ? t(', мета ×{n}', { n: estimate.goalFactor }) : '',
               })}
             </p>
             {customTarget && (
               <button type="button" style={{ marginTop: 10 }}
                 onClick={() => setTargetText(null)}>
-                {t('Повернути рекомендований ({n})', { n: estimate.recommended })}
+                {t('Повернути рекомендований ({n})', { n: showEnergy(estimate.recommended) })}
               </button>
             )}
           </>
@@ -294,10 +295,10 @@ export default function Profile() {
         )}
       </div>
       <label>
-        {t('Бажаний калораж, ккал на добу')}
-        <input type="number" inputMode="numeric" min={800} max={6000}
+        {t('Бажаний калораж, {unit} на добу', { unit: energyUnit() })}
+        <input type="number" inputMode="numeric" min={showEnergy(800)} max={showEnergy(6000)}
           className={customTarget ? undefined : 'auto-value'}
-          value={targetText ?? (recommended ?? '')}
+          value={targetText ?? (recommended === null ? '' : showEnergy(recommended))}
           placeholder={t('Автоматично')}
           onChange={(e) => setTargetText(e.target.value)}
           onBlur={() => targetText === '' && setTargetText(null)} />

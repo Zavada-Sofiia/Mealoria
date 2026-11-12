@@ -5,6 +5,7 @@ import ServingsPicker from '../components/ServingsPicker'
 import { scaleAmount, useServings } from '../servings'
 import { oneStepPerLine } from '../steps'
 import { t } from '../i18n'
+import { energyUnit, showEnergy } from '../units'
 import { convertAmount } from '../units'
 import { macrosLine } from '../macros'
 
@@ -164,7 +165,7 @@ export default function Recipes() {
                 <div className="thumb empty">🍽</div>
               )}
               <div>
-            <strong>{r.name}</strong> · {t(r.category)} · {r.calories} {t('ккал')} ·{' '}
+            <strong>{r.name}</strong> · {t(r.category)} · {showEnergy(r.calories)} {energyUnit()} ·{' '}
             {macrosLine(r.protein_g, r.fat_g, r.carbs_g, r.fiber_g)}
             <div>
               <small>

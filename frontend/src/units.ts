@@ -1,6 +1,8 @@
 import { getLang, t } from './i18n'
 
 export type Units = 'metric' | 'imperial'
+export type Energy = 'kcal' | 'kj'
+export type DateFormat = 'dmy' | 'mdy'
 
 const KEY = 'units'
 
@@ -86,3 +88,44 @@ export function convertAmount(text: string): string {
     }
   })
 }
+
+// ---------- energy: stored in kcal, shown in kcal or kJ
+const KJ_PER_KCAL = 4.184
+
+function load<T extends string>(key: string, allowed: readonly T[], fallback: T): T {
+  try {
+    const saved = localStorage.getItem(key)
+    if (saved && (allowed as readonly string[]).includes(saved)) return saved as T
+  } catch {
+    // no storage: the default
+  }
+  return fallback
+}
+
+function save(key: string, value: string) {
+  try {
+    localStorage.setItem(key, value)
+  } catch {
+    // the choice just lasts until the page is closed
+  }
+}
+
+let energy: Energy = load('energy', ['kcal', 'kj'], 'kcal')
+let dateFormat: DateFormat = load('dateFormat', ['dmy', 'mdy'], 'dmy')
+
+export const getEnergy = () => energy
+export const getDateFormat = () => dateFormat
+
+export function setEnergy(value: Energy) {
+  energy = value
+  save('energy', value)
+}
+
+export function setDateFormat(value: DateFormat) {
+  dateFormat = value
+  save('dateFormat', value)
+}
+
+export const energyUnit = () => (energy === 'kj' ? t('кДж') : t('ккал'))
+export const showEnergy = (kcal: number) => Math.round(energy === 'kj' ? kcal * KJ_PER_KCAL : kcal)
+export const storeEnergy = (shown: number) => Math.round(energy === 'kj' ? shown / KJ_PER_KCAL : shown)

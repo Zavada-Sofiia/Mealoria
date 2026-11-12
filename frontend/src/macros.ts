@@ -1,4 +1,5 @@
 import { t } from './i18n'
+import { energyUnit, showEnergy } from './units'
 
 type Grams = number | null | undefined
 
@@ -12,8 +13,8 @@ export function macrosLine(p: Grams, f: Grams, c: Grams, fiber?: Grams, alwaysFi
 
 /** "340 ккал · Б 12 / Ж 8 / В 40 · Кл 5 г" for an AI estimate. */
 export function kcalMacros(x: { calories: number; protein_g: number; fat_g: number; carbs_g: number; fiber_g?: number }): string {
-  const v = { kcal: x.calories, p: x.protein_g, f: x.fat_g, c: x.carbs_g }
+  const v = { kcal: showEnergy(x.calories), unit: energyUnit(), p: x.protein_g, f: x.fat_g, c: x.carbs_g }
   return x.fiber_g
-    ? t('{kcal} ккал · Б {p} / Ж {f} / В {c} · Кл {k} г', { ...v, k: x.fiber_g })
-    : t('{kcal} ккал · Б {p} / Ж {f} / В {c} г', v)
+    ? t('{kcal} {unit} · Б {p} / Ж {f} / В {c} · Кл {k} г', { ...v, k: x.fiber_g })
+    : t('{kcal} {unit} · Б {p} / Ж {f} / В {c} г', v)
 }

@@ -4,6 +4,7 @@ import { apiFetch } from '../api/client'
 import { iso, mondayOf } from '../dates'
 import { mealName } from '../meals'
 import { locale, t } from '../i18n'
+import { energyUnit, showEnergy } from '../units'
 import { macrosLine } from '../macros'
 
 type Day = {
@@ -78,7 +79,7 @@ export default function Dashboard() {
                     <br />
                     {meal ? (
                       <>
-                        {meal.dishes.join(', ')} <span className="muted">· {Math.round(meal.kcal)} {t('ккал')}</span>
+                        {meal.dishes.join(', ')} <span className="muted">· {showEnergy(meal.kcal)} {energyUnit()}</span>
                       </>
                     ) : (
                       <span className="muted">{t('Не заплановано')}</span>
@@ -93,8 +94,8 @@ export default function Dashboard() {
           <section className="card">
             <h3>{t('Калорії')}</h3>
             <p>
-              <strong style={{ fontSize: '1.6rem' }}>{total}</strong>
-              {target ? ` / ${target} ${t('ккал')}` : ` ${t('ккал')}`}
+              <strong style={{ fontSize: '1.6rem' }}>{showEnergy(total)}</strong>
+              {target ? ` / ${showEnergy(target)} ${energyUnit()}` : ` ${energyUnit()}`}
             </p>
             {target ? (
               <progress className={total > target ? 'over' : undefined} value={Math.min(total, target)} max={target} />

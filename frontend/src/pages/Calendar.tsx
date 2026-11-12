@@ -11,11 +11,12 @@ import {
 } from '@dnd-kit/core'
 import { Link } from 'react-router-dom'
 import { apiFetch } from '../api/client'
-import { addDays, fmtDate, iso, mondayOf, pad } from '../dates'
+import { addDays, fmtDate, fmtShortDate, iso, mondayOf } from '../dates'
 import { mealName, slotCategory } from '../meals'
 import PrintableWeek from '../components/PrintableWeek'
 import { download, weekToIcs } from '../ics'
 import { t } from '../i18n'
+import { energyUnit, showEnergy } from '../units'
 
 type Dish = {
   id: string
@@ -215,7 +216,7 @@ export default function Calendar() {
               ←
             </button>
             <strong>
-              {t(DAY_NAMES[dayIdx])}, {pad(days[dayIdx].getDate())}.{pad(days[dayIdx].getMonth() + 1)}
+              {t(DAY_NAMES[dayIdx])}, {fmtShortDate(iso(days[dayIdx]))}
             </strong>
             <button onClick={() => shiftDay(1)} aria-label={t('Наступний день')}>
               →
@@ -277,7 +278,7 @@ export default function Calendar() {
                 <th />
                 {shown.map((d) => (
                   <th key={iso(d)}>
-                    {t(DAY_NAMES[(d.getDay() + 6) % 7])} {pad(d.getDate())}.{pad(d.getMonth() + 1)}
+                    {t(DAY_NAMES[(d.getDay() + 6) % 7])} {fmtShortDate(iso(d))}
                   </th>
                 ))}
               </tr>
@@ -375,7 +376,7 @@ export default function Calendar() {
                 >
                   {d.favorite && '★ '}
                   {d.name}
-                  {d.calories != null && <small>{d.calories} {t('ккал')}</small>}
+                  {d.calories != null && <small>{showEnergy(d.calories)} {energyUnit()}</small>}
                 </button>
               )
               return (
