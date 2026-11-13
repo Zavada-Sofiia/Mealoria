@@ -1,0 +1,31 @@
+-- Dietary fibre (grams per serving, approximate) for the recipes of the catalogue.
+-- Only recipes without a value are filled, so a value set by hand is never overwritten.
+update public.recipes set fiber_g = 6.0 where name = 'Вівсянка з бананом' and fiber_g is null;
+update public.recipes set fiber_g = 2.0 where name = 'Омлет з овочами' and fiber_g is null;
+update public.recipes set fiber_g = 1.0 where name = 'Сирники' and fiber_g is null;
+update public.recipes set fiber_g = 5.5 where name = 'Гречана каша з молоком' and fiber_g is null;
+update public.recipes set fiber_g = 8.0 where name = 'Тост з авокадо та яйцем' and fiber_g is null;
+update public.recipes set fiber_g = 4.5 where name = 'Грецький йогурт з ягодами' and fiber_g is null;
+update public.recipes set fiber_g = 3.5 where name = 'Рисова каша з яблуком' and fiber_g is null;
+update public.recipes set fiber_g = 6.0 where name = 'Борщ' and fiber_g is null;
+update public.recipes set fiber_g = 3.0 where name = 'Курячий суп з локшиною' and fiber_g is null;
+update public.recipes set fiber_g = 7.5 where name = 'Гречка з курячим філе' and fiber_g is null;
+update public.recipes set fiber_g = 3.0 where name = 'Плов з куркою' and fiber_g is null;
+update public.recipes set fiber_g = 4.5 where name = 'Крем-суп з гарбуза' and fiber_g is null;
+update public.recipes set fiber_g = 5.0 where name = 'Макарони з томатним соусом' and fiber_g is null;
+update public.recipes set fiber_g = 3.0 where name = 'Салат Цезар з куркою' and fiber_g is null;
+update public.recipes set fiber_g = 7.0 where name = 'Тушкована капуста зі свининою' and fiber_g is null;
+update public.recipes set fiber_g = 3.0 where name = 'Запечена риба з овочами' and fiber_g is null;
+update public.recipes set fiber_g = 4.5 where name = 'Парові курячі котлети з броколі' and fiber_g is null;
+update public.recipes set fiber_g = 7.0 where name = 'Овочеве рагу' and fiber_g is null;
+update public.recipes set fiber_g = 5.5 where name = 'Печена картопля з індичкою' and fiber_g is null;
+update public.recipes set fiber_g = 4.0 where name = 'Фаршировані перці' and fiber_g is null;
+update public.recipes set fiber_g = 12.0 where name = 'Лобіо з червоної квасолі' and fiber_g is null;
+update public.recipes set fiber_g = 3.0 where name = 'Салат з тунцем та яйцем' and fiber_g is null;
+update public.recipes set fiber_g = 4.0 where name = 'Деруни' and fiber_g is null;
+update public.recipes set fiber_g = 5.5 where name = 'Яблуко з арахісовою пастою' and fiber_g is null;
+update public.recipes set fiber_g = 0.0 where name = 'Сир кисломолочний з медом' and fiber_g is null;
+update public.recipes set fiber_g = 7.0 where name = 'Хумус з морквою' and fiber_g is null;
+update public.recipes set fiber_g = 4.5 where name = 'Смузі з бананом і шпинатом' and fiber_g is null;
+update public.recipes set fiber_g = 5.0 where name = 'Горіхи з сухофруктами' and fiber_g is null;
+update public.recipes set fiber_g = 4.5 where name = 'Запечені яблука з корицею' and fiber_g is null;
