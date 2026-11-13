@@ -680,6 +680,8 @@ export const en: Record<string, string> = {
   "Фото страви": "Dish photo",
   "Фото страви надсилається в Google Gemini. На безкоштовному тарифі Google може використовувати такі дані для покращення своїх продуктів, тому не завантажуйте фото з людьми чи особисту інформацію.": "The photo of the dish is sent to Google Gemini. On the free tier Google may use such data to improve its products, so do not upload photos with people or personal information.",
   "Фільтр працює за відповідями з профілю. Інші алергії, вписані текстом, не враховуються, тому завжди перевіряйте склад самостійно.": "The filter uses your profile answers. Other allergies typed as text are not taken into account, so always check the ingredients yourself.",
+  "Фільтри": "Filters",
+  "Фільтри ({n})": "Filters ({n})",
   "Це ваша власна ціль. Збережемо саме її.": "This is your own target. We will save exactly this.",
   "Це вже ваш поточний email.": "This is already your current email.",
   "Це лише оцінка, реальні значення можуть відрізнятися.": "This is only an estimate; real values may differ.",

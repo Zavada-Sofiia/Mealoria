@@ -65,6 +65,7 @@ export default function Dishes() {
   const [onlyFav, setOnlyFav] = useState(false)
   const [meal, setMeal] = useState('')
   const [kind, setKind] = useState('')
+  const [filtersOpen, setFiltersOpen] = useState(false)
   const [status, setStatus] = useState(t('Завантаження…'))
   const [uploading, setUploading] = useState(false)
   const [drawing, setDrawing] = useState<string | null>(null)
@@ -287,6 +288,7 @@ export default function Dishes() {
     }
   })()
 
+  const activeFilters = (meal ? 1 : 0) + (kind ? 1 : 0) + (onlyFav ? 1 : 0)
   const atLimit = me !== null && !editingId && dishes.length >= me.dishes
 
   const [saving, setSaving] = useState(false)
@@ -622,25 +624,32 @@ export default function Dishes() {
               </option>
             ))}
           </select>
-          <div className="meal-filter">
-            <small className="muted">{t('Прийом їжі')}:</small>
-            {['', ...MEALS].map((c) => (
-              <button key={c || 'all'} type="button" className={`chip-btn${meal === c ? ' on' : ''}`} onClick={() => setMeal(c)}>
-                {c ? t(c) : t('Усі')}
-              </button>
-            ))}
-          </div>
-          <div className="meal-filter">
-            <small className="muted">{t('Тип страви')}:</small>
-            {['', ...KINDS].map((c) => (
-              <button key={c || 'all'} type="button" className={`chip-btn${kind === c ? ' on' : ''}`} onClick={() => setKind(c)}>
-                {c ? t(c) : t('Усі')}
-              </button>
-            ))}
-          </div>
-          <label className="inline">
-            <input type="checkbox" checked={onlyFav} onChange={(e) => setOnlyFav(e.target.checked)} /> {t('Лише улюблені')}
-          </label>
+          <button type="button" className="secondary" aria-expanded={filtersOpen} onClick={() => setFiltersOpen((o) => !o)}>
+            {activeFilters ? t('Фільтри ({n})', { n: activeFilters }) : t('Фільтри')} {filtersOpen ? '▴' : '▾'}
+          </button>
+          {filtersOpen && (
+            <div className="filters-panel">
+            <div className="meal-filter">
+              <small className="muted">{t('Прийом їжі')}:</small>
+              {['', ...MEALS].map((c) => (
+                <button key={c || 'all'} type="button" className={`chip-btn${meal === c ? ' on' : ''}`} onClick={() => setMeal(c)}>
+                  {c ? t(c) : t('Усі')}
+                </button>
+              ))}
+            </div>
+            <div className="meal-filter">
+              <small className="muted">{t('Тип страви')}:</small>
+              {['', ...KINDS].map((c) => (
+                <button key={c || 'all'} type="button" className={`chip-btn${kind === c ? ' on' : ''}`} onClick={() => setKind(c)}>
+                  {c ? t(c) : t('Усі')}
+                </button>
+              ))}
+            </div>
+            <label className="inline">
+              <input type="checkbox" checked={onlyFav} onChange={(e) => setOnlyFav(e.target.checked)} /> {t('Лише улюблені')}
+            </label>
+            </div>
+          )}
         </div>
       )}
       {!formOpen && (

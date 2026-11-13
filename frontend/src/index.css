@@ -1918,3 +1918,12 @@ button.add-dish:hover {
   text-align: center;
   font-variant-numeric: tabular-nums;
 }
+
+.filters-panel {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
