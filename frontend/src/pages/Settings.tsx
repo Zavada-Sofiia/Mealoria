@@ -5,6 +5,7 @@ import { convertAmount, energyUnit, feetInches, heightUnit, num, showEnergy, sho
 import { fmtDate } from '../dates'
 import { t } from '../i18n'
 import { useState } from 'react'
+import AccountSecurity from '../components/AccountSecurity'
 
 const OPTIONS: [Units, string, string][] = [
   ['metric', 'Метричні', 'кг, см, грами, мілілітри'],
@@ -103,8 +104,11 @@ export default function Settings() {
         </div>
       </section>
 
+      <h2>{t('Акаунт')}</h2>
+      <AccountSecurity />
+
       <p className="muted">
-        <small>{t('Налаштування зберігаються в цьому браузері.')}</small>
+        <small>{t('Налаштування вигляду зберігаються в цьому браузері.')}</small>
       </p>
     </div>
   )
