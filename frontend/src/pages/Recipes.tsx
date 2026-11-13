@@ -56,15 +56,6 @@ const ALLERGEN_LABEL: Record<string, string> = {
   legumes: 'бобові',
   tomatoes: 'томати',
 }
-const DIET_RANK: Record<string, number> = { any: 0, pescatarian: 1, vegetarian: 2, vegan: 3 }
-const DIET_FILTERS: [string, string][] = [
-  ['', 'Усі'],
-  ['pescatarian', 'Без м’яса'],
-  ['vegetarian', 'Вегетаріанські'],
-  ['vegan', 'Веганські'],
-]
-const TIME_FILTERS = [0, 15, 30]
-const HIGH_FIBER = 5
 const today = () => {
   const d = new Date()
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
@@ -75,10 +66,6 @@ export default function Recipes() {
   const [query, setQuery] = useState('')
   const [category, setCategory] = useState('')
   const [forMe, setForMe] = useState(false)
-  const [diet, setDiet] = useState('')
-  const [maxMinutes, setMaxMinutes] = useState(0)
-  const [cheap, setCheap] = useState(false)
-  const [highFiber, setHighFiber] = useState(false)
   const [filtersOpen, setFiltersOpen] = useState(false)
   const [status, setStatus] = useState(t('Завантаження…'))
   const [planning, setPlanning] = useState<string | null>(null)
@@ -134,14 +121,9 @@ export default function Recipes() {
   }
 
   const [servings, setServings] = useServings()
-  const activeFilters = [category, diet, maxMinutes, cheap, highFiber].filter(Boolean).length
+  const activeFilters = category ? 1 : 0
   const shown = recipes
     .filter((r) => !category || r.category === category)
-    // a vegan recipe also suits a vegetarian, and a vegetarian one suits somebody who only avoids meat
-    .filter((r) => !diet || (DIET_RANK[r.diet] ?? 0) >= DIET_RANK[diet])
-    .filter((r) => !maxMinutes || r.cook_minutes <= maxMinutes)
-    .filter((r) => !cheap || r.budget === 'low')
-    .filter((r) => !highFiber || (r.fiber_g ?? 0) >= HIGH_FIBER)
     .sort((a, b) => CATEGORIES.indexOf(a.category) - CATEGORIES.indexOf(b.category))
 
   return (
@@ -165,29 +147,6 @@ export default function Recipes() {
               </button>
             ))}
           </div>
-          <div className="meal-filter">
-            <small className="muted">{t('Дієта')}:</small>
-            {DIET_FILTERS.map(([key, label]) => (
-              <button key={key || 'all'} type="button" className={`chip-btn${diet === key ? ' on' : ''}`} onClick={() => setDiet(key)}>
-                {t(label)}
-              </button>
-            ))}
-          </div>
-          <div className="meal-filter">
-            <small className="muted">{t('Час приготування')}:</small>
-            {TIME_FILTERS.map((m) => (
-              <button key={m} type="button" className={`chip-btn${maxMinutes === m ? ' on' : ''}`} onClick={() => setMaxMinutes(m)}>
-                {m ? t('до {n} хв', { n: m }) : t('Будь-який')}
-              </button>
-            ))}
-          </div>
-          <label className="inline">
-            <input type="checkbox" checked={cheap} onChange={(e) => setCheap(e.target.checked)} /> {t('Бюджетні')}
-          </label>
-          <label className="inline">
-            <input type="checkbox" checked={highFiber} onChange={(e) => setHighFiber(e.target.checked)} />{' '}
-            {t('Багато клітковини (від {n} г)', { n: HIGH_FIBER })}
-          </label>
         </div>
       )}
       <p>
