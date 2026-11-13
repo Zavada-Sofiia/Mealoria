@@ -40,3 +40,17 @@ test('the file can be run again without duplicates', async () => {
   await db.exec(readFileSync(new URL('../supabase/033_more_recipes.sql', import.meta.url), 'utf8'))
   assert.equal((await rows(db, 'select count(*)::int as n from public.recipes'))[0].n, before)
 })
+
+test('every quick "already at home" button matches an ingredient of the catalogue', async () => {
+  // the shopping list matches the names exactly, so a button with a name no recipe uses would do nothing
+  const src = readFileSync(new URL('../../frontend/src/pages/Shopping.tsx', import.meta.url), 'utf8')
+  const block = src.slice(src.indexOf('const QUICK_GROUPS'), src.indexOf('export default function Shopping'))
+  const names = [...block.matchAll(/\['([^\]]+)'\]/g)].flatMap((m) => m[1].split(/',\s*'/))
+  assert.ok(names.length > 60, `found only ${names.length} names`)
+  const db = await freshDatabase()
+  const used = new Set(
+    (await rows(db, `select lower(i->>'name') as n from public.recipes, jsonb_array_elements(ingredients) i`)).map((r) => r.n),
+  )
+  const unused = names.filter((n) => !used.has(n) && n !== 'сіль')
+  assert.deepEqual(unused, [], 'these buttons match no ingredient')
+})

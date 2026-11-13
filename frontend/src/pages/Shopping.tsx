@@ -14,8 +14,37 @@ type PantryItem = { id: string; name: string }
 type ManualItem = { id: string; name: string; checked: boolean }
 
 const norm = (s: string) => s.toLowerCase().split(/\s+/).filter(Boolean).join(' ')
-// Products that most kitchens already have; the names match the ingredient names of the catalog
-const QUICK = ['сіль', 'цукор', 'олія', 'борошно', 'перець', 'яйця', 'молоко', 'масло вершкове', 'цибуля', 'часник', 'картопля', 'рис', 'гречка', 'макарони']
+// Products for the "Already at home" quick buttons, grouped. The names are the ingredient names of the catalog
+// (the list matches them exactly); a button with several names adds all of them.
+const QUICK_GROUPS: { title: string; items: string[][] }[] = [
+  {
+    title: 'Бакалія',
+    items: [['олія'], ['сіль'], ['цукор'], ['борошно'], ['рис'], ['гречка'], ['макарони'], ['вівсяні пластівці'], ['гранола'],
+      ['цільнозерновий хліб'], ['житній хліб'], ['спеції'], ['томатна паста'], ['соєвий соус'], ['мед'], ['родзинки'],
+      ['сочевиця'], ['нут консервований'], ['квасоля консервована'], ['томати в соку'], ['тунець консервований'],
+      ['овочевий бульйон'], ['мигдаль'], ['волоські горіхи'], ['арахісова паста'], ['насіння чіа']],
+  },
+  {
+    title: 'Молочне й яйця',
+    items: [['яйця', 'яйце'], ['молоко'], ['вершкове масло'], ['твердий сир'], ['сир кисломолочний'], ['йогурт натуральний'],
+      ['грецький йогурт'], ['сметана 15%'], ['вершки 10%'], ['кефір'], ['пармезан'], ['бринза']],
+  },
+  {
+    title: 'Овочі й зелень',
+    items: [['цибуля'], ['морква'], ['картопля'], ['часник'], ['помідор'], ['огірок'], ['солодкий перець'], ['кабачок'],
+      ['капуста'], ['броколі'], ['шпинат'], ['баклажан'], ['гарбуз'], ['буряк'], ['печериці'], ['зелень (кріп, петрушка)'],
+      ['листя салату'], ['авокадо']],
+  },
+  {
+    title: 'Фрукти й ягоди',
+    items: [['банан'], ['яблуко'], ['лимон'], ['лимонний сік'], ['ягоди'], ['ківі']],
+  },
+  {
+    title: 'М’ясо й риба',
+    items: [['куряче філе'], ['курячий фарш'], ['філе індички'], ['пісна свинина'], ['яловичина пісна'], ['шинка'],
+      ['філе білої риби'], ['креветки']],
+  },
+]
 
 export default function Shopping() {
   const [weekStart, setWeekStart] = useState(() => mondayOf(new Date()))
@@ -259,16 +288,20 @@ export default function Shopping() {
           onChange={(e) => setNewItem(e.target.value)} />
         <button type="submit">{t('Додати')}</button>
       </form>
-      {QUICK.some((q) => !pantry.some((p) => norm(p.name) === q)) && (
-        <div className="quick">
-          <small className="muted">{t('Швидко додати:')}</small>
-          {QUICK.filter((q) => !pantry.some((p) => norm(p.name) === q)).map((q) => (
-            <button key={q} type="button" className="chip-btn" onClick={() => void addNames([q])}>
-              + {q}
-            </button>
-          ))}
-        </div>
-      )}
+      {QUICK_GROUPS.map((group) => {
+        const left = group.items.filter((names) => !names.every((n) => pantry.some((p) => norm(p.name) === n)))
+        if (!left.length) return null
+        return (
+          <div className="quick" key={group.title}>
+            <small className="muted">{t(group.title)}:</small>
+            {left.map((names) => (
+              <button key={names[0]} type="button" className="chip-btn" onClick={() => void addNames(names)}>
+                + {names[0]}
+              </button>
+            ))}
+          </div>
+        )
+      })}
       <div className="pantry">
         {pantry.map((p) => (
           <span key={p.id} className="chip">
