@@ -226,7 +226,11 @@ export default function Recipes() {
             >
               {isFavorite(r) ? '★' : '☆'}
             </button>
-            <strong>{r.name}</strong> · {t(r.category)} · {showEnergy(r.calories)} {energyUnit()} ·{' '}
+            <strong>{r.name}</strong>
+            {[r.category, r.kind].filter(Boolean).map((c) => (
+              <span key={c} className="badge" style={{ marginLeft: 6 }}>{t(c as string)}</span>
+            ))}
+            {' · '}{showEnergy(r.calories)} {energyUnit()} ·{' '}
             {macrosLine(r.protein_g, r.fat_g, r.carbs_g, r.fiber_g)}
             <div>
               <small>
