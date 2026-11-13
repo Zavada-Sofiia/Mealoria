@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../api/supabase'
 import { passwordProblems } from '../password'
 import { t } from '../i18n'
+import { authErrorText } from '../authError'
 
 export default function ResetPassword() {
   const navigate = useNavigate()
@@ -26,9 +27,10 @@ export default function ResetPassword() {
 
   async function submit(e: FormEvent) {
     e.preventDefault()
+    if (!password) return setMessage(t('Введіть пароль.'))
     if (problems.length) return setMessage(t('Придумайте надійніший пароль: {list}.', { list: problems.join('; ').toLowerCase() }))
     const { error } = await supabase.auth.updateUser({ password })
-    if (error) return setMessage(error.message)
+    if (error) return setMessage(authErrorText(error))
     navigate('/today')
   }
 
@@ -48,7 +50,7 @@ export default function ResetPassword() {
   }
 
   return (
-    <form onSubmit={submit} className="card narrow">
+    <form onSubmit={submit} className="card narrow" noValidate>
       <h1>{t('Новий пароль')}</h1>
       <label>
         {t('Пароль')}
@@ -57,7 +59,6 @@ export default function ResetPassword() {
           autoComplete="new-password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          required
         />
       </label>
       {problems.length > 0 && password && (
@@ -69,7 +70,7 @@ export default function ResetPassword() {
       )}
       {!problems.length && password && <p className="pw-ok">{t('Пароль надійний')}</p>}
       <button type="submit">{t('Зберегти пароль')}</button>
-      {message && <p className="status" style={{ marginTop: 16 }}>{message}</p>}
+      {message && <p className="status error" role="alert" style={{ marginTop: 16 }}>{message}</p>}
     </form>
   )
 }

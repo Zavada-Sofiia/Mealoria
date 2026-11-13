@@ -295,6 +295,7 @@ export default function Dishes() {
   async function save(e: FormEvent) {
     e.preventDefault()
     if (saving) return
+    if (!form.name.trim()) return setStatus(t('Вкажіть назву страви.'))
     setSaving(true)
     try {
       await submit()
@@ -449,7 +450,7 @@ export default function Dishes() {
         <h2>{editingId ? t('Редагувати страву') : t('Додати страву')}</h2>
         <label>
           {t('Назва')}
-          <input value={form.name} maxLength={100} required
+          <input value={form.name} maxLength={100}
             onChange={(e) => setForm({ ...form, name: e.target.value })} />
         </label>
         <fieldset>

@@ -65,6 +65,12 @@ function App() {
   const [session, setSession] = useState<Session | null | undefined>(undefined)
 
   useEffect(() => {
+    // a failed e-mail link or Google sign-in comes back with the reason in the address; show it on the sign-in page
+    const { pathname, hash } = window.location
+    if (/error_code=|error=/.test(hash) && pathname !== '/auth' && pathname !== '/reset') {
+      window.location.replace(`/auth${hash}`)
+      return
+    }
     supabase.auth.getSession().then(({ data }) => setSession(data.session))
     const { data } = supabase.auth.onAuthStateChange((_event, s) => setSession(s))
     return () => data.subscription.unsubscribe()

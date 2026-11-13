@@ -426,6 +426,12 @@ ul.cards > li > strong {
   font-weight: 500;
 }
 
+.status.error {
+  background: var(--red-soft);
+  border: 1px solid var(--red-line);
+  color: var(--red-ink);
+}
+
 /* ---------- forms ---------- */
 label {
   display: block;

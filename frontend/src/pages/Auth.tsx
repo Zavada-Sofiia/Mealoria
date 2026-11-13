@@ -1,39 +1,59 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../api/supabase'
 import { passwordProblems } from '../password'
 import { t } from '../i18n'
+import { authErrorText, authLinkError, clearAuthLinkError, EMAIL_PATTERN } from '../authError'
 
 export default function Auth() {
   const navigate = useNavigate()
   const [mode, setMode] = useState<'signin' | 'signup'>('signin')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [message, setMessage] = useState('')
+  const [message, setMessage] = useState(authLinkError)
+  const [failed, setFailed] = useState(() => authLinkError() !== '')
   const problems = mode === 'signup' ? passwordProblems(password, email) : []
+
+  // a failed e-mail link or Google sign-in lands here with the reason in the address
+  useEffect(() => clearAuthLinkError(), [])
+
+  function fail(text: string) {
+    setFailed(true)
+    setMessage(text)
+  }
+
+  function note(text: string) {
+    setFailed(false)
+    setMessage(text)
+  }
 
   async function submit(e: FormEvent) {
     e.preventDefault()
     setMessage('')
+    if (!email.trim()) return fail(t('Введіть email.'))
+    if (!EMAIL_PATTERN.test(email.trim())) return fail(t('Перевірте, чи правильно введено email.'))
+    if (!password) return fail(t('Введіть пароль.'))
     if (mode === 'signup') {
-      if (problems.length) return setMessage(t('Придумайте надійніший пароль: {list}.', { list: problems.join('; ').toLowerCase() }))
-      const { data, error } = await supabase.auth.signUp({ email, password })
-      if (error) return setMessage(error.message)
-      if (!data.session) return setMessage(t('Перевірте пошту, щоб підтвердити email.'))
+      if (problems.length) return fail(t('Придумайте надійніший пароль: {list}.', { list: problems.join('; ').toLowerCase() }))
+      const { data, error } = await supabase.auth.signUp({ email: email.trim(), password })
+      if (error) return fail(authErrorText(error))
+      if (!data.session) return note(t('Перевірте пошту, щоб підтвердити email.'))
       return navigate('/profile')
     }
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
-    if (error) return setMessage(error.message)
+    const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password })
+    if (error) return fail(authErrorText(error))
     navigate('/today')
   }
 
   async function forgotPassword() {
     setMessage('')
-    if (!email.trim()) return setMessage(t('Спочатку введіть email у поле вище.'))
+    if (!email.trim()) return fail(t('Спочатку введіть email у поле вище.'))
+    if (!EMAIL_PATTERN.test(email.trim())) return fail(t('Перевірте, чи правильно введено email.'))
     const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
       redirectTo: `${window.location.origin}/reset`,
     })
-    setMessage(error ? error.message : t('Якщо такий акаунт є, ми надіслали лист із посиланням для нового пароля.'))
+    if (error) fail(authErrorText(error))
+    else note(t('Якщо такий акаунт є, ми надіслали лист із посиланням для нового пароля.'))
   }
 
   async function signInWithGoogle() {
@@ -42,11 +62,11 @@ export default function Auth() {
       provider: 'google',
       options: { redirectTo: window.location.origin },
     })
-    if (error) setMessage(error.message)
+    if (error) fail(authErrorText(error))
   }
 
   return (
-    <form onSubmit={submit} className="card narrow">
+    <form onSubmit={submit} className="card narrow" noValidate>
       <h1>{mode === 'signin' ? t('Вхід') : t('Реєстрація')}</h1>
       <label>
         Email
@@ -55,7 +75,6 @@ export default function Auth() {
           autoComplete="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          required
         />
       </label>
       <label>
@@ -65,7 +84,6 @@ export default function Auth() {
           autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          required
         />
       </label>
       {problems.length > 0 && password && (
@@ -97,7 +115,7 @@ export default function Auth() {
         {t('Продовжуючи, ви погоджуєтесь з')} <Link to="/terms">{t('Умовами')}</Link> {t('і')}{' '}
         <Link to="/privacy">{t('Політикою конфіденційності')}</Link>.
       </p>
-      {message && <p className="status" style={{ marginTop: 16 }}>{message}</p>}
+      {message && <p className={failed ? 'status error' : 'status'} role="alert" style={{ marginTop: 16 }}>{message}</p>}
     </form>
   )
 }
