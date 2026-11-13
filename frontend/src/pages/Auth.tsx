@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../api/supabase'
 import { passwordProblems } from '../password'
 import { t } from '../i18n'
+import ConfirmCode from '../components/ConfirmCode'
 import { authErrorText, authLinkError, clearAuthLinkError, EMAIL_PATTERN } from '../authError'
 
 export default function Auth() {
@@ -11,6 +12,7 @@ export default function Auth() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [message, setMessage] = useState(authLinkError)
+  const [confirming, setConfirming] = useState<{ email: string; sent: boolean } | null>(null)
   const [failed, setFailed] = useState(() => authLinkError() !== '')
   const problems = mode === 'signup' ? passwordProblems(password, email) : []
 
@@ -37,10 +39,11 @@ export default function Auth() {
       if (problems.length) return fail(t('Придумайте надійніший пароль: {list}.', { list: problems.join('; ').toLowerCase() }))
       const { data, error } = await supabase.auth.signUp({ email: email.trim(), password })
       if (error) return fail(authErrorText(error))
-      if (!data.session) return note(t('Перевірте пошту, щоб підтвердити email.'))
+      if (!data.session) return setConfirming({ email: email.trim(), sent: true })
       return navigate('/profile')
     }
     const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password })
+    if (error?.code === 'email_not_confirmed') return setConfirming({ email: email.trim(), sent: false })
     if (error) return fail(authErrorText(error))
     navigate('/today')
   }
@@ -63,6 +66,10 @@ export default function Auth() {
       options: { redirectTo: window.location.origin },
     })
     if (error) fail(authErrorText(error))
+  }
+
+  if (confirming) {
+    return <ConfirmCode email={confirming.email} sent={confirming.sent} onBack={() => setConfirming(null)} />
   }
 
   return (

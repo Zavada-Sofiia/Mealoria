@@ -20,6 +20,12 @@ Supabase → **Authentication → Emails → Templates** (у старому ін
 У шаблонах використані змінні Supabase (`{{ .ConfirmationURL }}`, `{{ .Email }}`, `{{ .NewEmail }}`, `{{ .Token }}`), їх змінювати не треба.
 Логотип підтягується з `https://mealoria.mealoria.workers.dev/icon-192.png`. Якщо зміниться адреса сайту, замініть її у файлах.
 
+## Підтвердження пошти кодом
+
+Лист «Confirm sign up» містить 6-значний код (`{{ .Token }}`) замість кнопки-посилання. Сайт після реєстрації
+показує поле для коду. У Supabase → **Authentication → Sign In / Providers → Email** довжина коду
+(**Email OTP Length**) має бути **6**, термін дії (**Email OTP Expiration**) 3600 секунд.
+
 ## Обмеження
 
 Вбудована пошта Supabase обмежена кількома листами на годину й може потрапляти в спам. Для більшого обсягу підключіть

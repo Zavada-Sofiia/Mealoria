@@ -1911,3 +1911,10 @@ button.add-dish:hover {
   min-height: 32px;
   padding: 0 10px;
 }
+
+.code-input {
+  font-size: 1.6rem;
+  letter-spacing: 0.35em;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}

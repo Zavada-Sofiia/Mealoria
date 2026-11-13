@@ -6,7 +6,7 @@ const SESSION_ENDED = () => t('Сесія завершилась. Увійдіт
 const TOO_MANY = () => t('Забагато спроб. Зачекайте кілька хвилин і спробуйте знову.')
 
 /** Supabase answers in English; this turns its error code into our own text in the chosen language. */
-export function authErrorText(error: Pick<AuthError, 'code' | 'status' | 'name' | 'message'>): string {
+export function authErrorText(error: Pick<AuthError, 'code' | 'status' | 'name' | 'message'>, about?: 'code'): string {
   const offline = error.name === 'AuthRetryableFetchError' || /failed to fetch|network|load failed/i.test(error.message)
   if (offline && !error.code) return t('Немає з’єднання з інтернетом. Перевірте мережу й спробуйте ще раз.')
   switch (error.code) {
@@ -34,6 +34,7 @@ export function authErrorText(error: Pick<AuthError, 'code' | 'status' | 'name' 
     case 'email_provider_disabled':
       return t('Реєстрацію тимчасово вимкнено. Спробуйте пізніше.')
     case 'otp_expired':
+      return about === 'code' ? t('Код неправильний або прострочений. Перевірте цифри або запросіть новий.') : EXPIRED_LINK()
     case 'flow_state_expired':
     case 'flow_state_not_found':
       return EXPIRED_LINK()
