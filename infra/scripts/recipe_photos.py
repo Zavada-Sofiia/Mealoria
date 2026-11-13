@@ -59,6 +59,13 @@ RECIPES = {
 }
 
 
+try:
+    from recipe_photos_more import MORE  # recipes from 033_more_recipes.sql
+    RECIPES.update(MORE)
+except ImportError:
+    pass
+
+
 def generate(prompt: str, account: str, token: str) -> bytes:
     url = f"https://api.cloudflare.com/client/v4/accounts/{account}/ai/run/{MODEL}"
     body = json.dumps({"prompt": f"{prompt}, {STYLE}", "steps": 6})

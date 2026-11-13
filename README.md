@@ -51,7 +51,7 @@ frontend/           React + TypeScript (Vite)
   src/components/   меню
   src/api/          клієнт API, Supabase, завантаження фото
 infra/
-  supabase/         SQL-скрипти бази й сховища (001…033)
+  supabase/         SQL-скрипти бази й сховища (001…034)
   scripts/          генерація фото для каталогу рецептів
   terraform/        опис Render, Supabase (авторизація) і Cloudflare Worker кодом
 .github/workflows/  CI (тести й збірка) та «будильник» Supabase
@@ -82,7 +82,7 @@ flowchart LR
 
 ### 1. База даних
 
-У Supabase → SQL Editor по черзі виконайте файли з `infra/supabase/` (від `001` до `033`).
+У Supabase → SQL Editor по черзі виконайте файли з `infra/supabase/` (від `001` до `034`).
 Скрипти можна запускати повторно. Файли `005` і `011` містять каталог рецептів і посилання на їхні фото.
 Для `011` фото мають бути завантажені в Storage (див. нижче).
 
@@ -190,7 +190,8 @@ Cloudflare Worker). Інструкція з перевірки та імпорт
 Фото згенеровано через Cloudflare Workers AI скриптом `infra/scripts/recipe_photos.py` (потрібні
 `CF_ACCOUNT_ID` і `CF_API_TOKEN`, див. коментар на початку файлу). Результат зменшують до 640 px і
 завантажують у Storage: `dish-photos/recipes/`. Після цього `infra/supabase/011_recipe_photos.sql`
-прив'язує їх до рецептів.
+прив'язує їх до рецептів. Для рецептів із `033_more_recipes.sql` описи фото лежать у `infra/scripts/recipe_photos_more.py`
+(скрипт бере їх сам), а прив'язує фото `infra/supabase/034_more_recipe_photos.sql`, який виконують **після** завантаження файлів у Storage.
 
 ## Заплановано
 

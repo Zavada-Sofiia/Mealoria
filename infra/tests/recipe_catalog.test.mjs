@@ -19,6 +19,12 @@ test('the catalogue has 150+ recipes in every category and kind, and every row i
   assert.deepEqual(await rows(db, `select name from public.recipes where calories < 30 or calories > 900 or protein_g < 0 or fat_g < 0 or carbs_g < 0`), [])
 })
 
+test('every recipe has a photo link of its own', async () => {
+  const db = await freshDatabase()
+  assert.deepEqual(await rows(db, 'select name from public.recipes where photo_url is null'), [])
+  assert.deepEqual(await rows(db, 'select photo_url from public.recipes group by photo_url having count(*) > 1'), [])
+})
+
 test('the diet agrees with the allergens that come from animal products', async () => {
   const db = await freshDatabase()
   const bad = await rows(db, `select name, diet, allergens from public.recipes where
