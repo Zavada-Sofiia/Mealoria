@@ -7,6 +7,7 @@ class RecipeOut(BaseModel):
     id: str
     name: str
     category: str
+    kind: str | None = None
     recipe: str
     ingredients: list[Ingredient]
     calories: int

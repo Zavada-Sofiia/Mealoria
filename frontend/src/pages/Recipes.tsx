@@ -13,6 +13,7 @@ type Recipe = {
   id: string
   name: string
   category: string
+  kind: string | null
   recipe: string
   ingredients: { name: string; amount: string }[]
   calories: number
@@ -27,9 +28,11 @@ type Recipe = {
   budget: string
   photo_url: string | null
 }
-type Dish = { id: string }
+type Dish = { id: string; name: string; favorite: boolean } & Record<string, unknown>
 
 const CATEGORIES = ['сніданок', 'обід', 'вечеря', 'перекус']
+const KINDS = ['основна страва', 'суп', 'салат', 'гарнір', 'закуска', 'десерт', 'випічка', 'напій']
+const sameName = (a: string, b: string) => a.trim().toLowerCase() === b.trim().toLowerCase()
 const DIET_LABEL: Record<string, string> = {
   vegan: 'веганське',
   vegetarian: 'вегетаріанське',
@@ -65,6 +68,9 @@ export default function Recipes() {
   const [recipes, setRecipes] = useState<Recipe[]>([])
   const [query, setQuery] = useState('')
   const [category, setCategory] = useState('')
+  const [kind, setKind] = useState('')
+  const [onlyFav, setOnlyFav] = useState(false)
+  const [myDishes, setMyDishes] = useState<Dish[]>([])
   const [forMe, setForMe] = useState(false)
   const [filtersOpen, setFiltersOpen] = useState(false)
   const [status, setStatus] = useState(t('Завантаження…'))
@@ -90,6 +96,30 @@ export default function Recipes() {
   }, [query, forMe])
 
   const json = { 'Content-Type': 'application/json' }
+
+  // a recipe is a favourite when the dish with its name in "My dishes" is starred
+  useEffect(() => {
+    apiFetch<Dish[]>('/api/dishes').then(setMyDishes).catch(() => {})
+  }, [])
+  const mineOf = (r: Recipe) => myDishes.find((d) => sameName(d.name, r.name))
+  const isFavorite = (r: Recipe) => !!mineOf(r)?.favorite
+
+  async function toggleFavorite(r: Recipe) {
+    try {
+      let dish = mineOf(r)
+      if (!dish) {
+        dish = await apiFetch<Dish>(`/api/recipes/${r.id}/save`, { method: 'POST' })
+        setSavedIds((ids) => (ids.includes(r.id) ? ids : [...ids, r.id]))
+      }
+      const { id, ...rest } = dish
+      const favorite = !dish.favorite
+      setMyDishes((ds) => [...ds.filter((d) => d.id !== id), { ...dish, favorite }])
+      await apiFetch<Dish>(`/api/dishes/${id}`, { method: 'PUT', headers: json, body: JSON.stringify({ ...rest, favorite }) })
+    } catch {
+      apiFetch<Dish[]>('/api/dishes').then(setMyDishes).catch(() => {})
+      setStatus(t('Не вдалося зберегти'))
+    }
+  }
 
   const [savedIds, setSavedIds] = useState<string[]>([])
 
@@ -121,9 +151,11 @@ export default function Recipes() {
   }
 
   const [servings, setServings] = useServings()
-  const activeFilters = category ? 1 : 0
+  const activeFilters = (category ? 1 : 0) + (kind ? 1 : 0) + (onlyFav ? 1 : 0)
   const shown = recipes
     .filter((r) => !category || r.category === category)
+    .filter((r) => !kind || r.kind === kind)
+    .filter((r) => !onlyFav || isFavorite(r))
     .sort((a, b) => CATEGORIES.indexOf(a.category) - CATEGORIES.indexOf(b.category))
 
   return (
@@ -147,6 +179,17 @@ export default function Recipes() {
               </button>
             ))}
           </div>
+          <div className="meal-filter">
+            <small className="muted">{t('Тип страви')}:</small>
+            {['', ...KINDS].map((c) => (
+              <button key={c || 'all'} type="button" className={`chip-btn${kind === c ? ' on' : ''}`} onClick={() => setKind(c)}>
+                {c ? t(c) : t('Усі')}
+              </button>
+            ))}
+          </div>
+          <label className="inline">
+            <input type="checkbox" checked={onlyFav} onChange={(e) => setOnlyFav(e.target.checked)} /> {t('Лише улюблені')}
+          </label>
         </div>
       )}
       <p>
@@ -174,6 +217,15 @@ export default function Recipes() {
                 <div className="thumb empty">🍽</div>
               )}
               <div>
+            <button
+              type="button"
+              className={`star${isFavorite(r) ? ' on' : ''}`}
+              aria-pressed={isFavorite(r)}
+              aria-label={isFavorite(r) ? t('Прибрати з улюблених') : t('Додати до улюблених')}
+              onClick={() => void toggleFavorite(r)}
+            >
+              {isFavorite(r) ? '★' : '☆'}
+            </button>
             <strong>{r.name}</strong> · {t(r.category)} · {showEnergy(r.calories)} {energyUnit()} ·{' '}
             {macrosLine(r.protein_g, r.fat_g, r.carbs_g, r.fiber_g)}
             <div>

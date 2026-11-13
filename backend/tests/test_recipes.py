@@ -14,6 +14,7 @@ RECIPE = {
     "id": RECIPE_ID,
     "name": "Борщ",
     "category": "обід",
+    "kind": "суп",
     "recipe": "Варити",
     "ingredients": [{"name": "Буряк", "amount": "1 шт"}],
     "calories": 250,
@@ -81,7 +82,7 @@ def test_save_copies_recipe_into_my_dishes(client_and_dishes):
     user_id, data = dishes.created[0]
     assert user_id == "user-1"
     assert data["id"] and "category" not in data
-    assert data["categories"] == ["обід"]  # the recipe's category becomes the dish's meal type
+    assert data["categories"] == ["обід", "суп"]  # the recipe's meal and kind become the dish's categories
 
 
 def test_save_unknown_recipe_is_404(client_and_dishes):

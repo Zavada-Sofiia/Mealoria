@@ -15,6 +15,9 @@ from app.limits.plans import raise_if_plan_limit
 from app.profile.router import get_store as get_profile_store
 from app.profile.store import SupabaseProfileStore
 
+MEALS = ('сніданок', 'обід', 'вечеря', 'перекус')
+KINDS = ('основна страва', 'суп', 'салат', 'гарнір', 'закуска', 'десерт', 'випічка', 'напій')
+
 router = APIRouter(prefix="/api/recipes", tags=["recipes"])
 
 
@@ -55,8 +58,12 @@ def save_to_my_dishes(
             return existing
     fields = ("name", "recipe", "ingredients", "calories", "protein_g", "fat_g", "carbs_g", "fiber_g", "photo_url")
     data = {k: recipe.get(k) for k in fields}
-    if recipe.get("category") in ("сніданок", "обід", "вечеря", "перекус"):
-        data["categories"] = [recipe["category"]]
+    # the meal and the kind of the recipe become the categories of the dish
+    data["categories"] = [
+        c
+        for c in (recipe.get("category"), recipe.get("kind"))
+        if c in MEALS or c in KINDS
+    ]
     try:
         return dishes.create(user_id, data)
     except httpx.HTTPStatusError as e:
