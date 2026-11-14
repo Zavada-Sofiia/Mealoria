@@ -4,6 +4,7 @@ import StatusLine from '../components/StatusLine'
 import { Link } from 'react-router-dom'
 import { apiFetch } from '../api/client'
 import { supabase } from '../api/supabase'
+import CalorieRing from '../components/CalorieRing'
 import GettingStarted from '../components/GettingStarted'
 import { iso, mondayOf } from '../dates'
 import { mealName } from '../meals'
@@ -22,6 +23,13 @@ type Profile = {
   recommended_calories: number | null
 }
 type Shopping = { items: { checked: boolean }[] }
+
+function greeting(): string {
+  const hour = new Date().getHours()
+  if (hour >= 5 && hour < 12) return t('Доброго ранку')
+  if (hour >= 12 && hour < 18) return t('Доброго дня')
+  return t('Доброго вечора')
+}
 
 export default function Dashboard() {
   const [day, setDay] = useState<Day | null>(null)
@@ -89,6 +97,7 @@ export default function Dashboard() {
 
   return (
     <div>
+      <p className="greeting">{greeting()}</p>
       <h1>{t('Сьогодні')}</h1>
       <p className="muted">{dateLabel}</p>
       <StatusLine text={status} />
@@ -135,13 +144,18 @@ export default function Dashboard() {
 
           <section className="card">
             <h3>{t('Калорії')}</h3>
-            <p>
-              <strong style={{ fontSize: '1.6rem' }}>{showEnergy(Math.round(shownTotal))}</strong>
-              {target ? ` / ${showEnergy(target)} ${energyUnit()}` : ` ${energyUnit()}`}
-            </p>
             {target ? (
-              <progress className={total > target ? 'over' : undefined} value={Math.min(shownTotal, target)} max={target} />
-            ) : null}
+              <CalorieRing
+                value={showEnergy(shownTotal)}
+                goal={showEnergy(target)}
+                label={String(showEnergy(Math.round(shownTotal)))}
+                unit={energyUnit()}
+              />
+            ) : (
+              <p>
+                <strong style={{ fontSize: '1.6rem' }}>{showEnergy(Math.round(shownTotal))}</strong> {energyUnit()}
+              </p>
+            )}
             <p className="muted">
               {targets
                 ? macrosVsTargets(day.total, targets)

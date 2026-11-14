@@ -88,7 +88,7 @@ export default function Nav() {
           <span style={{ flex: 1 }} />
           <nav className="nav-links right desktop-only">
             {RIGHT.map(([to, label]) => (
-              <NavLink key={to} to={to}>
+              <NavLink key={to} to={to} viewTransition>
                 {t(label)}
               </NavLink>
             ))}
@@ -109,7 +109,7 @@ export default function Nav() {
       <aside className="sidebar">
         <nav>
           {MAIN.map(([to, label]) => (
-            <NavLink key={to} to={to}>
+            <NavLink key={to} to={to} viewTransition>
               {t(label)}
             </NavLink>
           ))}
@@ -117,7 +117,7 @@ export default function Nav() {
       </aside>
       <nav className="tabbar">
         {TABS.map(([to, label]) => (
-          <NavLink key={to} to={to}>
+          <NavLink key={to} to={to} viewTransition>
             <Icon name={to} />
             {t(label)}
           </NavLink>
@@ -137,7 +137,7 @@ export default function Nav() {
           <div className="sheet-backdrop" onClick={() => setMoreOpen(false)} />
           <div className="sheet more-sheet" role="dialog" aria-label={t('Меню')} onClick={() => setMoreOpen(false)}>
             {MORE.map(([to, label]) => (
-              <NavLink key={to} to={to}>
+              <NavLink key={to} to={to} viewTransition>
                 {t(label)}
               </NavLink>
             ))}

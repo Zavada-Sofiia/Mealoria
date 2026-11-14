@@ -18,11 +18,29 @@ function ripple(e: PointerEvent) {
 
 /** A light follows the pointer over cards (desktop only). */
 function spotlight(e: PointerEvent) {
-  const card = (e.target as Element | null)?.closest?.<HTMLElement>('ul.cards > li, .grid > .card')
+  const card = (e.target as Element | null)?.closest?.<HTMLElement>('ul.cards > li, .grid > .card, .preview-card')
   if (!card) return
   const box = card.getBoundingClientRect()
   card.style.setProperty('--mx', `${e.clientX - box.left}px`)
   card.style.setProperty('--my', `${e.clientY - box.top}px`)
+}
+
+/** Cards marked .tilt lean towards the pointer, as if they were a sheet of glass. */
+let tilted: HTMLElement | null = null
+function tilt(e: PointerEvent) {
+  const card = (e.target as Element | null)?.closest?.<HTMLElement>('.tilt') ?? null
+  if (tilted && tilted !== card) {
+    tilted.style.removeProperty('--rx')
+    tilted.style.removeProperty('--ry')
+  }
+  tilted = card
+  if (!card) return
+  const box = card.getBoundingClientRect()
+  const x = (e.clientX - box.left) / box.width - 0.5
+  const y = (e.clientY - box.top) / box.height - 0.5
+  const strength = card.classList.contains('hero-preview') ? 10 : 5
+  card.style.setProperty('--rx', `${(-y * strength).toFixed(2)}deg`)
+  card.style.setProperty('--ry', `${(x * strength).toFixed(2)}deg`)
 }
 
 export function initEffects() {
@@ -30,6 +48,7 @@ export function initEffects() {
   document.addEventListener('pointerdown', ripple, { passive: true })
   if (window.matchMedia('(hover: hover)').matches) {
     document.addEventListener('pointermove', spotlight, { passive: true })
+    document.addEventListener('pointermove', tilt, { passive: true })
   }
 }
 

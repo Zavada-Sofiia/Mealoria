@@ -85,6 +85,57 @@ function InstallApp() {
   )
 }
 
+const PREVIEW_MEALS = [
+  ['Сніданок', 'Сирники з ягодами', 380],
+  ['Обід', 'Курячий суп з локшиною', 420],
+  ['Вечеря', 'Лосось з овочами', 440],
+] as const
+
+/** A live-looking picture of the app for the home page: it floats and leans towards the pointer. */
+function HeroPreview() {
+  const eaten = 1240
+  const goal = 1580
+  const ring = 2 * Math.PI * 42
+  return (
+    <div className="hero-preview tilt" aria-hidden="true">
+      <div className="preview-card main">
+        <div className="preview-head">
+          <strong>{t('Сьогодні')}</strong>
+        </div>
+        <div className="preview-ring">
+          <svg viewBox="0 0 100 100">
+            <circle cx="50" cy="50" r="42" className="ring-track" />
+            <circle cx="50" cy="50" r="42" className="ring-value" strokeDasharray={ring} style={{ ['--ring-to' as string]: `${ring * (1 - eaten / goal)}` }} />
+          </svg>
+          <div>
+            <b>{eaten}</b>
+            <small>/ {goal} {t('ккал')}</small>
+          </div>
+        </div>
+        <ul>
+          {PREVIEW_MEALS.map(([meal, dish, kcal], i) => (
+            <li key={meal} style={{ animationDelay: `${0.5 + i * 0.15}s` }}>
+              <small>{t(meal)}</small>
+              <span>{t(dish)}</span>
+              <em>{kcal}</em>
+            </li>
+          ))}
+        </ul>
+      </div>
+      <div className="preview-card float-a">
+        <strong>{t('Список продуктів')}</strong>
+        <span className="tick">✓ {t('Яйця')}</span>
+        <span className="tick">✓ {t('Броколі')}</span>
+        <span>○ {t('Лосось')}</span>
+      </div>
+      <div className="preview-card float-b">
+        <span className="pulse-dot" />
+        {t('Тиждень заплановано')}
+      </div>
+    </div>
+  )
+}
+
 export default function Home({ signedIn }: { signedIn: boolean }) {
   usePageMeta(
     t('Mealoria: тижневе меню, калорії та список продуктів'),
@@ -93,30 +144,36 @@ export default function Home({ signedIn }: { signedIn: boolean }) {
   return (
     <div>
       <section className="hero">
-        <h1>
-          {t('Тижневе меню без клопоту')}<span className="dot">.</span>
-        </h1>
-        <p className="lead">
-          {t('Mealoria допомагає планувати харчування на тиждень: складайте меню в календарі, рахуйте калорії й отримуйте список продуктів автоматично. Для тих, хто готує для себе або невеликої родини.')}
-        </p>
-        <div className="actions">
-          {signedIn ? (
-            <Link to="/today">
-              <button className="big">{t('Відкрити застосунок')}</button>
-            </Link>
-          ) : (
-            <Link to="/auth">
-              <button className="big">{t('Спробувати безкоштовно')}</button>
-            </Link>
-          )}
-          <Link to="/pricing">{t('Тарифи')}</Link>
+        <div className="hero-aurora" aria-hidden="true" />
+        <div className="hero-text">
+          <h1>
+            <span className="shine-text">{t('Тижневе меню без клопоту')}</span>
+            <span className="dot">.</span>
+          </h1>
+          <p className="lead">
+            {t('Mealoria допомагає планувати харчування на тиждень: складайте меню в календарі, рахуйте калорії й отримуйте список продуктів автоматично. Для тих, хто готує для себе або невеликої родини.')}
+          </p>
+          <div className="actions">
+            {signedIn ? (
+              <Link to="/today">
+                <button className="big glow">{t('Відкрити застосунок')}</button>
+              </Link>
+            ) : (
+              <Link to="/auth">
+                <button className="big glow">{t('Спробувати безкоштовно')}</button>
+              </Link>
+            )}
+            <Link to="/pricing">{t('Тарифи')}</Link>
+          </div>
         </div>
+        <HeroPreview />
       </section>
 
       <h2>{t('Як це працює')}</h2>
       <div className="grid">
         {STEPS.map(([n, title, text]) => (
-          <section key={n} className="card">
+          <section key={n} className="card tilt step-card">
+            <span className="step-num" aria-hidden="true">{n}</span>
             <span className="badge">{t('Крок {n}', { n })}</span>
             <h3 style={{ marginTop: 10 }}>{t(title)}</h3>
             <p className="muted">{t(text)}</p>
@@ -125,9 +182,9 @@ export default function Home({ signedIn }: { signedIn: boolean }) {
       </div>
 
       <h2>{t('Що всередині')}</h2>
-      <div className="grid">
+      <div className="grid bento">
         {FEATURES.map(([title, text]) => (
-          <section key={title} className="card red">
+          <section key={title} className="card red tilt">
             <h3>{t(title)}</h3>
             <p className="muted">{t(text)}</p>
           </section>
