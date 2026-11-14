@@ -13,6 +13,7 @@ import { Link } from 'react-router-dom'
 import { apiFetch } from '../api/client'
 import { addDays, fmtDate, fmtShortDate, iso, mondayOf } from '../dates'
 import { mealName, slotCategory } from '../meals'
+import DishFilters, { filterDishes, NO_FILTER, type DishFilter } from '../components/DishFilters'
 import PrintableWeek from '../components/PrintableWeek'
 import { download, weekToIcs } from '../ics'
 import { t } from '../i18n'
@@ -85,6 +86,8 @@ export default function Calendar() {
   const [weekStart, setWeekStart] = useState(() => mondayOf(new Date()))
   const [entries, setEntries] = useState<Entry[]>([])
   const [dishes, setDishes] = useState<Dish[]>([])
+  const [filter, setFilter] = useState<DishFilter>(NO_FILTER)
+  const visible = filterDishes(dishes, filter)
   const [meals, setMeals] = useState(3)
   const [target, setTarget] = useState<number | null>(null)
   const [hasProfile, setHasProfile] = useState(true)
@@ -278,8 +281,9 @@ export default function Calendar() {
       <DndContext sensors={sensors} onDragEnd={onDragEnd}>
         <div className={mobile ? 'palette-wrap mobile' : 'palette-wrap'}>
           <strong>{t('Мої страви')}</strong> {mobile ? t('(або натисніть «+» у клітинці)') : t('(перетягніть у клітинку):')}
+          <DishFilters value={filter} onChange={setFilter} />
           <div className="palette">
-            {dishes.map((d) => (
+            {visible.map((d) => (
               <Draggable key={d.id} id={`dish:${d.id}`}>
                 <span className="chip">
                   {d.favorite && '★ '}
@@ -289,6 +293,7 @@ export default function Calendar() {
               </Draggable>
             ))}
             {dishes.length === 0 && <Link to="/dishes">{t('Додайте першу страву')}</Link>}
+            {dishes.length > 0 && visible.length === 0 && <span className="muted">{t('Нічого не знайдено.')}</span>}
           </div>
         </div>
 
@@ -384,10 +389,11 @@ export default function Calendar() {
           <div className="sheet-backdrop" onClick={() => setPicking(null)} />
           <div className="sheet" role="dialog" aria-label={t('Обрати страву')}>
             <h3>{t('{meal}: обрати страву', { meal: mealName(meals, picking.slot) })}</h3>
+            <DishFilters value={filter} onChange={setFilter} />
             {(() => {
               const want = slotCategory(meals, picking.slot)
-              const fits = want ? dishes.filter((d) => d.categories?.includes(want)) : []
-              const rest = dishes.filter((d) => !fits.includes(d))
+              const fits = want ? visible.filter((d) => d.categories?.includes(want)) : []
+              const rest = visible.filter((d) => !fits.includes(d))
               const item = (d: Dish) => (
                 <button
                   key={d.id}
