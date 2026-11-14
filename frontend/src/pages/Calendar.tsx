@@ -75,10 +75,10 @@ function Draggable({ id, children }: { id: string; children: React.ReactNode }) 
   )
 }
 
-function Cell({ id, children }: { id: string; children: React.ReactNode }) {
+function Cell({ id, today, children }: { id: string; today: boolean; children: React.ReactNode }) {
   const { setNodeRef, isOver } = useDroppable({ id })
   return (
-    <td ref={setNodeRef} className={isOver ? 'drop-over' : undefined}>
+    <td ref={setNodeRef} className={[isOver && 'drop-over', today && 'today'].filter(Boolean).join(' ') || undefined}>
       {children}
     </td>
   )
@@ -220,6 +220,7 @@ export default function Calendar() {
   }
 
   const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i))
+  const todayIso = iso(new Date())
   const planned = entries.filter((e) => e.dish)
   const exportIcs = () =>
     download(`mealoria-${iso(weekStart)}.ics`, weekToIcs(planned, meals), 'text/calendar;charset=utf-8')
@@ -301,12 +302,12 @@ export default function Calendar() {
         </div>
 
         <div className="week-scroll">
-          <table className={mobile ? 'week single' : 'week'}>
+          <table key={iso(weekStart)} className={mobile ? 'week single' : 'week'}>
             <thead>
               <tr>
                 <th />
                 {shown.map((d) => (
-                  <th key={iso(d)}>
+                  <th key={iso(d)} className={iso(d) === todayIso ? 'today' : undefined}>
                     {t(DAY_NAMES[(d.getDay() + 6) % 7])} {fmtShortDate(iso(d))}
                   </th>
                 ))}
@@ -319,7 +320,7 @@ export default function Calendar() {
                   {shown.map((d) => {
                     const date = iso(d)
                     return (
-                      <Cell key={date} id={`cell:${date}:${slot}`}>
+                      <Cell key={date} id={`cell:${date}:${slot}`} today={date === todayIso}>
                         {entries
                           .filter((e) => e.date === date && e.slot === slot)
                           .map((e) => (
@@ -357,9 +358,14 @@ export default function Calendar() {
                 {shown.map((d) => {
                   const total = dayCalories(iso(d))
                   return (
-                    <td key={iso(d)}>
+                    <td key={iso(d)} className={iso(d) === todayIso ? 'today' : undefined}>
                       {total}
                       {target ? ` / ${target}` : ''}
+                      {target ? (
+                        <span className={`day-meter${total > target ? ' over' : ''}`} aria-hidden="true">
+                          <span style={{ width: `${Math.min(100, (total / target) * 100)}%` }} />
+                        </span>
+                      ) : null}
                     </td>
                   )
                 })}

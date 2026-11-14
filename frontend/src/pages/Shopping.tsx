@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import StatusLine from '../components/StatusLine'
 import { Link } from 'react-router-dom'
 import { apiFetch } from '../api/client'
@@ -8,6 +8,7 @@ import { addDays, fmtDate, iso, mondayOf } from '../dates'
 import { scaleAmount, useServings } from '../servings'
 import { t } from '../i18n'
 import { convertAmount } from '../units'
+import { confetti } from '../effects'
 
 type Item = { name: string; amount: string; checked: boolean }
 type ShoppingResponse = { items: Item[]; at_home: string[] }
@@ -207,6 +208,19 @@ export default function Shopping() {
 
   const todo = data.items.filter((i) => !i.checked)
   const done = data.items.filter((i) => i.checked)
+  const totalCount = data.items.length + manual.length
+  const boughtCount = done.length + manual.filter((m) => m.checked).length
+  const allBought = totalCount > 0 && boughtCount === totalCount
+  // confetti only when the last product gets ticked, not when a finished list is opened
+  const wasAllBought = useRef<boolean | null>(null)
+  useEffect(() => {
+    if (status) {
+      wasAllBought.current = null
+      return
+    }
+    if (wasAllBought.current === false && allBought) confetti()
+    wasAllBought.current = allBought
+  }, [allBought, status])
   // what is still to buy, as lines of text for a chat message
   const toShare = [
     ...todo.map((i) => (i.amount ? `${i.name} — ${convertAmount(scaleAmount(i.amount, servings))}` : i.name)),
@@ -237,7 +251,18 @@ export default function Shopping() {
         </p>
       )}
 
-      <ul className="cards">
+      {totalCount > 0 && (
+        <div className={`buy-progress${allBought ? ' all' : ''}`}>
+          <div className="buy-progress-head">
+            <strong>{allBought ? t('Усе куплено!') : t('Куплено {done} з {total}', { done: boughtCount, total: totalCount })}</strong>
+            <span>{Math.round((boughtCount / totalCount) * 100)}%</span>
+          </div>
+          <div className="buy-meter" aria-hidden="true">
+            <span style={{ width: `${(boughtCount / totalCount) * 100}%` }} />
+          </div>
+        </div>
+      )}
+      <ul className="cards shopping-list">
         {[
           ...todo.map((item) => ({ kind: 'plan' as const, item })),
           ...manual.filter((m) => !m.checked).map((item) => ({ kind: 'own' as const, item })),
@@ -245,10 +270,13 @@ export default function Shopping() {
           ...manual.filter((m) => m.checked).map((item) => ({ kind: 'own' as const, item })),
         ].map((row) =>
           row.kind === 'plan' ? (
-            <li key={`p-${row.item.name}`} style={{ textDecoration: row.item.checked ? 'line-through' : undefined, opacity: row.item.checked ? 0.6 : 1 }}>
+            <li key={`p-${row.item.name}`} className={row.item.checked ? 'done' : undefined}>
               <label className="inline" style={{ margin: 0 }}>
-                <input type="checkbox" checked={row.item.checked} onChange={() => toggle(row.item)} /> {row.item.name}
-                {row.item.amount && ` — ${convertAmount(scaleAmount(row.item.amount, servings))}`}
+                <input type="checkbox" checked={row.item.checked} onChange={() => toggle(row.item)} />{' '}
+                <span className="item-text">
+                  {row.item.name}
+                  {row.item.amount && ` — ${convertAmount(scaleAmount(row.item.amount, servings))}`}
+                </span>
               </label>
               {!row.item.checked && (
                 <button type="button" className="have-it" onClick={() => void addNames([row.item.name])}>
@@ -257,9 +285,10 @@ export default function Shopping() {
               )}
             </li>
           ) : (
-            <li key={`m-${row.item.id}`} style={{ textDecoration: row.item.checked ? 'line-through' : undefined, opacity: row.item.checked ? 0.6 : 1 }}>
+            <li key={`m-${row.item.id}`} className={row.item.checked ? 'done' : undefined}>
               <label className="inline" style={{ margin: 0 }}>
-                <input type="checkbox" checked={row.item.checked} onChange={() => void toggleManual(row.item)} /> {row.item.name}
+                <input type="checkbox" checked={row.item.checked} onChange={() => void toggleManual(row.item)} />{' '}
+                <span className="item-text">{row.item.name}</span>
               </label>
               <button type="button" className="have-it" aria-label={t('Прибрати з списку')} title={t('Додано вручну')} onClick={() => void removeManual(row.item.id)}>
                 ×

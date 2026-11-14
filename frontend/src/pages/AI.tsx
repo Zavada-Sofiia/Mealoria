@@ -246,7 +246,7 @@ function AIPage({ userId }: { userId: string }) {
 
       <SectionRail items={RAIL} />
 
-      <section className="card" id="ai-recipes">
+      <section className={`card${busy === 'ideas' ? ' thinking' : ''}`} id="ai-recipes">
         <h2>{t('Підібрати рецепти')}</h2>
         <p className="muted">
           {t('Ураховуємо ваш профіль: тип харчування, алергени, кухні, час, бюджет і калораж. Відповідь може займати до півхвилини.')}
@@ -278,7 +278,7 @@ function AIPage({ userId }: { userId: string }) {
         {ideas.length > 0 && <IdeaList ideas={ideas} saved={savedNames} onSave={saveIdea} />}
       </section>
 
-      <section className="card" id="ai-fridge">
+      <section className={`card${busy === 'fridge' ? ' thinking' : ''}`} id="ai-fridge">
         <h2>{t('Рецепти з того, що є в холодильнику')}</h2>
         <p className="muted">
           {t('Напишіть продукти, які у вас є, і ШІ запропонує, що з них приготувати. Це окрема функція: звичайний підбір рецептів вище працює як і раніше.')}
