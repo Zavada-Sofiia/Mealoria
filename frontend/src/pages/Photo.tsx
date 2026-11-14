@@ -32,7 +32,6 @@ export default function Photo() {
             className={mode === key ? 'on' : undefined}
             onClick={() => setParams(key === 'calc' ? { mode: 'calc' } : {}, { replace: true })}
           >
-            {key === 'photo' ? '📷 ' : '🔍 '}
             {t(label)}
           </button>
         ))}
