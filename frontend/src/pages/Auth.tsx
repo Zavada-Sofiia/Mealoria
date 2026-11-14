@@ -5,6 +5,7 @@ import { passwordProblems } from '../password'
 import { t } from '../i18n'
 import ConfirmCode from '../components/ConfirmCode'
 import { authErrorText, authLinkError, clearAuthLinkError, EMAIL_PATTERN } from '../authError'
+import PasswordInput from '../components/PasswordInput'
 
 export default function Auth() {
   const navigate = useNavigate()
@@ -86,8 +87,7 @@ export default function Auth() {
       </label>
       <label>
         {t('Пароль')}
-        <input
-          type="password"
+        <PasswordInput
           autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
           value={password}
           onChange={(e) => setPassword(e.target.value)}

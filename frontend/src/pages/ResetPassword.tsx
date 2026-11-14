@@ -4,6 +4,7 @@ import { supabase } from '../api/supabase'
 import { passwordProblems } from '../password'
 import { t } from '../i18n'
 import { authErrorText } from '../authError'
+import PasswordInput from '../components/PasswordInput'
 
 export default function ResetPassword() {
   const navigate = useNavigate()
@@ -54,8 +55,7 @@ export default function ResetPassword() {
       <h1>{t('Новий пароль')}</h1>
       <label>
         {t('Пароль')}
-        <input
-          type="password"
+        <PasswordInput
           autoComplete="new-password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}

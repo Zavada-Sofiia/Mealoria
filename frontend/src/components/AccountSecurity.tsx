@@ -4,6 +4,7 @@ import { supabase } from '../api/supabase'
 import { authErrorText, EMAIL_PATTERN } from '../authError'
 import { passwordProblems } from '../password'
 import { t } from '../i18n'
+import PasswordInput from './PasswordInput'
 
 type Result = { text: string; failed: boolean } | null
 
@@ -70,12 +71,12 @@ function PasswordCard({ user, hasPassword }: { user: User; hasPassword: boolean 
         {hasPassword && (
           <label>
             {t('Поточний пароль')}
-            <input type="password" autoComplete="current-password" value={current} onChange={(e) => setCurrent(e.target.value)} />
+            <PasswordInput autoComplete="current-password" value={current} onChange={(e) => setCurrent(e.target.value)} />
           </label>
         )}
         <label>
           {t('Новий пароль')}
-          <input type="password" autoComplete="new-password" value={next} onChange={(e) => setNext(e.target.value)} />
+          <PasswordInput autoComplete="new-password" value={next} onChange={(e) => setNext(e.target.value)} />
         </label>
         {problems.length > 0 && next && (
           <ul className="pw-hints">
