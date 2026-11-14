@@ -3449,3 +3449,49 @@ textarea::placeholder {
   color: var(--teal);
   animation: float-a 7s ease-in-out infinite reverse;
 }
+
+/* the two ways to count calories, as a segmented switch */
+.mode-switch {
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px;
+  margin: 4px 0 16px;
+  border-radius: 14px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+}
+.mode-switch button {
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--ink);
+  font-weight: 700;
+  padding: 9px 16px;
+  box-shadow: none;
+}
+.mode-switch button:hover {
+  background: var(--teal-soft);
+}
+.mode-switch button.on {
+  background: linear-gradient(120deg, var(--teal) 15%, var(--red) 105%);
+  color: #fff;
+  box-shadow: 0 6px 16px -8px color-mix(in srgb, var(--red) 70%, transparent);
+}
+@media (max-width: 760px) {
+  .mode-switch {
+    display: flex;
+  }
+  .mode-switch button {
+    flex: 1;
+    padding: 9px 8px;
+    font-size: 0.9rem;
+  }
+}
+:root[data-theme='dark'] .mode-switch button.on,
+.mode-switch button.on:hover {
+  color: #fff;
+}
+:root[data-theme='dark'] .mode-switch button:not(.on) {
+  color: var(--ink);
+}

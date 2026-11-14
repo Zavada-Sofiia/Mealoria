@@ -19,7 +19,7 @@ const ICONS: Record<string, string> = {
 const TABS = [
   ['/today', 'Сьогодні'],
   ['/calendar', 'Календар'],
-  ['/photo', 'Фото'],
+  ['/photo', 'Порахувати'],
   ['/shopping', 'Продукти'],
 ]
 const MORE = [
@@ -43,7 +43,7 @@ function Icon({ name }: { name: string }) {
 }
 const MAIN = [
   ['/today', 'Сьогодні'],
-  ['/photo', 'Калорії по фото'],
+  ['/photo', 'Порахувати калорії'],
   ['/calendar', 'Календар'],
   ['/dishes', 'Мої страви'],
   ['/recipes', 'Рецепти'],

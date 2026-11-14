@@ -126,8 +126,8 @@ export default function Dashboard() {
           </svg>
         </span>
         <span>
-          <strong>{t('Калорії по фото')}</strong>
-          <small>{t('Сфотографуйте тарілку, і ШІ порахує калорії та БЖВ')}</small>
+          <strong>{t('Порахувати калорії')}</strong>
+          <small>{t('По фото тарілки з ШІ або за штрихкодом і продуктами')}</small>
         </span>
         <span className="photo-cta-go" aria-hidden="true">→</span>
       </Link>

@@ -1,7 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import StatusLine from '../components/StatusLine'
-import { Link, useSearchParams } from 'react-router-dom'
-import DishCalculator from '../components/DishCalculator'
+import { Link } from 'react-router-dom'
 import { ApiError, apiFetch } from '../api/client'
 import { logReason } from '../aiError'
 import { deleteDishPhoto, uploadDishPhoto } from '../api/photos'
@@ -63,9 +62,6 @@ export default function Dishes() {
   const [form, setForm] = useState<DishInput>(EMPTY)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [formOpen, setFormOpen] = useState(false)
-  // ?calc=1 opens the calculator straight away (the link from the Calories page)
-  const [params] = useSearchParams()
-  const [calcOpen, setCalcOpen] = useState(() => params.get('calc') === '1')
   const [query, setQuery] = useState('')
   const [sort, setSortState] = useState<Sort>(loadSort)
   const [onlyFav, setOnlyFav] = useState(false)
@@ -449,20 +445,11 @@ export default function Dishes() {
           <button type="button" className="big add-dish" onClick={() => setFormOpen(true)}>
             {t('+ Додати страву')}
           </button>
-          <button type="button" className="secondary" aria-expanded={calcOpen} onClick={() => setCalcOpen((o) => !o)}>
-            {calcOpen ? t('Сховати калькулятор') : t('Порахувати з продуктів і штрихкодів')}
-          </button>
+          <Link to="/photo?mode=calc">
+            <button type="button" className="secondary">{t('Порахувати з продуктів і штрихкодів')}</button>
+          </Link>
           <Link to="/recipes">{t('Знайти рецепт')}</Link>
         </div>
-      )}
-      {!formOpen && calcOpen && (
-        <DishCalculator
-          onSaved={() =>
-            apiFetch<Dish[]>('/api/dishes')
-              .then(setDishes)
-              .catch(() => {})
-          }
-        />
       )}
 
       {formOpen && (

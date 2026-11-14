@@ -284,7 +284,7 @@ export default function Calories() {
       <Trends />
       <WeightJournal />
       <p className="muted">
-        {t('Калькулятор страви й сканер штрихкодів тепер у')} <Link to="/dishes?calc=1">{t('«Моїх стравах»')}</Link>.
+        {t('Калорії по фото, калькулятор страви й сканер штрихкодів у вкладці')} <Link to="/photo">{t('«Порахувати калорії»')}</Link>.
       </p>
     </div>
   )
