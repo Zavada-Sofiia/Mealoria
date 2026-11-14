@@ -1,4 +1,3 @@
-import { en } from './en'
 
 export type Lang = 'uk' | 'en'
 
@@ -18,6 +17,12 @@ let current: Lang = detect()
 if (typeof document !== 'undefined') document.documentElement.lang = current
 
 export const getLang = () => current
+
+// the English dictionary is a separate file, fetched only for people who use English
+let en: Record<string, string> = {}
+export async function loadEnglish(): Promise<void> {
+  if (Object.keys(en).length === 0) en = (await import('./en')).en
+}
 
 export function setLang(lang: Lang) {
   current = lang

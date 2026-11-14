@@ -245,11 +245,6 @@ export default function DishCalculator({ onSaved }: { onSaved?: () => void }) {
           </p>
         </>
       )}
-      <p>
-        <small>
-          {t('Звичайні продукти: довідкові значення USDA FoodData Central (суспільне надбання). Товари з магазинів і штрихкоди: Open Food Facts. Значення орієнтовні; за штрихкодом назва може бути іншою мовою.')}
-        </small>
-      </p>
     </section>
   )
 }

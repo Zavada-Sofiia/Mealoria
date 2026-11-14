@@ -50,7 +50,11 @@ function PrivacyUk() {
           Google (Gemini): ШІ-помічник. Для підбору рецептів йому надсилаються ваші вподобання й алергени (а для рецептів із холодильника ще й список продуктів, який ви вводите), для
           «калорій по фото» — саме фото страви. Email і ім’я не надсилаються.
         </li>
-        <li>Open Food Facts: тільки назва продукту, яку ви шукаєте в калькуляторі.</li>
+        <li>
+          Open Food Facts: тільки назва продукту, яку ви шукаєте в калькуляторі, або штрихкод. Дані про товари
+          з Open Food Facts поширюються за ліцензією ODbL; довідкові значення звичайних продуктів взято з USDA
+          FoodData Central (суспільне надбання). Усі значення орієнтовні.
+        </li>
         <li>Sentry: звіти про технічні помилки. Ми вимкнули збір email, cookie, заголовків і вмісту запитів.</li>
       </ul>
       <p>Ці провайдери можуть обробляти дані на серверах за межами України та ЄС.</p>
@@ -186,7 +190,11 @@ function PrivacyEn() {
           Google (Gemini): the AI assistant. For recipe suggestions it receives your preferences and allergens (and, for fridge recipes, the list of products you enter);
           for “calories from a photo” it receives the photo of the dish. Your email and name are not sent.
         </li>
-        <li>Open Food Facts: only the product name you search for in the calculator.</li>
+        <li>
+          Open Food Facts: only the product name or barcode you search for in the calculator. Product data from
+          Open Food Facts is available under the ODbL; reference values for everyday products come from USDA
+          FoodData Central (public domain). All values are approximate.
+        </li>
         <li>Sentry: technical error reports. We have disabled collection of email, cookies, headers and request contents.</li>
       </ul>
       <p>These providers may process data on servers outside Ukraine and the EU.</p>

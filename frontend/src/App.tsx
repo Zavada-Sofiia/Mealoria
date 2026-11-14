@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from './api/supabase'
@@ -7,27 +7,13 @@ import Nav from './components/Nav'
 import PlanLimitBanner from './components/PlanLimitBanner'
 import PublicNav from './components/PublicNav'
 import PlanProvider from './plan/PlanProvider'
-import Admin from './pages/Admin'
-import AI from './pages/AI'
-import Photo from './pages/Photo'
 import Auth from './pages/Auth'
-import Calendar from './pages/Calendar'
-import Calories from './pages/Calories'
 import Dashboard from './pages/Dashboard'
-import Dishes from './pages/Dishes'
 import Home from './pages/Home'
-import NotFound from './pages/NotFound'
-import Pricing from './pages/Pricing'
-import Support from './pages/Support'
-import Help from './pages/Help'
-import { Privacy, Terms } from './pages/Legal'
-import ResetPassword from './pages/ResetPassword'
-import Profile from './pages/Profile'
-import Recipes from './pages/Recipes'
-import Shopping from './pages/Shopping'
 import ConfirmHost from './components/ConfirmHost'
 import NoticeBanner from './components/NoticeBanner'
-import { getLang, setLang, type Lang } from './i18n'
+import { getLang, loadEnglish, setLang, t, type Lang } from './i18n'
+import StatusLine from './components/StatusLine'
 import { LangContext } from './i18n/context'
 import {
   getDateFormat,
@@ -40,11 +26,56 @@ import {
   type Energy,
   type Units,
 } from './units'
-import Settings from './pages/Settings'
+
+
+// Every page is its own file: the first screen loads quickly, and the rest are fetched in the
+// background right after, so moving between pages stays instant.
+const PAGES = {
+  Admin: () => import('./pages/Admin'),
+  AI: () => import('./pages/AI'),
+  Calendar: () => import('./pages/Calendar'),
+  Calories: () => import('./pages/Calories'),
+  Dishes: () => import('./pages/Dishes'),
+  NotFound: () => import('./pages/NotFound'),
+  Pricing: () => import('./pages/Pricing'),
+  Support: () => import('./pages/Support'),
+  Help: () => import('./pages/Help'),
+  ResetPassword: () => import('./pages/ResetPassword'),
+  Profile: () => import('./pages/Profile'),
+  Recipes: () => import('./pages/Recipes'),
+  Shopping: () => import('./pages/Shopping'),
+  Settings: () => import('./pages/Settings'),
+  Photo: () => import('./pages/Photo'),
+  Legal: () => import('./pages/Legal'),
+}
+const Admin = lazy(PAGES.Admin)
+const AI = lazy(PAGES.AI)
+const Calendar = lazy(PAGES.Calendar)
+const Calories = lazy(PAGES.Calories)
+const Dishes = lazy(PAGES.Dishes)
+const NotFound = lazy(PAGES.NotFound)
+const Pricing = lazy(PAGES.Pricing)
+const Support = lazy(PAGES.Support)
+const Help = lazy(PAGES.Help)
+const ResetPassword = lazy(PAGES.ResetPassword)
+const Profile = lazy(PAGES.Profile)
+const Recipes = lazy(PAGES.Recipes)
+const Shopping = lazy(PAGES.Shopping)
+const Settings = lazy(PAGES.Settings)
+const Photo = lazy(PAGES.Photo)
+const Privacy = lazy(() => PAGES.Legal().then((m) => ({ default: m.Privacy })))
+const Terms = lazy(() => PAGES.Legal().then((m) => ({ default: m.Terms })))
+
+function preloadPages() {
+  const run = () => Object.values(PAGES).forEach((load) => void load().catch(() => {}))
+  if ('requestIdleCallback' in window) window.requestIdleCallback(run, { timeout: 4000 })
+  else setTimeout(run, 1500)
+}
 
 function App() {
   const [lang, setLangState] = useState(getLang)
-  const changeLang = (l: Lang) => {
+  const changeLang = async (l: Lang) => {
+    if (l === 'en') await loadEnglish()
     setLang(l)
     setLangState(l)
   }
@@ -73,6 +104,7 @@ function App() {
       return
     }
     void startingSession().then(setSession)
+    preloadPages()
     const { data } = supabase.auth.onAuthStateChange((event, s) => {
       // the first session comes from startingSession, which can still restore it from the backup
       if (event === 'INITIAL_SESSION') return
@@ -95,6 +127,7 @@ function App() {
       <main className="page">
       <NoticeBanner />
       {session && <PlanLimitBanner />}
+      <Suspense fallback={<StatusLine text={t('Завантаження…')} />}>
       <Routes>
         <Route path="/auth" element={session ? <Navigate to="/today" /> : <Auth />} />
         <Route
@@ -143,6 +176,7 @@ function App() {
         />
         <Route path="*" element={<NotFound />} />
       </Routes>
+      </Suspense>
       </main>
       </PlanProvider>
     </BrowserRouter>
