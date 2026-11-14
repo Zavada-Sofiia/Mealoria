@@ -224,7 +224,7 @@ function AIPage({ userId }: { userId: string }) {
   return (
     <div>
       <h1>
-        {t('ШІ-помічник')} <span className="badge paid">{t('ШІ')}</span>
+        {t('Що приготувати?')} <span className="badge paid">{t('ШІ')}</span>
       </h1>
       <p className="muted">
         {quota

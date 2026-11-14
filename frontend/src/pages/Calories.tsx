@@ -3,7 +3,6 @@ import StatusLine from '../components/StatusLine'
 import { Link } from 'react-router-dom'
 import { apiFetch } from '../api/client'
 import { BarChart, LineChart } from '../components/Charts'
-import MealPhotoCard from '../components/MealPhotoCard'
 import SectionRail from '../components/SectionRail'
 import WaterCard from '../components/WaterCard'
 import { mealName } from '../meals'
@@ -274,7 +273,6 @@ const RAIL = [
   { id: 'cal-water', label: 'Вода' },
   { id: 'cal-trend', label: 'Динаміка' },
   { id: 'cal-weight', label: 'Вага' },
-  { id: 'cal-photo', label: 'По фото' },
 ]
 
 export default function Calories() {
@@ -285,7 +283,6 @@ export default function Calories() {
       <DaySummary />
       <Trends />
       <WeightJournal />
-      <MealPhotoCard />
       <p className="muted">
         {t('Калькулятор страви й сканер штрихкодів тепер у')} <Link to="/dishes?calc=1">{t('«Моїх стравах»')}</Link>.
       </p>

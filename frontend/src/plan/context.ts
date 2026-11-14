@@ -27,7 +27,7 @@ export function formatDate(iso: string | null): string {
 export function limitLines(l: Limits, premium: boolean): string[] {
   return [
     t('До {n} власних страв', { n: l.dishes }),
-    t(premium ? '{n} запитів до ШІ-помічника щодня' : '{n} запити до ШІ-помічника щодня', { n: l.ai_per_day }),
+    t(premium ? '{n} запитів до ШІ щодня' : '{n} запити до ШІ щодня', { n: l.ai_per_day }),
     premium
       ? t('Планування в календарі на рік уперед')
       : t('Планування в календарі на {n} днів уперед', { n: l.plan_days_ahead }),

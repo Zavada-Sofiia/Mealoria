@@ -12,18 +12,21 @@ const ICONS: Record<string, string> = {
   '/calendar': 'M4 6.5h16V20H4zM4 11h16M8.5 3.5v5M15.5 3.5v5',
   '/dishes': 'M5 3v8a3 3 0 0 0 3 3v7M8 3v6M11 3v8a3 3 0 0 1-3 3M17 21V3c-2.5 1.5-3.5 5-3.5 8H17',
   '/shopping': 'M3 4h2.5l2 11h10l2-8H7M9.5 19.5h.01M16.5 19.5h.01',
+  '/photo': 'M4 8a2 2 0 0 1 2-2h1.5l1.2-1.6A1 1 0 0 1 9.5 4h5a1 1 0 0 1 .8.4L16.5 6H18a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8ZM12 9.3a3.2 3.2 0 1 0 0 6.4 3.2 3.2 0 0 0 0-6.4Z',
   more: 'M5 12h.01M12 12h.01M19 12h.01',
 }
+// the photo tab sits in the middle as a big round camera button
 const TABS = [
   ['/today', 'Сьогодні'],
   ['/calendar', 'Календар'],
-  ['/dishes', 'Страви'],
+  ['/photo', 'Фото'],
   ['/shopping', 'Продукти'],
 ]
 const MORE = [
+  ['/dishes', 'Мої страви'],
   ['/recipes', 'Рецепти'],
   ['/calories', 'Калорії й вода'],
-  ['/ai', 'ШІ-помічник'],
+  ['/ai', 'Що приготувати'],
   ['/profile', 'Профіль'],
   ['/settings', 'Налаштування'],
   ['/pricing', 'Тарифи'],
@@ -40,12 +43,13 @@ function Icon({ name }: { name: string }) {
 }
 const MAIN = [
   ['/today', 'Сьогодні'],
+  ['/photo', 'Калорії по фото'],
   ['/calendar', 'Календар'],
   ['/dishes', 'Мої страви'],
   ['/recipes', 'Рецепти'],
   ['/shopping', 'Список продуктів'],
   ['/calories', 'Калорії й вода'],
-  ['/ai', 'ШІ-помічник'],
+  ['/ai', 'Що приготувати'],
 ]
 const RIGHT = [
   ['/profile', 'Профіль'],
@@ -109,15 +113,16 @@ export default function Nav() {
       <aside className="sidebar">
         <nav>
           {MAIN.map(([to, label]) => (
-            <NavLink key={to} to={to} viewTransition>
+            <NavLink key={to} to={to} viewTransition className={to === '/photo' ? 'nav-photo' : undefined}>
               {t(label)}
+              {to === '/photo' && <span className="nav-badge">{t('ШІ')}</span>}
             </NavLink>
           ))}
         </nav>
       </aside>
       <nav className="tabbar">
         {TABS.map(([to, label]) => (
-          <NavLink key={to} to={to} viewTransition>
+          <NavLink key={to} to={to} viewTransition className={to === '/photo' ? 'tab-photo' : undefined}>
             <Icon name={to} />
             {t(label)}
           </NavLink>

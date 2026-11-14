@@ -118,6 +118,20 @@ export default function Dashboard() {
         </section>
       )}
 
+      <Link to="/photo" className="photo-cta">
+        <span className="photo-cta-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round">
+            <path d="M4 8a2 2 0 0 1 2-2h1.5l1.2-1.6A1 1 0 0 1 9.5 4h5a1 1 0 0 1 .8.4L16.5 6H18a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8Z" />
+            <circle cx="12" cy="12.5" r="3.2" />
+          </svg>
+        </span>
+        <span>
+          <strong>{t('Калорії по фото')}</strong>
+          <small>{t('Сфотографуйте тарілку, і ШІ порахує калорії та БЖВ')}</small>
+        </span>
+        <span className="photo-cta-go" aria-hidden="true">→</span>
+      </Link>
+
       {day && (
         <div className="grid">
           <section className="card">
@@ -190,7 +204,7 @@ export default function Dashboard() {
           <button>{t('Спланувати тиждень')}</button>
         </Link>
         <Link to="/ai">
-          <button>{t('ШІ-помічник')}</button>
+          <button>{t('Що приготувати')}</button>
         </Link>
       </div>
     </div>

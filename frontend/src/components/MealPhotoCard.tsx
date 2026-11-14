@@ -26,7 +26,7 @@ const json = { 'Content-Type': 'application/json' }
 const key = (userId: string) => `mealoria.photo.v1.${userId}`
 
 /** Calories of a dish from its photo (AI). The result stays in this browser until the next photo. */
-export default function MealPhotoCard() {
+export default function MealPhotoCard({ standalone = false }: { standalone?: boolean }) {
   const [userId, setUserId] = useState('')
   const [quota, setQuota] = useState<Quota | null>(null)
   const [meal, setMeal] = useState<MealPhoto | null>(null)
@@ -119,12 +119,18 @@ export default function MealPhotoCard() {
   }
 
   return (
-    <section className="card red" id="cal-photo">
-      <h2 style={{ marginTop: 0 }}>{t('Калорії по фото')}</h2>
+    <section className={`card red photo-card${standalone ? ' standalone' : ''}`} id="cal-photo">
+      {!standalone && <h2 style={{ marginTop: 0 }}>{t('Калорії по фото')}</h2>}
       <p className="muted">
         {t('Сфотографуйте страву, і ШІ оцінить калорії, БЖВ та інгредієнти.')}
         {quota && ` ${t('Сьогодні використано {used} з {limit} запитів до ШІ.', { used: quota.used, limit: quota.limit })}`}
       </p>
+      {busy && photo && (
+        <div className="scan-frame" aria-hidden="true">
+          <img src={photo} alt="" />
+          <span className="scan-line" />
+        </div>
+      )}
       <PhotoPicker
         onFile={(f) => void analyse(f)}
         disabled={busy || left === 0}
@@ -139,9 +145,12 @@ export default function MealPhotoCard() {
       {meal && meal.is_food && (
         <div style={{ marginTop: 16 }}>
           {photo && (
-            <img src={photo} alt={t('Ваше фото')} style={{ width: 140, height: 140, objectFit: 'cover', borderRadius: 10, marginBottom: 10 }} />
+            <img className="photo-result-img" src={photo} alt={t('Ваше фото')} />
           )}
           <h3>{meal.name}</h3>
+          <div className="photo-kcal">
+            <b>{meal.calories}</b> <span>{t('ккал')}</span>
+          </div>
           <p>
             <strong>{kcalMacros(meal)}</strong>
           </p>

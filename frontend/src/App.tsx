@@ -8,6 +8,7 @@ import PublicNav from './components/PublicNav'
 import PlanProvider from './plan/PlanProvider'
 import Admin from './pages/Admin'
 import AI from './pages/AI'
+import Photo from './pages/Photo'
 import Auth from './pages/Auth'
 import Calendar from './pages/Calendar'
 import Calories from './pages/Calories'
@@ -98,6 +99,7 @@ function App() {
           element={session ? <Dashboard /> : <Navigate to="/auth" />}
         />
         <Route path="/ai" element={session ? <AI /> : <Navigate to="/auth" />} />
+        <Route path="/photo" element={session ? <Photo /> : <Navigate to="/auth" />} />
         <Route
           path="/calendar"
           element={session ? <Calendar /> : <Navigate to="/auth" />}
