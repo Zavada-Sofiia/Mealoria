@@ -82,6 +82,7 @@ function App() {
     <LangContext.Provider value={{ lang, changeLang, units, changeUnits, energy, changeEnergy, dateFormat, changeDateFormat }}>
     <BrowserRouter key={`${lang}-${units}-${energy}-${dateFormat}`}>
       <PlanProvider signedIn={!!session}>
+      <div className="scroll-bar" aria-hidden="true" />
       {session ? <Nav /> : <PublicNav />}
       <ConfirmHost />
       <main className="page">

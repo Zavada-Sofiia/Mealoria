@@ -14,6 +14,7 @@ import { Link } from 'react-router-dom'
 import { apiFetch } from '../api/client'
 import { addDays, fmtDate, fmtShortDate, iso, mondayOf } from '../dates'
 import { mealName, slotCategory } from '../meals'
+import { confetti } from '../effects'
 import DishFilters, { filterDishes, NO_FILTER, type DishFilter } from '../components/DishFilters'
 import PrintableWeek from '../components/PrintableWeek'
 import { download, weekToIcs } from '../ics'
@@ -166,6 +167,7 @@ export default function Calendar() {
           .catch(() => {})
       }
       setStatus(autoPlanMessage(r))
+      confetti()
     } catch {
       setStatus(t('Не вдалося заповнити тиждень'))
     } finally {
