@@ -170,3 +170,25 @@ def test_products_can_be_added_to_the_list_without_the_calendar(client):
     assert client.get("/api/shopping/manual").json() == []
     assert client.patch(f"/api/shopping/manual/{uuid4()}", json={"checked": True}).status_code == 404
     assert client.post("/api/shopping/manual", json={"names": []}).status_code == 422
+
+
+def test_the_same_product_in_another_form_is_one_line():
+    plan = [
+        dish(("Яблуко", "1 шт"), ("Яйця", "2 шт"), ("Масло вершкове", "10 г"), ("Часник", "2 зубчики")),
+        dish(("Яблука", "2 шт"), ("Яйце куряче", "1 шт"), ("Вершкове масло (82%)", "20 г"), ("Часник", "1 зубчик")),
+    ]
+    by_name = {i["name"]: i["amount"] for i in build_items(plan, set(), set())[0]}
+    assert by_name == {"Яблуко": "3 шт", "Яйця": "3 шт", "Масло вершкове": "30 г", "Часник": "3 зубчики"}
+
+
+def test_kilograms_and_grams_are_added_and_shown_in_the_bigger_unit():
+    plan = [dish(("Борошно", "1 кг"), ("Молоко", "500 мл")), dish(("Борошно", "500 г"), ("Молоко", "0,5 л"))]
+    by_name = {i["name"]: i["amount"] for i in build_items(plan, set(), set())[0]}
+    assert by_name == {"Борошно": "1.5 кг", "Молоко": "1 л"}
+
+
+def test_a_pantry_item_or_a_check_matches_any_form_of_the_name():
+    plan = [dish(("Яйця", "3 шт"), ("Яблука", "2 шт"))]
+    items, home = build_items(plan, {"яйце"}, {"яблуко"})
+    assert home == ["Яйця"]
+    assert items == [{"name": "Яблука", "amount": "2 шт", "checked": True}]
