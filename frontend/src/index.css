@@ -3621,3 +3621,110 @@ textarea::placeholder {
   font-weight: 800;
   background: linear-gradient(135deg, var(--teal), var(--red));
 }
+
+/* phone: the "More" sheet as tiles and a tidy list instead of a plain white column */
+.sheet-grip {
+  align-self: center;
+  width: 42px;
+  height: 5px;
+  margin: -2px 0 10px;
+  border-radius: 999px;
+  background: var(--line);
+}
+.sheet.more-sheet {
+  gap: 12px;
+  padding-top: 10px;
+  background:
+    radial-gradient(120% 60% at 0% 0%, color-mix(in srgb, var(--teal) 12%, transparent), transparent 60%),
+    radial-gradient(120% 60% at 100% 0%, color-mix(in srgb, var(--red) 10%, transparent), transparent 60%),
+    var(--bg);
+  border-top: 1px solid var(--line);
+}
+.more-tiles {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.sheet .more-tile {
+  display: grid;
+  gap: 2px;
+  padding: 14px;
+  border-radius: 16px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  box-shadow: 0 6px 16px -10px rgb(20 40 48 / 35%);
+  animation: entry-in 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+}
+.more-tile:nth-child(2) { animation-delay: 0.04s; }
+.more-tile:nth-child(3) { animation-delay: 0.08s; }
+.more-tile:nth-child(4) { animation-delay: 0.12s; }
+.more-tile strong {
+  margin-top: 8px;
+  font-size: 0.98rem;
+}
+.more-tile small {
+  color: var(--muted);
+  font-weight: 500;
+  font-size: 0.78rem;
+}
+.more-icon {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  color: #fff;
+  background: linear-gradient(135deg, var(--teal), var(--red));
+  box-shadow: 0 6px 14px -6px color-mix(in srgb, var(--red) 60%, transparent);
+}
+.sheet .more-tile.active {
+  background: linear-gradient(120deg, var(--teal) 15%, var(--red) 105%);
+  border-color: transparent;
+  color: #fff;
+}
+.sheet .more-tile.active small {
+  color: rgb(255 255 255 / 85%);
+}
+.more-tile.active .more-icon {
+  background: rgb(255 255 255 / 22%);
+  box-shadow: none;
+}
+.more-list {
+  display: grid;
+  border-radius: 16px;
+  overflow: hidden;
+  background: var(--card);
+  border: 1px solid var(--line);
+}
+.sheet .more-list a {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 0;
+}
+.sheet .more-list a + a {
+  border-top: 1px solid var(--line);
+}
+.more-list a svg {
+  color: var(--teal);
+  flex: none;
+}
+.more-chevron {
+  margin-left: auto;
+  font-size: 1.3rem;
+  color: var(--muted);
+}
+.sheet .more-list a.active {
+  background: var(--teal-soft);
+}
+.sheet .more-list a.active svg {
+  color: var(--red);
+}
+.more-sheet > .secondary {
+  margin-top: 0;
+}
+/* the sheet scrolls; its parts keep their height instead of being squeezed */
+.more-sheet > * {
+  flex-shrink: 0;
+}

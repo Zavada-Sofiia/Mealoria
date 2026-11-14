@@ -14,6 +14,14 @@ const ICONS: Record<string, string> = {
   '/shopping': 'M3 4h2.5l2 11h10l2-8H7M9.5 19.5h.01M16.5 19.5h.01',
   '/photo': 'M4 8a2 2 0 0 1 2-2h1.5l1.2-1.6A1 1 0 0 1 9.5 4h5a1 1 0 0 1 .8.4L16.5 6H18a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8ZM12 9.3a3.2 3.2 0 1 0 0 6.4 3.2 3.2 0 0 0 0-6.4Z',
   more: 'M5 12h.01M12 12h.01M19 12h.01',
+  '/recipes': 'M5 4.5A1.5 1.5 0 0 1 6.5 3H19v15H6.5A1.5 1.5 0 0 0 5 19.5v-15ZM5 19.5A1.5 1.5 0 0 0 6.5 21H19M9 7.5h6M9 11h6',
+  '/calories': 'M12 3c3 3.6 6 6.9 6 10.5a6 6 0 0 1-12 0c0-2.1 1-3.9 2.4-5.4.3 1.8 1.1 3 2.4 3.6C10.5 8.7 11 5.7 12 3Z',
+  '/ai': 'M12 3.5l1.7 4.3 4.3 1.7-4.3 1.7L12 15.5l-1.7-4.3L6 9.5l4.3-1.7L12 3.5ZM18.5 15l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8.8-2Z',
+  '/profile': 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM4.5 20.5c.8-3.6 3.9-5.5 7.5-5.5s6.7 1.9 7.5 5.5',
+  '/settings': 'M12 15.2a3.2 3.2 0 1 0 0-6.4 3.2 3.2 0 0 0 0 6.4ZM19.4 13.5l1.6 1.2-1.8 3.1-1.9-.7a7 7 0 0 1-1.7 1l-.3 2h-3.6l-.3-2a7 7 0 0 1-1.7-1l-1.9.7-1.8-3.1 1.6-1.2a7 7 0 0 1 0-2l-1.6-1.2 1.8-3.1 1.9.7a7 7 0 0 1 1.7-1l.3-2h3.6l.3 2a7 7 0 0 1 1.7 1l1.9-.7 1.8 3.1-1.6 1.2a7 7 0 0 1 0 2Z',
+  '/pricing': 'M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9L12 3.5Z',
+  '/help': 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18ZM9.5 9.3a2.6 2.6 0 0 1 5 .9c0 1.7-2.5 2.3-2.5 3.8M12 17.2h.01',
+  '/support': 'M12 20s-7.5-4.6-7.5-10A4.3 4.3 0 0 1 12 7.4 4.3 4.3 0 0 1 19.5 10c0 5.4-7.5 10-7.5 10Z',
 }
 // the photo tab sits in the middle as a big round camera button
 const TABS = [
@@ -22,11 +30,15 @@ const TABS = [
   ['/photo', 'Порахувати'],
   ['/shopping', 'Продукти'],
 ]
+// in the "More" sheet the first four are big tiles with a short hint, the rest a compact list
+const MORE_TILES = [
+  ['/dishes', 'Мої страви', 'Ваші рецепти й КБЖВ'],
+  ['/recipes', 'Рецепти', 'Каталог готових страв'],
+  ['/calories', 'Калорії й вода', 'День, вага, графіки'],
+  ['/ai', 'Що приготувати', 'Ідеї від ШІ'],
+]
 const MORE = [
-  ['/dishes', 'Мої страви'],
-  ['/recipes', 'Рецепти'],
-  ['/calories', 'Калорії й вода'],
-  ['/ai', 'Що приготувати'],
+  ...MORE_TILES.map(([to, label]) => [to, label]),
   ['/profile', 'Профіль'],
   ['/settings', 'Налаштування'],
   ['/pricing', 'Тарифи'],
@@ -141,11 +153,27 @@ export default function Nav() {
         <>
           <div className="sheet-backdrop" onClick={() => setMoreOpen(false)} />
           <div className="sheet more-sheet" role="dialog" aria-label={t('Меню')} onClick={() => setMoreOpen(false)}>
-            {MORE.map(([to, label]) => (
-              <NavLink key={to} to={to} viewTransition>
-                {t(label)}
-              </NavLink>
-            ))}
+            <span className="sheet-grip" aria-hidden="true" />
+            <div className="more-tiles">
+              {MORE_TILES.map(([to, label, hint]) => (
+                <NavLink key={to} to={to} viewTransition className="more-tile">
+                  <span className="more-icon">
+                    <Icon name={to} />
+                  </span>
+                  <strong>{t(label)}</strong>
+                  <small>{t(hint)}</small>
+                </NavLink>
+              ))}
+            </div>
+            <div className="more-list">
+              {MORE.slice(MORE_TILES.length).map(([to, label]) => (
+                <NavLink key={to} to={to} viewTransition>
+                  <Icon name={to} />
+                  <span>{t(label)}</span>
+                  <span className="more-chevron" aria-hidden="true">›</span>
+                </NavLink>
+              ))}
+            </div>
             <button type="button" className="secondary" onClick={() => signOut()}>
               {t('Вийти')}
             </button>
