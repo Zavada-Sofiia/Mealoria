@@ -1,8 +1,9 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { ApiError, apiFetch } from '../api/client'
 import BarcodeScanner from './BarcodeScanner'
 import StatusLine from './StatusLine'
-import { t } from '../i18n'
+import { getLang, t } from '../i18n'
+import { loadAllFoods, searchFoods } from '../foodSearch'
 import { macrosLine } from '../macros'
 import { energyUnit, gramUnit, showEnergy, showGrams, storeEnergy, storeGrams } from '../units'
 
@@ -30,6 +31,17 @@ export default function DishCalculator({ onSaved }: { onSaved?: () => void }) {
   const [manualOpen, setManualOpen] = useState(false)
   const [manual, setManual] = useState({ name: '', kcal: '', protein: '', fat: '', carbs: '', fiber: '' })
   const canScan = typeof navigator !== 'undefined' && !!navigator.mediaDevices?.getUserMedia
+  // about 1 150 everyday products are searched right here while typing; the shop database is a button away
+  const [allLoaded, setAllLoaded] = useState(false)
+  useEffect(() => {
+    void loadAllFoods().then(() => setAllLoaded(true))
+  }, [])
+  const hits = useMemo(() => searchFoods(query, getLang() === 'en' ? 'en' : 'uk'), [query, allLoaded])
+  const add = (f: Food) => {
+    setLines([...lines, { ...f, grams: 100 }])
+    setQuery('')
+    setResults([])
+  }
 
   async function findByBarcode(code: string) {
     setScanning(false)
@@ -125,22 +137,48 @@ export default function DishCalculator({ onSaved }: { onSaved?: () => void }) {
     <section className="card red" id="dish-calc">
       <h2 style={{ marginTop: 0 }}>{t('Калькулятор страви')}</h2>
       <form onSubmit={search} className="actions" style={{ marginBottom: 12 }}>
-        <input placeholder={t('Продукт, наприклад гречка')} value={query} style={{ maxWidth: 320 }}
-          onChange={(e) => setQuery(e.target.value)} />
-        <button type="submit">{t('Знайти')}</button>
+        <input placeholder={t('Почніть вводити: гречка, курка, яблуко…')} value={query} style={{ maxWidth: 360 }}
+          onChange={(e) => {
+            setQuery(e.target.value)
+            setResults([])
+          }} />
+        <button type="submit" className="secondary">{t('Шукати в товарах')}</button>
         {canScan && <button type="button" onClick={() => setScanning(true)}>{t('Сканувати')}</button>}
       </form>
       {scanning && <BarcodeScanner onCode={(c) => void findByBarcode(c)} onClose={() => setScanning(false)} />}
       <StatusLine text={status} />
 
-      <ul className="cards">
-        {results.map((f) => (
-          <li key={f.name}>
-            {t('{name} · {n} {unit} / 100 г', { name: f.name, n: showEnergy(f.kcal_100g), unit: energyUnit() })}{' '}
-            <button onClick={() => setLines([...lines, { ...f, grams: 100 }])}>{t('Додати')}</button>
-          </li>
-        ))}
-      </ul>
+      {hits.length > 0 && (
+        <ul className="food-hits">
+          {hits.map((f) => (
+            <li key={f.name}>
+              <button type="button" onClick={() => add(f)}>
+                <span className="food-name">{f.name}</span>
+                <span className="food-kcal">{t('{n} {unit} / 100 г', { n: showEnergy(f.kcal_100g), unit: energyUnit() })}</span>
+                <span className="food-macros">{t('Б {p} · Ж {f} · В {c}', { p: f.protein_100g, f: f.fat_100g, c: f.carbs_100g })}</span>
+                <span className="food-add" aria-hidden="true">+</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+      {query.trim().length >= 2 && hits.length === 0 && results.length === 0 && !status && (
+        <p className="muted">{t('Серед звичайних продуктів не знайдено. Натисніть «Шукати в товарах» або додайте продукт вручну.')}</p>
+      )}
+
+      {results.length > 0 && (
+        <>
+          <h3>{t('Товари з магазинів')}</h3>
+          <ul className="cards">
+            {results.map((f) => (
+              <li key={f.name}>
+                {t('{name} · {n} {unit} / 100 г', { name: f.name, n: showEnergy(f.kcal_100g), unit: energyUnit() })}{' '}
+                <button onClick={() => add(f)}>{t('Додати')}</button>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
 
       <details open={manualOpen} onToggle={(e) => setManualOpen((e.target as HTMLDetailsElement).open)} style={{ margin: '10px 0' }}>
         <summary>{t('Додати продукт вручну')}</summary>
@@ -209,7 +247,7 @@ export default function DishCalculator({ onSaved }: { onSaved?: () => void }) {
       )}
       <p>
         <small>
-          {t('Дані про продукти з Open Food Facts, показуємо лише українські назви. Значення можуть бути неточними. За штрихкодом назва може бути іншою мовою.')}
+          {t('Звичайні продукти: довідкові значення USDA FoodData Central (суспільне надбання). Товари з магазинів і штрихкоди: Open Food Facts. Значення орієнтовні; за штрихкодом назва може бути іншою мовою.')}
         </small>
       </p>
     </section>
