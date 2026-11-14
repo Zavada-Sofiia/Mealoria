@@ -2975,3 +2975,163 @@ progress.over::-webkit-progress-value {
 .dish-tools > button.secondary {
   justify-self: start;
 }
+
+/* =================================================================
+   More brand red: a second accent next to the teal.
+   Red that means "over the goal" (bars, ring, meters) is left as it was.
+   ================================================================= */
+:root {
+  --duo: linear-gradient(120deg, var(--teal) 15%, var(--red) 105%);
+  --duo-soft: linear-gradient(120deg, var(--teal-soft), var(--red-soft));
+}
+
+/* header line, page headings, greeting */
+.topbar {
+  box-shadow: none;
+  background-image: linear-gradient(90deg, var(--teal), var(--red));
+  background-size: 100% 2px;
+  background-position: bottom;
+  background-repeat: no-repeat;
+}
+.page > div > .no-print > h1 {
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  letter-spacing: -0.025em;
+}
+.page > div > h1,
+.page > div > .no-print > h1 {
+  width: fit-content;
+  background-image: linear-gradient(100deg, var(--ink) 10%, var(--teal) 55%, var(--red) 100%);
+}
+.greeting {
+  color: var(--red);
+}
+
+/* active menu items and the main buttons get the teal-to-red sweep */
+.sidebar a.active,
+.nav-links a.active {
+  background: var(--duo);
+  box-shadow: 0 8px 20px -10px color-mix(in srgb, var(--red) 70%, transparent);
+}
+@media (max-width: 760px) {
+  .tabbar a.active,
+  .tabbar .tab-more.active {
+    position: relative;
+  }
+  .tabbar a.active::after,
+  .tabbar .tab-more.active::after {
+    content: '';
+    position: absolute;
+    bottom: 3px;
+    left: 50%;
+    width: 6px;
+    height: 6px;
+    margin-left: -3px;
+    border-radius: 50%;
+    background: var(--red);
+    box-shadow: 0 0 8px var(--red);
+  }
+}
+button.glow,
+button.add-dish,
+:root[data-theme='dark'] button.add-dish {
+  background-image: var(--duo);
+  border-color: transparent;
+}
+button.glow {
+  animation-name: breathe-duo;
+}
+@keyframes breathe-duo {
+  50% {
+    box-shadow: 0 8px 30px -4px color-mix(in srgb, var(--red) 55%, transparent), inset 0 1px 0 rgb(255 255 255 / 18%);
+  }
+}
+
+/* cards: the short accent bar runs teal to red (red cards the other way round) */
+.card::before {
+  width: 64px;
+  background: linear-gradient(90deg, var(--teal), var(--red));
+}
+.card.red::before {
+  background: linear-gradient(90deg, var(--red), var(--teal));
+}
+ul.cards > li:hover,
+.grid > .card:hover {
+  box-shadow: 0 14px 34px -10px color-mix(in srgb, var(--red) 28%, transparent), 0 6px 20px -10px color-mix(in srgb, var(--teal) 30%, transparent);
+}
+@media (hover: hover) {
+  ul.cards > li,
+  .grid > .card {
+    background-image: radial-gradient(260px circle at var(--mx, -999px) var(--my, -999px), color-mix(in srgb, var(--red) 7%, transparent), transparent 70%);
+  }
+}
+
+/* warmer aurora */
+body::before {
+  background:
+    radial-gradient(34vmax 34vmax at 12% 18%, color-mix(in srgb, var(--teal) 13%, transparent), transparent 70%),
+    radial-gradient(32vmax 32vmax at 88% 10%, color-mix(in srgb, var(--red) 13%, transparent), transparent 70%),
+    radial-gradient(26vmax 26vmax at 35% 75%, color-mix(in srgb, var(--red) 7%, transparent), transparent 70%),
+    radial-gradient(40vmax 40vmax at 78% 92%, color-mix(in srgb, var(--teal) 9%, transparent), transparent 70%);
+}
+.hero-aurora {
+  background:
+    radial-gradient(closest-side at 70% 40%, color-mix(in srgb, var(--teal) 45%, transparent), transparent),
+    radial-gradient(closest-side at 92% 72%, color-mix(in srgb, var(--red) 50%, transparent), transparent),
+    radial-gradient(closest-side at 50% 85%, color-mix(in srgb, var(--red) 25%, transparent), transparent);
+}
+
+/* home details */
+.step-num {
+  background-image: linear-gradient(160deg, var(--red), var(--teal) 60%, transparent 95%);
+}
+.badge {
+  background: var(--duo-soft);
+}
+.pulse-dot {
+  background: var(--red);
+  box-shadow: 0 0 0 0 color-mix(in srgb, var(--red) 60%, transparent);
+}
+@keyframes pulse {
+  from {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--red) 60%, transparent);
+  }
+  to {
+    box-shadow: 0 0 0 12px transparent;
+  }
+}
+.preview-card li em {
+  color: var(--red);
+}
+
+/* calendar: today's column header */
+table.week th.today {
+  background: var(--duo);
+  box-shadow: none;
+}
+
+/* shopping: the finished list glows in both colours */
+.buy-progress.all {
+  border-color: transparent;
+  background: linear-gradient(var(--card), var(--card)) padding-box, linear-gradient(120deg, var(--teal), var(--red)) border-box;
+  border: 1.5px solid transparent;
+}
+.buy-progress-head span {
+  background: linear-gradient(90deg, var(--teal), var(--red));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* selected filter chips */
+.chip-btn.on {
+  background: var(--duo);
+  border-color: transparent;
+}
+
+@media print {
+  .topbar {
+    background-image: none;
+  }
+}
