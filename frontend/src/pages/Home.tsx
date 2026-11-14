@@ -171,7 +171,6 @@ export default function Home({ signedIn }: { signedIn: boolean }) {
 
       <section className="photo-spotlight">
         <div className="spot-text">
-          <span className="badge paid">{t('Головна фішка')}</span>
           <h2>{t('Калорії по фото за секунди')}</h2>
           <p className="muted">
             {t('Сфотографуйте тарілку: ШІ впізнає страву, оцінить калорії, білки, жири, вуглеводи та інгредієнти. Одним дотиком збережіть її у свої страви й додайте в меню.')}
@@ -182,14 +181,14 @@ export default function Home({ signedIn }: { signedIn: boolean }) {
         </div>
         <div className="spot-visual tilt" aria-hidden="true">
           <div className="spot-photo">
-            <span className="plate">🥗</span>
+            <img src="/spotlight-salad.jpg" alt="" width="240" height="240" loading="lazy" />
             <span className="scan-line" />
           </div>
           <div className="spot-chip c1">{t('Грецький салат')}</div>
           <div className="spot-chip c2">
-            <b>260</b> {t('ккал')}
+            <b>296</b> {t('ккал')}
           </div>
-          <div className="spot-chip c3">{t('Б 6 · Ж 21 · В 12')}</div>
+          <div className="spot-chip c3">{t('Б 10 · Ж 21 · В 19')}</div>
         </div>
       </section>
 

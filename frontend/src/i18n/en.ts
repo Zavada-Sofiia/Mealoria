@@ -72,6 +72,7 @@ export const en: Record<string, string> = {
   "Алергії та непереносимість": "Allergies and intolerances",
   "Аналізуємо фото…": "Analyzing the photo…",
   "Арахіс": "Peanuts",
+  "Б 10 · Ж 21 · В 19": "P 10 · F 21 · C 19",
   "Б 6 · Ж 21 · В 12": "P 6 · F 21 · C 12",
   "Б {p} / {tp} · Ж {f} / {tf} · В {c} / {tc} · Кл {k} / {tk} г": "P {p} / {tp} · F {f} / {tf} · C {c} / {tc} · Fiber {k} / {tk} g",
   "Б {p} · Ж {f} · В {c} · Кл {k} г": "P {p} · F {f} · C {c} · Fiber {k} g",
