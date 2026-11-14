@@ -154,3 +154,15 @@ def test_redeeming_returns_the_codes_message(client):
     app.dependency_overrides[get_promo_store] = lambda: store
     r = client.post("/api/promo/redeem", json={"code": "FEEDBACK7"})
     assert r.json()["message_uk"] == "Дякуємо!" and r.json()["message_en"] == "Thanks!"
+
+
+def test_a_code_is_created_even_if_its_message_cannot_be_saved(client):
+    store = FakeAdmin()
+
+    def broken(*_):
+        raise httpx.HTTPStatusError("no such function", request=None, response=None)
+
+    store.set_promo_message = broken
+    app.dependency_overrides[get_admin_store] = lambda: store
+    r = client.post("/api/admin/promo", json={"code": "feedback7", "days": 7, "message_uk": "Дякуємо!"})
+    assert r.status_code == 201 and r.json()["code"] == "FEEDBACK7" and r.json()["message_saved"] is False

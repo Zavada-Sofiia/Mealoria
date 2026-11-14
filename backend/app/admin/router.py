@@ -193,9 +193,19 @@ def create_promo(
         code = own or generate_code()
         result = _admin_only(lambda: store.create_promo(code, body.days, body.max_uses))
         if result.get("ok"):
+            message_saved = True
             if body.message_uk.strip() or body.message_en.strip():
-                _admin_only(lambda: store.set_promo_message(result["code"], body.message_uk, body.message_en))
-            return {**result, "message_uk": body.message_uk.strip() or None, "message_en": body.message_en.strip() or None}
+                # the code already exists at this point; a failed message must not look like a failed code
+                try:
+                    message_saved = bool(store.set_promo_message(result["code"], body.message_uk, body.message_en).get("ok"))
+                except (NotAdmin, httpx.HTTPError):
+                    message_saved = False
+            return {
+                **result,
+                "message_uk": body.message_uk.strip() or None,
+                "message_en": body.message_en.strip() or None,
+                "message_saved": message_saved,
+            }
         if result.get("error") != "exists" or own:
             break  # a generated code that already exists is simply replaced by another one
     error = result.get("error", "failed")

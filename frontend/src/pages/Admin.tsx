@@ -249,7 +249,7 @@ export default function Admin() {
     setPromoMessage('')
     setCreated('')
     try {
-      const r = await apiFetch<{ code: string }>('/api/admin/promo', {
+      const r = await apiFetch<{ code: string; message_saved?: boolean }>('/api/admin/promo', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -262,8 +262,12 @@ export default function Admin() {
       })
       setCreated(r.code)
       setPromoCode('')
-      setPromoMsgUk('')
-      setPromoMsgEn('')
+      if (r.message_saved === false) {
+        setPromoMessage('Код створено, але повідомлення не збереглося. Запустіть SQL 035, а потім додайте текст кнопкою «Змінити» в таблиці.')
+      } else {
+        setPromoMsgUk('')
+        setPromoMsgEn('')
+      }
       setVersion((v) => v + 1)
     } catch (err) {
       setPromoMessage(
