@@ -445,9 +445,6 @@ export default function Dishes() {
           <button type="button" className="big add-dish" onClick={() => setFormOpen(true)}>
             {t('+ Додати страву')}
           </button>
-          <Link to="/photo?mode=calc">
-            <button type="button" className="secondary">{t('Порахувати з продуктів і штрихкодів')}</button>
-          </Link>
           <Link to="/recipes">{t('Знайти рецепт')}</Link>
         </div>
       )}
