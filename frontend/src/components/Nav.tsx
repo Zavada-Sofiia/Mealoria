@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../api/supabase'
 import { usePlan } from '../plan/context'
 import { askConfirm } from '../confirm'
+import { expectSignOut } from '../sessionBackup'
 import { t } from '../i18n'
 import LangToggle from './LangToggle'
 import ThemeToggle from './ThemeToggle'
@@ -78,7 +79,10 @@ async function signOut() {
     confirmLabel: t('Вийти'),
     cancelLabel: t('Лишитися'),
   })
-  if (ok) await supabase.auth.signOut()
+  if (ok) {
+    expectSignOut()
+    await supabase.auth.signOut()
+  }
 }
 
 export default function Nav() {

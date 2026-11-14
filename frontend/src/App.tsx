@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from './api/supabase'
+import { onSignedOut, rememberSession, startingSession } from './sessionBackup'
 import Nav from './components/Nav'
 import PlanLimitBanner from './components/PlanLimitBanner'
 import PublicNav from './components/PublicNav'
@@ -71,8 +72,14 @@ function App() {
       window.location.replace(`/auth${hash}`)
       return
     }
-    supabase.auth.getSession().then(({ data }) => setSession(data.session))
-    const { data } = supabase.auth.onAuthStateChange((_event, s) => setSession(s))
+    void startingSession().then(setSession)
+    const { data } = supabase.auth.onAuthStateChange((event, s) => {
+      // the first session comes from startingSession, which can still restore it from the backup
+      if (event === 'INITIAL_SESSION') return
+      if (event === 'SIGNED_OUT') onSignedOut()
+      else if (s) rememberSession(s)
+      setSession(s)
+    })
     return () => data.subscription.unsubscribe()
   }, [])
 

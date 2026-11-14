@@ -42,3 +42,8 @@ export async function initMonitoring(): Promise<void> {
 export function reportError(error: unknown): void {
   sentry?.captureException(error)
 }
+
+/** A warning that is not an exception (for example, the account was signed out without pressing «Вийти»). */
+export function reportWarning(message: string, extra: Record<string, unknown> = {}): void {
+  sentry?.captureMessage(message, { level: 'warning', extra })
+}

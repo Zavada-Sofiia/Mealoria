@@ -1,5 +1,7 @@
 /** Registers the service worker and reloads the page once a new release has taken over. */
 export function registerServiceWorker() {
+  // ask the browser not to clear this site's storage (the sign-in lives there) when space runs low
+  void navigator.storage?.persist?.().catch(() => {})
   if (!('serviceWorker' in navigator) || !import.meta.env.PROD) return
 
   const hadController = !!navigator.serviceWorker.controller

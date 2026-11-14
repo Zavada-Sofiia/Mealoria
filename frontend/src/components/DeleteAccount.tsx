@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { apiFetch } from '../api/client'
 import { supabase } from '../api/supabase'
 import { t } from '../i18n'
+import { expectSignOut } from '../sessionBackup'
 
 export default function DeleteAccount() {
   const WORD = t('ВИДАЛИТИ')
@@ -17,6 +18,7 @@ export default function DeleteAccount() {
     setError('')
     try {
       await apiFetch<void>('/api/account', { method: 'DELETE' })
+      expectSignOut()
       await supabase.auth.signOut()
       navigate('/')
     } catch {
