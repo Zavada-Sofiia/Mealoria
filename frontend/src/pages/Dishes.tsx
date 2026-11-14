@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { ApiError, apiFetch } from '../api/client'
+import { logReason } from '../aiError'
 import { deleteDishPhoto, uploadDishPhoto } from '../api/photos'
 import PhotoPicker from '../components/PhotoPicker'
 import { usePlan } from '../plan/context'
@@ -107,8 +108,8 @@ export default function Dishes() {
         return t('ШІ зараз перевантажений. Спробуйте за кілька хвилин, цей запит не списано з ліміту')
       }
       if (e.status === 502) {
-        const reason = e.detail.includes(': ') ? e.detail.slice(e.detail.indexOf(': ') + 2) : ''
-        return `${t('Не вдалося створити фото.')}${reason ? t(' Технічна причина: {reason}', { reason }) : ''}`
+        logReason(e)
+        return t('Не вдалося створити фото.')
       }
     }
     return t('Щось пішло не так. Спробуйте ще раз')
@@ -126,8 +127,8 @@ export default function Dishes() {
         return t('ШІ зараз перевантажений, спробуйте за кілька хвилин')
       }
       if (e.status === 502) {
-        const reason = e.detail.includes(': ') ? e.detail.slice(e.detail.indexOf(': ') + 2) : ''
-        return `${failed}${reason ? t(' Технічна причина: {reason}', { reason }) : ''}`
+        logReason(e)
+        return failed
       }
     }
     return fallback
