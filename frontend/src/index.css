@@ -2029,3 +2029,76 @@ textarea {
     transition: none !important;
   }
 }
+
+/* ---------- modern surface: glass header, softer and rounder cards, skeleton loading ---------- */
+:root {
+  --radius: 16px;
+  --shadow: 0 1px 2px rgb(40 55 62 / 5%), 0 4px 16px rgb(40 55 62 / 6%);
+}
+.topbar {
+  background: color-mix(in srgb, var(--card) 82%, transparent);
+  -webkit-backdrop-filter: saturate(180%) blur(14px);
+  backdrop-filter: saturate(180%) blur(14px);
+  border-bottom: 1px solid var(--line);
+  box-shadow: 0 2px 0 var(--teal);
+}
+.card,
+form.card,
+section.card {
+  position: relative;
+  border-top: 1px solid var(--line);
+  padding-top: 24px;
+}
+.card::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  left: 20px;
+  width: 44px;
+  height: 4px;
+  border-radius: 0 0 4px 4px;
+  background: var(--teal);
+}
+.card.red::before {
+  background: var(--red);
+}
+.card.red {
+  border-top-color: var(--line);
+}
+ul.cards > li {
+  border-radius: var(--radius);
+}
+button {
+  border-radius: 12px;
+}
+input,
+select,
+textarea {
+  border-radius: 12px;
+}
+input:focus,
+select:focus,
+textarea:focus {
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--teal) 18%, transparent);
+}
+
+.skeleton-list {
+  display: grid;
+  gap: 12px;
+  margin: 16px 0;
+}
+.skeleton {
+  height: 74px;
+  border-radius: var(--radius);
+  background: linear-gradient(90deg, var(--teal-soft) 25%, color-mix(in srgb, var(--teal-soft) 40%, var(--card)) 50%, var(--teal-soft) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.3s linear infinite;
+}
+.skeleton.short {
+  width: 60%;
+}
+@keyframes shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}

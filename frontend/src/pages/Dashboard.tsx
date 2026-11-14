@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react'
+import { useCountUp } from '../useCountUp'
+import StatusLine from '../components/StatusLine'
 import { Link } from 'react-router-dom'
 import { apiFetch } from '../api/client'
 import { supabase } from '../api/supabase'
@@ -82,11 +84,14 @@ export default function Dashboard() {
   const total = Math.round(day?.total.kcal ?? 0)
   const target = day?.target
 
+  const shownTotal = useCountUp(total)
+  const shownBuy = useCountUp(toBuy ?? 0)
+
   return (
     <div>
       <h1>{t('Сьогодні')}</h1>
       <p className="muted">{dateLabel}</p>
-      {status && <p className="status">{status}</p>}
+      <StatusLine text={status} />
 
       {profile && weekPlanned === false && dismissed === false && (
         <GettingStarted hasProfile={!!profile.profile} onDismiss={dismissChecklist} />
@@ -131,11 +136,11 @@ export default function Dashboard() {
           <section className="card">
             <h3>{t('Калорії')}</h3>
             <p>
-              <strong style={{ fontSize: '1.6rem' }}>{showEnergy(total)}</strong>
+              <strong style={{ fontSize: '1.6rem' }}>{showEnergy(Math.round(shownTotal))}</strong>
               {target ? ` / ${showEnergy(target)} ${energyUnit()}` : ` ${energyUnit()}`}
             </p>
             {target ? (
-              <progress className={total > target ? 'over' : undefined} value={Math.min(total, target)} max={target} />
+              <progress className={total > target ? 'over' : undefined} value={Math.min(shownTotal, target)} max={target} />
             ) : null}
             <p className="muted">
               {targets
@@ -148,7 +153,7 @@ export default function Dashboard() {
           <section className="card red">
             <h3>{t('Список продуктів')}</h3>
             <p>
-              <strong style={{ fontSize: '1.6rem' }}>{toBuy ?? 0}</strong>{' '}
+              <strong style={{ fontSize: '1.6rem' }}>{Math.round(shownBuy)}</strong>{' '}
               <span className="muted">{t('лишилось купити цього тижня')}</span>
             </p>
             <Link to="/shopping">{t('Відкрити список →')}</Link>

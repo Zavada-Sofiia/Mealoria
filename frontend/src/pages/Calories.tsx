@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
+import StatusLine from '../components/StatusLine'
 import { ApiError, apiFetch } from '../api/client'
 import BarcodeScanner from '../components/BarcodeScanner'
 import { BarChart, LineChart } from '../components/Charts'
@@ -73,7 +74,7 @@ function DaySummary() {
         <input type="date" value={day} onChange={(e) => e.target.value && goTo(new Date(e.target.value + 'T00:00'))} />
         <button onClick={() => goTo(addDays(date, 1))}>→</button>
       </div>
-      {status && <p className="status">{status}</p>}
+      <StatusLine text={status} />
       {data && (
         <>
           <p>
@@ -244,7 +245,7 @@ function DishCalculator() {
         {canScan && <button type="button" onClick={() => setScanning(true)}>{t('Сканувати')}</button>}
       </form>
       {scanning && <BarcodeScanner onCode={(c) => void findByBarcode(c)} onClose={() => setScanning(false)} />}
-      {status && <p className="status">{status}</p>}
+      <StatusLine text={status} />
 
       <ul className="cards">
         {results.map((f) => (
@@ -436,7 +437,7 @@ function WeightJournal() {
           onChange={(e) => setWeight(e.target.value)} />
         <button type="submit">{t('Записати')}</button>
       </form>
-      {status && <p className="status">{status}</p>}
+      <StatusLine text={status} />
       {points.length >= 2 && (
         <LineChart points={points.map((p) => ({ label: fmtShortDate(p.day), value: showWeight(p.weight_kg) }))} />
       )}

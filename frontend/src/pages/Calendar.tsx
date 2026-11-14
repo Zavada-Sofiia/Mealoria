@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import StatusLine from '../components/StatusLine'
 import {
   DndContext,
   PointerSensor,
@@ -276,7 +277,7 @@ export default function Calendar() {
           <button onClick={() => goToWeek(mondayOf(new Date()))}>{t('Сьогодні')}</button>
         </div>
       )}
-      {status && <p className="status">{status}</p>}
+      <StatusLine text={status} />
 
       <DndContext sensors={sensors} onDragEnd={onDragEnd}>
         <div className={mobile ? 'palette-wrap mobile' : 'palette-wrap'}>

@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
+import StatusLine from '../components/StatusLine'
 import { apiFetch } from '../api/client'
 import { supabase } from '../api/supabase'
 import SectionRail from '../components/SectionRail'
@@ -235,7 +236,7 @@ function AIPage({ userId }: { userId: string }) {
           </>
         )}
       </p>
-      {status && <p className="status">{status}</p>}
+      <StatusLine text={status} />
       {hasResults && (
         <p>
           <small className="muted">{t('Результати збережено в цьому браузері.')} </small>

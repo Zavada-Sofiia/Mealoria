@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import StatusLine from '../components/StatusLine'
 import { apiFetch } from '../api/client'
 import { fmtDate } from '../dates'
 import ServingsPicker from '../components/ServingsPicker'
@@ -205,7 +206,7 @@ export default function Recipes() {
           </small>
         </p>
       )}
-      {status && <p className="status">{status}</p>}
+      <StatusLine text={status} />
 
       <ul className="cards">
         {shown.map((r) => (

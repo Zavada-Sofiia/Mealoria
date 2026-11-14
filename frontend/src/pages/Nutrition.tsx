@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import StatusLine from '../components/StatusLine'
 import { Link } from 'react-router-dom'
 import { apiFetch } from '../api/client'
 import { addDays, iso } from '../dates'
@@ -100,7 +101,7 @@ export default function Nutrition() {
         <button onClick={() => goTo(addDays(date, 1))}>→</button>
         <button onClick={() => goTo(new Date())}>{t('Сьогодні')}</button>
       </div>
-      {status && <p className="status">{status}</p>}
+      <StatusLine text={status} />
 
       {!profileFilled && (
         <section className="card red">

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
+import StatusLine from '../components/StatusLine'
 import { Link, useSearchParams } from 'react-router-dom'
 import type { Session } from '@supabase/supabase-js'
 import { ApiError, apiFetch } from '../api/client'
@@ -156,7 +157,7 @@ function FeedbackForm() {
       <button type="submit" disabled={busy || length < MIN}>
         {busy ? t('Надсилаємо…') : t('Надіслати')}
       </button>
-      {status && <p className="status">{status}</p>}
+      <StatusLine text={status} />
     </form>
   )
 }

@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
+import StatusLine from '../components/StatusLine'
 import { Link } from 'react-router-dom'
 import { ApiError, apiFetch } from '../api/client'
 import { logReason } from '../aiError'
@@ -612,7 +613,7 @@ export default function Dishes() {
       </form>
       )}
 
-      {status && <p className="status">{status}</p>}
+      <StatusLine text={status} />
 
       {!formOpen && dishes.length > 0 && (
         <div className="dish-tools">

@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
+import StatusLine from '../components/StatusLine'
 import { Link } from 'react-router-dom'
 import { apiFetch } from '../api/client'
 import ServingsPicker from '../components/ServingsPicker'
@@ -224,7 +225,7 @@ export default function Shopping() {
         <button onClick={() => goToWeek(mondayOf(new Date()))}>{t('Сьогодні')}</button>
       </div>
       <ServingsPicker value={servings} onChange={setServings} />
-      {status && <p className="status">{status}</p>}
+      <StatusLine text={status} />
       <form onSubmit={addManual} className="actions" style={{ margin: '4px 0 14px' }}>
         <input placeholder={t('Додати до списку: молоко 2 л, хліб')} value={extra} maxLength={300} style={{ maxWidth: 360 }}
           onChange={(e) => setExtra(e.target.value)} />
