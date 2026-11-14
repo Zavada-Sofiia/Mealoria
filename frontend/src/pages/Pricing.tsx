@@ -4,7 +4,7 @@ import type { Session } from '@supabase/supabase-js'
 import { ApiError, apiFetch } from '../api/client'
 import { usePageMeta } from '../seo'
 import { formatDate, limitLines, usePlan } from '../plan/context'
-import { t } from '../i18n'
+import { getLang, t } from '../i18n'
 import PayByCode, { type PayInfo } from '../components/PayByCode'
 
 // Shown to visitors; change here when the real prices are decided (hryvnias).
@@ -40,6 +40,8 @@ export default function Pricing({ session }: { session: Session | null }) {
   const { me, table, refresh } = usePlan()
   const [promo, setPromo] = useState('')
   const [promoMessage, setPromoMessage] = useState('')
+  // the admin's own text for the redeemed code (for example a thank-you for a survey)
+  const [promoNote, setPromoNote] = useState('')
   const [promoBusy, setPromoBusy] = useState(false)
   const [preordered, setPreordered] = useState(false)
   const [preorderedMonths, setPreorderedMonths] = useState<number | null>(null)
@@ -64,17 +66,25 @@ export default function Pricing({ session }: { session: Session | null }) {
     if (!promo.trim() || promoBusy) return
     setPromoBusy(true)
     setPromoMessage('')
+    setPromoNote('')
     try {
-      const r = await apiFetch<{ days: number; premium_until: string | null; unlimited: boolean }>('/api/promo/redeem', {
+      const r = await apiFetch<{
+        days: number
+        premium_until: string | null
+        unlimited: boolean
+        message_uk?: string | null
+        message_en?: string | null
+      }>('/api/promo/redeem', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ code: promo }),
       })
       setPromo('')
+      setPromoNote((getLang() === 'en' ? r.message_en || r.message_uk : r.message_uk || r.message_en) ?? '')
       setPromoMessage(
         r.unlimited || !r.premium_until
           ? t('Преміум активовано на {days} дн. Він у вас безстроковий, нічого додавати не треба.', { days: r.days })
-          : t('Преміум активовано на {days} дн. Діє до {date}.', { days: r.days, date: formatDate(r.premium_until) }),
+          : t('Преміум активовано на {days} дн. Діє до {date}.', { days: r.days, date: formatDate(r.premium_until).replace(/\.$/, '') }),
       )
       refresh()
     } catch (err) {
@@ -200,6 +210,11 @@ export default function Pricing({ session }: { session: Session | null }) {
               {promoBusy ? t('Перевіряємо…') : t('Активувати')}
             </button>
           </form>
+          {promoNote && (
+            <div className="promo-note" role="status">
+              <p>{promoNote}</p>
+            </div>
+          )}
           {promoMessage && <p className="status" style={{ marginTop: 12 }}>{promoMessage}</p>}
         </section>
       )}

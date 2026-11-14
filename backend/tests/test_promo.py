@@ -31,6 +31,13 @@ class FakeAdmin:
     def delete_promo(self, code):
         return {"ok": self.rows.pop(code.upper(), None) is not None}
 
+    def set_promo_message(self, code, message_uk, message_en):
+        row = self.rows.get(code.upper())
+        if row is None:
+            return {"ok": False, "error": "not_found"}
+        row.update(message_uk=message_uk.strip() or None, message_en=message_en.strip() or None)
+        return {"ok": True, "code": code.upper()}
+
 
 class FakePromo:
     def __init__(self, result):
@@ -94,7 +101,13 @@ def test_user_redeems_a_code(client):
     store = FakePromo({"ok": True, "days": 30, "premium_until": "2026-12-12T10:00:00Z", "unlimited": False})
     app.dependency_overrides[get_promo_store] = lambda: store
     r = client.post("/api/promo/redeem", json={"code": "  friends30 "})
-    assert r.status_code == 200 and r.json() == {"days": 30, "premium_until": "2026-12-12T10:00:00Z", "unlimited": False}
+    assert r.status_code == 200 and r.json() == {
+        "days": 30,
+        "premium_until": "2026-12-12T10:00:00Z",
+        "unlimited": False,
+        "message_uk": None,
+        "message_en": None,
+    }
     assert store.seen == ["friends30"]
 
 
@@ -117,3 +130,27 @@ def test_database_problem_is_502_and_empty_code_is_rejected(client):
     app.dependency_overrides[get_promo_store] = lambda: FakePromo(httpx.ConnectError("down"))
     assert client.post("/api/promo/redeem", json={"code": "ABC"}).status_code == 502
     assert client.post("/api/promo/redeem", json={"code": ""}).status_code == 422
+
+
+def test_a_code_can_carry_its_own_message(client):
+    store = FakeAdmin()
+    app.dependency_overrides[get_admin_store] = lambda: store
+    r = client.post(
+        "/api/admin/promo",
+        json={"code": "feedback7", "days": 7, "max_uses": 50, "message_uk": " Дякуємо за відповіді! ", "message_en": ""},
+    )
+    assert r.status_code == 201 and r.json()["message_uk"] == "Дякуємо за відповіді!" and r.json()["message_en"] is None
+    assert store.rows["FEEDBACK7"]["message_uk"] == "Дякуємо за відповіді!"
+
+    r = client.put("/api/admin/promo/feedback7/message", json={"message_uk": "Нове", "message_en": "New"})
+    assert r.status_code == 200
+    assert store.rows["FEEDBACK7"]["message_en"] == "New"
+    assert client.put("/api/admin/promo/nope/message", json={"message_uk": "x"}).status_code == 404
+    assert client.put("/api/admin/promo/feedback7/message", json={"message_uk": "a" * 1001}).status_code == 422
+
+
+def test_redeeming_returns_the_codes_message(client):
+    store = FakePromo({"ok": True, "days": 7, "premium_until": None, "message_uk": "Дякуємо!", "message_en": "Thanks!"})
+    app.dependency_overrides[get_promo_store] = lambda: store
+    r = client.post("/api/promo/redeem", json={"code": "FEEDBACK7"})
+    assert r.json()["message_uk"] == "Дякуємо!" and r.json()["message_en"] == "Thanks!"

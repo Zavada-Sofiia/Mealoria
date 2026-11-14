@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { Fragment, useEffect, useState, type FormEvent } from 'react'
 import { API_URL, ApiError, apiFetch } from '../api/client'
 import NotFound from './NotFound'
 import { reportError } from '../monitoring'
@@ -18,7 +18,15 @@ type UserRow = {
   planned: number
   preordered: boolean
 }
-type Promo = { code: string; days: number; max_uses: number | null; used_count: number; created_at: string }
+type Promo = {
+  code: string
+  days: number
+  max_uses: number | null
+  used_count: number
+  created_at: string
+  message_uk?: string | null
+  message_en?: string | null
+}
 type Grant = {
   email: string | null
   source: 'admin' | 'promo' | 'reset' | 'card'
@@ -145,6 +153,12 @@ export default function Admin() {
   const [promoCode, setPromoCode] = useState('')
   const [promoDays, setPromoDays] = useState('30')
   const [promoUses, setPromoUses] = useState('1')
+  // the text shown after this code is redeemed (optional), and the code whose text is being edited
+  const [promoMsgUk, setPromoMsgUk] = useState('')
+  const [promoMsgEn, setPromoMsgEn] = useState('')
+  const [editingPromo, setEditingPromo] = useState<string | null>(null)
+  const [editUk, setEditUk] = useState('')
+  const [editEn, setEditEn] = useState('')
   const [promoMessage, setPromoMessage] = useState('')
   const [created, setCreated] = useState('')
   const [pay, setPay] = useState<PayStatus | null>(null)
@@ -242,10 +256,14 @@ export default function Admin() {
           code: promoCode.trim(),
           days: Number(promoDays),
           max_uses: promoUses.trim() === '' ? null : Number(promoUses),
+          message_uk: promoMsgUk,
+          message_en: promoMsgEn,
         }),
       })
       setCreated(r.code)
       setPromoCode('')
+      setPromoMsgUk('')
+      setPromoMsgEn('')
       setVersion((v) => v + 1)
     } catch (err) {
       setPromoMessage(
@@ -255,6 +273,28 @@ export default function Admin() {
             ? 'Перевірте код (літери, цифри, - і _; 3–40 символів) і кількість днів'
             : 'Не вдалося створити промокод',
       )
+    }
+  }
+
+  function startEditing(p: Promo) {
+    setEditingPromo(p.code)
+    setEditUk(p.message_uk ?? '')
+    setEditEn(p.message_en ?? '')
+  }
+
+  async function savePromoMessage(code: string) {
+    try {
+      await apiFetch(`/api/admin/promo/${encodeURIComponent(code)}/message`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message_uk: editUk, message_en: editEn }),
+      })
+      setPromos((list) =>
+        list.map((p) => (p.code === code ? { ...p, message_uk: editUk.trim() || null, message_en: editEn.trim() || null } : p)),
+      )
+      setEditingPromo(null)
+    } catch {
+      setPromoMessage('Не вдалося зберегти повідомлення')
     }
   }
 
@@ -629,6 +669,16 @@ export default function Admin() {
               <p className="muted" style={{ margin: '0 0 12px' }}>
                 <small>Якщо залишити кількість активацій порожньою, код можна використовувати без обмежень.</small>
               </p>
+              <label>
+                Повідомлення після активації (необов’язково)
+                <textarea value={promoMsgUk} maxLength={1000} rows={3}
+                  placeholder="Наприклад: Дякуємо, що відповіли на наше опитування! Даруємо вам 7 днів преміуму."
+                  onChange={(e) => setPromoMsgUk(e.target.value)} />
+              </label>
+              <label>
+                Те саме англійською (для тих, у кого сайт англійською; якщо порожньо, покажемо українське)
+                <textarea value={promoMsgEn} maxLength={1000} rows={2} onChange={(e) => setPromoMsgEn(e.target.value)} />
+              </label>
               <button type="submit">Створити промокод</button>
               {promoMessage && <span className="muted"> {promoMessage}</span>}
             </form>
@@ -647,22 +697,60 @@ export default function Admin() {
                       <th className="num">Днів</th>
                       <th className="num">Активовано</th>
                       <th>Створено</th>
+                      <th>Повідомлення</th>
                       <th />
                     </tr>
                   </thead>
                   <tbody>
                     {promos.map((p) => (
-                      <tr key={p.code}>
-                        <td><strong>{p.code}</strong></td>
-                        <td className="num">{p.days}</td>
-                        <td className="num">
-                          {p.used_count} / {p.max_uses ?? '∞'}
-                        </td>
-                        <td>{fmt(p.created_at)}</td>
-                        <td>
-                          <button type="button" className="danger" onClick={() => void deletePromo(p.code)}>Видалити</button>
-                        </td>
-                      </tr>
+                      <Fragment key={p.code}>
+                        <tr>
+                          <td><strong>{p.code}</strong></td>
+                          <td className="num">{p.days}</td>
+                          <td className="num">
+                            {p.used_count} / {p.max_uses ?? '∞'}
+                          </td>
+                          <td>{fmt(p.created_at)}</td>
+                          <td className="promo-msg-cell">
+                            {p.message_uk || p.message_en ? (
+                              <span title={p.message_uk ?? p.message_en ?? ''}>{p.message_uk || p.message_en}</span>
+                            ) : (
+                              <span className="muted">стандартне</span>
+                            )}{' '}
+                            <button type="button" className="secondary" onClick={() => startEditing(p)}>Змінити</button>
+                          </td>
+                          <td>
+                            <button type="button" className="danger" onClick={() => void deletePromo(p.code)}>Видалити</button>
+                          </td>
+                        </tr>
+                        {editingPromo === p.code && (
+                          <tr>
+                            <td colSpan={6}>
+                              <label>
+                                Повідомлення для {p.code} українською
+                                <textarea value={editUk} maxLength={1000} rows={3} onChange={(e) => setEditUk(e.target.value)} />
+                              </label>
+                              <label>
+                                Англійською
+                                <textarea value={editEn} maxLength={1000} rows={2} onChange={(e) => setEditEn(e.target.value)} />
+                              </label>
+                              <p className="muted" style={{ margin: '0 0 8px' }}>
+                                <small>Порожні поля повертають стандартне «Преміум активовано».</small>
+                              </p>
+                              {(editUk.trim() || editEn.trim()) && (
+                                <div className="promo-note" style={{ marginBottom: 10 }}>
+                                  <small className="muted">Так це побачить людина:</small>
+                                  <p>{editUk.trim() || editEn.trim()}</p>
+                                </div>
+                              )}
+                              <div className="actions">
+                                <button type="button" onClick={() => void savePromoMessage(p.code)}>Зберегти</button>
+                                <button type="button" className="secondary" onClick={() => setEditingPromo(null)}>Скасувати</button>
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </Fragment>
                     ))}
                   </tbody>
                 </table>

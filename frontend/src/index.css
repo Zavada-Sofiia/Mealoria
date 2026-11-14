@@ -3871,3 +3871,36 @@ textarea::placeholder {
 .more-sheet > * {
   flex-shrink: 0;
 }
+
+/* the admin's own message after a promo code is redeemed */
+.promo-note {
+  position: relative;
+  margin-top: 14px;
+  padding: 16px 18px 16px 22px;
+  border-radius: 14px;
+  background: linear-gradient(120deg, color-mix(in srgb, var(--teal) 10%, var(--card)), color-mix(in srgb, var(--red) 9%, var(--card)));
+  border: 1px solid var(--line);
+  animation: entry-in 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.promo-note::before {
+  content: '';
+  position: absolute;
+  inset: 10px auto 10px 0;
+  width: 4px;
+  border-radius: 0 4px 4px 0;
+  background: linear-gradient(180deg, var(--teal), var(--red));
+}
+.promo-note p {
+  margin: 0;
+  white-space: pre-wrap;
+  font-weight: 600;
+  line-height: 1.5;
+}
+.promo-msg-cell span {
+  display: inline-block;
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: middle;
+}

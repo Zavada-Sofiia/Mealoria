@@ -39,6 +39,9 @@ class RedeemOut(BaseModel):
     days: int
     premium_until: str | None
     unlimited: bool = False
+    # the admin's own text for this code (for example a thank-you), if there is one
+    message_uk: str | None = None
+    message_en: str | None = None
 
 
 ERRORS = {
@@ -63,5 +66,9 @@ def redeem(
         status, detail = ERRORS.get(result.get("error", ""), (422, "promo_invalid"))
         raise HTTPException(status_code=status, detail=detail)
     return RedeemOut(
-        days=result["days"], premium_until=result.get("premium_until"), unlimited=bool(result.get("unlimited"))
+        days=result["days"],
+        premium_until=result.get("premium_until"),
+        unlimited=bool(result.get("unlimited")),
+        message_uk=result.get("message_uk"),
+        message_en=result.get("message_en"),
     )

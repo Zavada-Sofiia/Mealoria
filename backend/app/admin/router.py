@@ -97,6 +97,11 @@ class SupabaseAdminStore:
     def delete_promo(self, code: str) -> dict:
         return self._rpc("admin_delete_promo", {"target_code": code})
 
+    def set_promo_message(self, code: str, message_uk: str, message_en: str) -> dict:
+        return self._rpc(
+            "admin_set_promo_message", {"target_code": code, "new_uk": message_uk, "new_en": message_en}
+        )
+
 
 def get_store(creds: HTTPAuthorizationCredentials = Depends(bearer)) -> SupabaseAdminStore:
     return SupabaseAdminStore(creds.credentials)
@@ -156,6 +161,9 @@ class PromoCreate(BaseModel):
     code: str = Field(default="", max_length=40)  # empty = generate one
     days: int = Field(ge=1, le=3650)
     max_uses: int | None = Field(default=1, ge=1, le=100000)  # None = unlimited
+    # shown to the person who redeems this code, instead of the standard "Premium activated"
+    message_uk: str = Field(default="", max_length=1000)
+    message_en: str = Field(default="", max_length=1000)
 
 
 # no 0, O, 1, I: a code read from a screen or a message cannot be mistyped
@@ -185,7 +193,9 @@ def create_promo(
         code = own or generate_code()
         result = _admin_only(lambda: store.create_promo(code, body.days, body.max_uses))
         if result.get("ok"):
-            return result
+            if body.message_uk.strip() or body.message_en.strip():
+                _admin_only(lambda: store.set_promo_message(result["code"], body.message_uk, body.message_en))
+            return {**result, "message_uk": body.message_uk.strip() or None, "message_en": body.message_en.strip() or None}
         if result.get("error") != "exists" or own:
             break  # a generated code that already exists is simply replaced by another one
     error = result.get("error", "failed")
@@ -201,6 +211,26 @@ def delete_promo(
     result = _admin_only(lambda: store.delete_promo(code))
     if not result.get("ok"):
         raise HTTPException(status_code=404, detail="promo_not_found")
+
+
+class PromoMessageIn(BaseModel):
+    message_uk: str = Field(default="", max_length=1000)
+    message_en: str = Field(default="", max_length=1000)
+
+
+@router.put("/promo/{code}/message")
+def set_promo_message(
+    code: str,
+    body: PromoMessageIn,
+    _: str = Depends(current_user_id),
+    store: SupabaseAdminStore = Depends(get_store),
+):
+    """Admin-only: the text shown after this code is redeemed; empty texts remove it."""
+    result = _admin_only(lambda: store.set_promo_message(code, body.message_uk, body.message_en))
+    if not result.get("ok"):
+        error = result.get("error", "failed")
+        raise HTTPException(status_code=404 if error == "not_found" else 422, detail=error)
+    return result
 
 
 class NoticeIn(BaseModel):
