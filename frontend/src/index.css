@@ -3135,3 +3135,14 @@ table.week th.today {
     background-image: none;
   }
 }
+
+/* water on the Today card: the glasses sit side by side */
+.grid .water-presets {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+}
+.grid .water-presets button {
+  min-width: 0;
+  padding: 8px 6px;
+}

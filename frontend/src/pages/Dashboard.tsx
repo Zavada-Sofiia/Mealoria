@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom'
 import { apiFetch } from '../api/client'
 import { supabase } from '../api/supabase'
 import CalorieRing from '../components/CalorieRing'
+import WaterCard from '../components/WaterCard'
 import GettingStarted from '../components/GettingStarted'
 import { iso, mondayOf } from '../dates'
 import { mealName } from '../meals'
@@ -163,6 +164,8 @@ export default function Dashboard() {
             </p>
             <Link to="/calories">{t('Деталі →')}</Link>
           </section>
+
+          <WaterCard day={iso(new Date())} target={targets?.water_ml ?? null} compact />
 
           <section className="card red">
             <h3>{t('Список продуктів')}</h3>
