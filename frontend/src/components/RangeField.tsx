@@ -1,4 +1,5 @@
 import { useId } from 'react'
+import NumberField from './NumberField'
 
 type Props = {
   label: string
@@ -35,16 +36,14 @@ export default function RangeField({
       <div className="range-head">
         <label htmlFor={id}>{label}</label>
         <div className="range-value">
-          <input
+          <NumberField
             id={id}
-            type="number"
-            inputMode={decimals ? 'decimal' : 'numeric'}
+            integer={!decimals}
             min={min}
             max={max}
-            step={decimals ? 0.1 : 1}
-            value={value ?? ''}
+            value={value}
             placeholder={placeholder}
-            onChange={(e) => onChange(e.target.value === '' ? null : Number(e.target.value))}
+            onChange={onChange}
             onBlur={() => value !== null && onChange(clamp(value, min, max))}
           />
           <span>{unit}</span>

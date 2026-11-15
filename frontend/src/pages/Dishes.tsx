@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import StatusLine from '../components/StatusLine'
+import NumberField, { useFieldCheck } from '../components/NumberField'
 import { Link } from 'react-router-dom'
 import { ApiError, apiFetch } from '../api/client'
 import { logReason } from '../aiError'
@@ -60,6 +61,8 @@ export default function Dishes() {
   const { me, refresh } = usePlan()
   const [dishes, setDishes] = useState<Dish[]>([])
   const [form, setForm] = useState<DishInput>(EMPTY)
+  // a name of only spaces is no name: the form stops at the field with a message under it
+  const nameCheck = useFieldCheck(form.name.trim() ? '' : t('Вкажіть назву страви.'), { onBlur: false })
   const [editingId, setEditingId] = useState<string | null>(null)
   const [formOpen, setFormOpen] = useState(false)
   const [query, setQuery] = useState('')
@@ -455,8 +458,9 @@ export default function Dishes() {
         <h2>{editingId ? t('Редагувати страву') : t('Додати страву')}</h2>
         <label>
           {t('Назва')}
-          <input value={form.name} maxLength={100}
+          <input value={form.name} maxLength={100} {...nameCheck.props}
             onChange={(e) => setForm({ ...form, name: e.target.value })} />
+          {nameCheck.message}
         </label>
         <fieldset>
           <legend>{t('Прийом їжі')}</legend>
@@ -486,8 +490,8 @@ export default function Dishes() {
         </fieldset>
         <label>
           {t('На скільки порцій цей рецепт')}
-          <input type="number" min={1} max={100} inputMode="numeric" value={form.servings || ''}
-            onChange={(e) => setForm({ ...form, servings: Math.min(100, Math.round(Number(e.target.value)) || 0) })} />
+          <NumberField integer min={1} max={100} value={form.servings || null}
+            onChange={(v) => setForm({ ...form, servings: v ?? 0 })} />
         </label>
         <p className="muted" style={{ margin: '-6px 0 14px' }}>
           <small>{t('Інгредієнти вказуйте на всю страву (наприклад, на всю каструлю), а калорії та БЖВ на одну порцію. Кожен запис у календарі це одна порція.')}</small>
@@ -502,38 +506,28 @@ export default function Dishes() {
         <div className="row">
         <label>
           {t('Калорії на порцію')}, {energyUnit()}
-          <input type="number" min={0} max={showEnergy(5000)} value={form.calories === null ? '' : showEnergy(form.calories)}
-            onChange={(e) =>
-              setForm({ ...form, calories: e.target.value ? storeEnergy(Number(e.target.value)) : null })
-            } />
+          <NumberField min={0} max={showEnergy(5000)} value={form.calories === null ? null : showEnergy(form.calories)}
+            onChange={(v) => setForm({ ...form, calories: v === null ? null : storeEnergy(v) })} />
         </label>
         <label>
           {t('Білки, г')}
-          <input type="number" min={0} max={1000} step={0.1} value={form.protein_g ?? ''}
-            onChange={(e) =>
-              setForm({ ...form, protein_g: e.target.value ? Number(e.target.value) : null })
-            } />
+          <NumberField min={0} max={1000} value={form.protein_g}
+            onChange={(v) => setForm({ ...form, protein_g: v })} />
         </label>
         <label>
           {t('Жири, г')}
-          <input type="number" min={0} max={1000} step={0.1} value={form.fat_g ?? ''}
-            onChange={(e) =>
-              setForm({ ...form, fat_g: e.target.value ? Number(e.target.value) : null })
-            } />
+          <NumberField min={0} max={1000} value={form.fat_g}
+            onChange={(v) => setForm({ ...form, fat_g: v })} />
         </label>
         <label>
           {t('Вуглеводи, г')}
-          <input type="number" min={0} max={1000} step={0.1} value={form.carbs_g ?? ''}
-            onChange={(e) =>
-              setForm({ ...form, carbs_g: e.target.value ? Number(e.target.value) : null })
-            } />
+          <NumberField min={0} max={1000} value={form.carbs_g}
+            onChange={(v) => setForm({ ...form, carbs_g: v })} />
         </label>
         <label>
           {t('Клітковина, г')}
-          <input type="number" min={0} max={1000} step={0.1} value={form.fiber_g ?? ''}
-            onChange={(e) =>
-              setForm({ ...form, fiber_g: e.target.value ? Number(e.target.value) : null })
-            } />
+          <NumberField min={0} max={1000} value={form.fiber_g}
+            onChange={(v) => setForm({ ...form, fiber_g: v })} />
         </label>
         </div>
         <p className="actions" style={{ margin: '-6px 0 18px' }}>

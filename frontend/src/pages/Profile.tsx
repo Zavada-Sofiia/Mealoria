@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { apiFetch } from '../api/client'
 import DeleteAccount from '../components/DeleteAccount'
 import RangeField from '../components/RangeField'
+import { parseNumber, useFieldCheck } from '../components/NumberField'
 import { dailyTargets } from '../nutrition'
 import { estimateCalories } from '../calories'
 import { t } from '../i18n'
@@ -177,7 +178,18 @@ export default function Profile() {
 
   const estimate = estimateCalories(form)
   const recommended = estimate?.recommended ?? null
-  const ownTarget = targetText === null || targetText === '' ? null : storeEnergy(Number(targetText))
+  // " 2 000" counts as 2000; a wrong number stops the form with a message under the field
+  const typedTarget = targetText === null ? null : parseNumber(targetText)
+  const ownTarget = typedTarget === null || Number.isNaN(typedTarget) ? null : storeEnergy(typedTarget)
+  const targetCheck = useFieldCheck(
+    typedTarget === null
+      ? ''
+      : Number.isNaN(typedTarget)
+        ? t('Введіть число')
+        : typedTarget < showEnergy(800) || typedTarget > showEnergy(6000)
+          ? t('Від {min} до {max}', { min: showEnergy(800), max: showEnergy(6000) })
+          : '',
+  )
   const customTarget = ownTarget !== null && ownTarget !== recommended
   const kcalForTargets = ownTarget !== null && ownTarget >= 800 && ownTarget <= 6000 ? ownTarget : recommended
   const targets =
@@ -324,12 +336,16 @@ export default function Profile() {
       </div>
       <label>
         {t('Бажаний калораж, {unit} на добу', { unit: energyUnit() })}
-        <input type="number" inputMode="numeric" min={showEnergy(800)} max={showEnergy(6000)}
-          className={customTarget ? undefined : 'auto-value'}
+        <input type="text" inputMode="numeric" autoComplete="off" {...targetCheck.props}
+          className={customTarget ? 'num' : 'num auto-value'}
           value={targetText ?? (recommended === null ? '' : showEnergy(recommended))}
           placeholder={t('Автоматично')}
           onChange={(e) => setTargetText(e.target.value)}
-          onBlur={() => targetText === '' && setTargetText(null)} />
+          onBlur={() => {
+            targetCheck.props.onBlur()
+            if (targetText === '') setTargetText(null)
+          }} />
+        {targetCheck.message}
       </label>
       <p className="muted" style={{ marginTop: -6 }}>
         <small>

@@ -463,7 +463,8 @@ fieldset label {
   border-radius: 10px;
   background: var(--surface);
 }
-input[type='number'] {
+input[type='number'],
+input.num {
   max-width: 220px;
 }
 input[type='file'] {
@@ -487,6 +488,19 @@ a:focus-visible {
   outline: 3px solid rgb(5 108 121 / 28%);
   outline-offset: 1px;
   border-color: var(--teal);
+}
+/* a field's own message: shown when the form is sent or the field is left with a wrong value */
+input[aria-invalid='true'],
+textarea[aria-invalid='true'] {
+  border-color: var(--red);
+  outline-color: rgb(225 75 70 / 30%);
+}
+.field-error {
+  display: block;
+  margin-top: 5px;
+  color: var(--red-ink);
+  font-size: 0.84rem;
+  font-weight: 600;
 }
 input[type='checkbox'],
 input[type='radio'] {
@@ -514,7 +528,8 @@ legend {
   grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
   gap: 0 14px;
 }
-.row input[type='number'] {
+.row input[type='number'],
+.row input.num {
   max-width: none;
 }
 /* fields with labels of different length still line up at the bottom */

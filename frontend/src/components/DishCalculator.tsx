@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { ApiError, apiFetch } from '../api/client'
 import BarcodeScanner from './BarcodeScanner'
 import StatusLine from './StatusLine'
+import NumberField from './NumberField'
 import { getLang, t } from '../i18n'
 import { loadAllFoods, searchFoods } from '../foodSearch'
 import { macrosLine } from '../macros'
@@ -222,9 +223,9 @@ export default function DishCalculator({ onSaved }: { onSaved?: () => void }) {
             {lines.map((l, i) => (
               <li key={i}>
                 {l.name}{' '}
-                <input type="number" min={0} max={showGrams(5000)} step="any" value={showGrams(l.grams)} style={{ width: 80 }}
-                  onChange={(e) =>
-                    setLines(lines.map((x, j) => (j === i ? { ...x, grams: storeGrams(Number(e.target.value)) } : x)))
+                <NumberField min={0} max={showGrams(5000)} value={showGrams(l.grams)} style={{ width: 80 }}
+                  onChange={(v) =>
+                    setLines(lines.map((x, j) => (j === i ? { ...x, grams: storeGrams(v ?? 0) } : x)))
                   } />{' '}
                 {gramUnit()} <button onClick={() => setLines(lines.filter((_, j) => j !== i))}>×</button>
               </li>
@@ -232,8 +233,8 @@ export default function DishCalculator({ onSaved }: { onSaved?: () => void }) {
           </ul>
           <p>
             {t('Порцій:')}{' '}
-            <input type="number" min={1} max={50} value={servings} style={{ width: 60 }}
-              onChange={(e) => setServings(Math.max(1, Number(e.target.value)))} />
+            <NumberField integer min={1} max={50} value={servings} style={{ width: 60 }}
+              onChange={(v) => setServings(Math.max(1, v ?? 1))} />
           </p>
           <p>
             {t('На порцію:')} <strong>{showEnergy(kcal)} {energyUnit()}</strong> · {macrosLine(protein, fat, carbs, fiber)}
