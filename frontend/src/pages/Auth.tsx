@@ -40,6 +40,12 @@ export default function Auth() {
       if (problems.length) return fail(t('Придумайте надійніший пароль: {list}.', { list: problems.join('; ').toLowerCase() }))
       const { data, error } = await supabase.auth.signUp({ email: email.trim(), password })
       if (error) return fail(authErrorText(error))
+      // a confirmed account with this email already exists: Supabase answers with a user that has no identities
+      // and sends no email, so the person would wait for a code that never comes
+      if (data.user && data.user.identities?.length === 0) {
+        setMode('signin')
+        return fail(t('Акаунт із цією поштою вже існує. Увійдіть або натисніть «Забули пароль?».'))
+      }
       if (!data.session) return setConfirming({ email: email.trim(), sent: true })
       return navigate('/profile')
     }

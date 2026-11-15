@@ -69,6 +69,7 @@ export const en: Record<string, string> = {
   "Азійська": "Asian",
   "Акаунт": "Account",
   "Акаунт із таким email уже є. Увійдіть або натисніть «Забули пароль?».": "An account with this email already exists. Sign in or press \"Forgot password?\".",
+  "Акаунт із цією поштою вже існує. Увійдіть або натисніть «Забули пароль?».": "An account with this email already exists. Sign in or press \"Forgot password?\".",
   "Активність": "Activity",
   "Активувати": "Activate",
   "Алергії та непереносимість": "Allergies and intolerances",
