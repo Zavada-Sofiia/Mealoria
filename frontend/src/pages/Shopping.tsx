@@ -6,7 +6,7 @@ import ServingsPicker from '../components/ServingsPicker'
 import ShareList from '../components/ShareList'
 import { addDays, fmtDate, iso, mondayOf } from '../dates'
 import { scaleAmount, useServings } from '../servings'
-import { t } from '../i18n'
+import { food, foodSource, t } from '../i18n'
 import { convertAmount } from '../units'
 import { confetti } from '../effects'
 
@@ -190,7 +190,8 @@ export default function Shopping() {
 
   function addPantry(e: FormEvent) {
     e.preventDefault()
-    void addNames(newItem.split(/[,;\n]+/))
+    // "eggs" typed on the English site is saved as the catalogue's «яйця», so recipes still find it
+    void addNames(newItem.split(/[,;\n]+/).map(foodSource))
     setNewItem('')
   }
 
@@ -223,8 +224,8 @@ export default function Shopping() {
   }, [allBought, status])
   // what is still to buy, as lines of text for a chat message
   const toShare = [
-    ...todo.map((i) => (i.amount ? `${i.name} — ${convertAmount(scaleAmount(i.amount, servings))}` : i.name)),
-    ...manual.filter((m) => !m.checked).map((m) => m.name),
+    ...todo.map((i) => (i.amount ? `${food(i.name)} — ${convertAmount(scaleAmount(i.amount, servings))}` : food(i.name))),
+    ...manual.filter((m) => !m.checked).map((m) => food(m.name)),
   ]
 
   return (
@@ -274,7 +275,7 @@ export default function Shopping() {
               <label className="inline" style={{ margin: 0 }}>
                 <input type="checkbox" checked={row.item.checked} onChange={() => toggle(row.item)} />{' '}
                 <span className="item-text">
-                  {row.item.name}
+                  {food(row.item.name)}
                   {row.item.amount && ` — ${convertAmount(scaleAmount(row.item.amount, servings))}`}
                 </span>
               </label>
@@ -288,7 +289,7 @@ export default function Shopping() {
             <li key={`m-${row.item.id}`} className={row.item.checked ? 'done' : undefined}>
               <label className="inline" style={{ margin: 0 }}>
                 <input type="checkbox" checked={row.item.checked} onChange={() => void toggleManual(row.item)} />{' '}
-                <span className="item-text">{row.item.name}</span>
+                <span className="item-text">{food(row.item.name)}</span>
               </label>
               <button type="button" className="have-it" aria-label={t('Прибрати з списку')} title={t('Додано вручну')} onClick={() => void removeManual(row.item.id)}>
                 ×
@@ -326,7 +327,7 @@ export default function Shopping() {
             <small className="muted">{t(group.title)}:</small>
             {left.map((names) => (
               <button key={names[0]} type="button" className="chip-btn" onClick={() => void addNames(names)}>
-                + {names[0]}
+                + {food(names[0])}
               </button>
             ))}
           </div>
@@ -335,14 +336,14 @@ export default function Shopping() {
       <div className="pantry">
         {pantry.map((p) => (
           <span key={p.id} className="chip">
-            {p.name}{' '}
+            {food(p.name)}{' '}
             <button type="button" aria-label={t('Прибрати зі списку «вже є вдома»')} onClick={() => removePantry(p.id)}>
               ×
             </button>
           </span>
         ))}
       </div>
-      {data.at_home.length > 0 && <p>{t('У цьому тижні вже є вдома: {list}.', { list: data.at_home.join(', ') })}</p>}
+      {data.at_home.length > 0 && <p>{t('У цьому тижні вже є вдома: {list}.', { list: data.at_home.map(food).join(', ') })}</p>}
     </div>
   )
 }

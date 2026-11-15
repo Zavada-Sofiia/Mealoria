@@ -18,7 +18,7 @@ import { confetti } from '../effects'
 import DishFilters, { filterDishes, NO_FILTER, type DishFilter } from '../components/DishFilters'
 import PrintableWeek from '../components/PrintableWeek'
 import { download, weekToIcs } from '../ics'
-import { t } from '../i18n'
+import { food, t } from '../i18n'
 import { autoPlanMessage, autoPlanWeek } from '../autoplan'
 import { energyUnit, showEnergy } from '../units'
 
@@ -291,7 +291,7 @@ export default function Calendar() {
               <Draggable key={d.id} id={`dish:${d.id}`}>
                 <span className="chip">
                   {d.favorite && '★ '}
-                  {d.name}
+                  {food(d.name)}
                   {d.calories != null && ` · ${d.calories}`}
                 </span>
               </Draggable>
@@ -326,7 +326,7 @@ export default function Calendar() {
                           .map((e) => (
                             <Draggable key={e.id} id={`entry:${e.id}`}>
                               <div className="entry">
-                                <span>{e.dish?.name ?? '—'}</span>
+                                <span>{e.dish ? food(e.dish.name) : '—'}</span>
                                 <button
                                   onPointerDown={(ev) => ev.stopPropagation()}
                                   onClick={() => remove(e.id)}
@@ -414,7 +414,7 @@ export default function Calendar() {
                   }}
                 >
                   {d.favorite && '★ '}
-                  {d.name}
+                  {food(d.name)}
                   {d.calories != null && <small>{showEnergy(d.calories)} {energyUnit()}</small>}
                 </button>
               )

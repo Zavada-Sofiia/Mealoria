@@ -1,6 +1,6 @@
 import { addDays, fmtDate, fmtShortDate, iso } from '../dates'
 import { mealName } from '../meals'
-import { t } from '../i18n'
+import { food, t } from '../i18n'
 import { energyUnit, showEnergy } from '../units'
 import { macrosLine } from '../macros'
 
@@ -112,7 +112,7 @@ export default function PrintableWeek({
                     {list.map((e) => (
                       <li key={e.id}>
                         <small>{mealName(meals, e.slot)}</small>
-                        <span>{e.dish?.name}</span>
+                        <span>{e.dish && food(e.dish.name)}</span>
                         <em>{e.dish?.calories != null ? `${showEnergy(e.dish.calories)} ${energyUnit()}` : ''}</em>
                       </li>
                     ))}

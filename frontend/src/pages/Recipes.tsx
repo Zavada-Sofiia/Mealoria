@@ -5,7 +5,7 @@ import { fmtDate } from '../dates'
 import ServingsPicker from '../components/ServingsPicker'
 import { scaleAmount, useServings } from '../servings'
 import { oneStepPerLine } from '../steps'
-import { t } from '../i18n'
+import { food, t } from '../i18n'
 import { energyUnit, showEnergy } from '../units'
 import { convertAmount } from '../units'
 import { macrosLine } from '../macros'
@@ -79,22 +79,20 @@ export default function Recipes() {
   const [date, setDate] = useState(today())
   const [slot, setSlot] = useState(0)
 
+  // the whole catalogue comes at once and is searched here, by the Ukrainian and the English name
   useEffect(() => {
     let current = true
-    const timer = setTimeout(() => {
-      apiFetch<Recipe[]>(`/api/recipes?q=${encodeURIComponent(query)}&for_me=${forMe}`)
-        .then((r) => {
-          if (!current) return
-          setRecipes(r)
-          setStatus('')
-        })
-        .catch(() => current && setStatus(t('Не вдалося завантажити рецепти')))
-    }, 250)
+    apiFetch<Recipe[]>(`/api/recipes?for_me=${forMe}`)
+      .then((r) => {
+        if (!current) return
+        setRecipes(r)
+        setStatus('')
+      })
+      .catch(() => current && setStatus(t('Не вдалося завантажити рецепти')))
     return () => {
       current = false
-      clearTimeout(timer)
     }
-  }, [query, forMe])
+  }, [forMe])
 
   const json = { 'Content-Type': 'application/json' }
 
@@ -102,7 +100,8 @@ export default function Recipes() {
   useEffect(() => {
     apiFetch<Dish[]>('/api/dishes').then(setMyDishes).catch(() => {})
   }, [])
-  const mineOf = (r: Recipe) => myDishes.find((d) => sameName(d.name, r.name))
+  // a copy edited on the English site keeps the English name
+  const mineOf = (r: Recipe) => myDishes.find((d) => sameName(d.name, r.name) || sameName(d.name, food(r.name)))
   const isFavorite = (r: Recipe) => !!mineOf(r)?.favorite
 
   async function toggleFavorite(r: Recipe) {
@@ -129,7 +128,7 @@ export default function Recipes() {
     setSavedIds((ids) => [...ids, r.id])
     try {
       await apiFetch<Dish>(`/api/recipes/${r.id}/save`, { method: 'POST' })
-      setStatus(t('«{name}» додано до моїх страв', { name: r.name }))
+      setStatus(t('«{name}» додано до моїх страв', { name: food(r.name) }))
     } catch {
       setSavedIds((ids) => ids.filter((x) => x !== r.id))
       setStatus(t('Не вдалося додати страву'))
@@ -145,7 +144,7 @@ export default function Recipes() {
         body: JSON.stringify({ date, slot, dish_id: dish.id }),
       })
       setPlanning(null)
-      setStatus(t('«{name}» додано в календар на {date}', { name: r.name, date: fmtDate(date) }))
+      setStatus(t('«{name}» додано в календар на {date}', { name: food(r.name), date: fmtDate(date) }))
     } catch {
       setStatus(t('Не вдалося додати в календар'))
     }
@@ -153,7 +152,9 @@ export default function Recipes() {
 
   const [servings, setServings] = useServings()
   const activeFilters = (category ? 1 : 0) + (kind ? 1 : 0) + (onlyFav ? 1 : 0)
+  const needle = query.trim().toLowerCase()
   const shown = recipes
+    .filter((r) => !needle || r.name.toLowerCase().includes(needle) || food(r.name).toLowerCase().includes(needle))
     .filter((r) => !category || r.category === category)
     .filter((r) => !kind || r.kind === kind)
     .filter((r) => !onlyFav || isFavorite(r))
@@ -213,7 +214,7 @@ export default function Recipes() {
           <li key={r.id}>
             <div className="media">
               {r.photo_url ? (
-                <img className="thumb" src={r.photo_url} alt={r.name} loading="lazy" />
+                <img className="thumb" src={r.photo_url} alt={food(r.name)} loading="lazy" />
               ) : (
                 <div className="thumb empty">🍽</div>
               )}
@@ -227,7 +228,7 @@ export default function Recipes() {
             >
               {isFavorite(r) ? '★' : '☆'}
             </button>
-            <strong>{r.name}</strong>
+            <strong>{food(r.name)}</strong>
             {[r.category, r.kind].filter(Boolean).map((c) => (
               <span key={c} className="badge" style={{ marginLeft: 6 }}>{t(c as string)}</span>
             ))}
@@ -245,9 +246,9 @@ export default function Recipes() {
               <summary>{t('Рецепт')}</summary>
               <div>
                 {servings > 1 && <strong>{t('На {n}: ', { n: servings })}</strong>}
-                {r.ingredients.map((i) => `${i.name} (${convertAmount(scaleAmount(i.amount, servings))})`).join(', ')}
+                {r.ingredients.map((i) => `${food(i.name)} (${convertAmount(scaleAmount(i.amount, servings))})`).join(', ')}
               </div>
-              <p style={{ whiteSpace: 'pre-line' }}>{oneStepPerLine(r.recipe)}</p>
+              <p style={{ whiteSpace: 'pre-line' }}>{oneStepPerLine(food(r.recipe))}</p>
             </details>
             <div className="actions" style={{ marginTop: 8 }}>
               <button onClick={() => saveToDishes(r)} disabled={savedIds.includes(r.id)}>

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { t } from '../i18n'
+import { food, t } from '../i18n'
 
 const MEALS = ['сніданок', 'обід', 'вечеря', 'перекус']
 const KINDS = ['основна страва', 'суп', 'салат', 'гарнір', 'закуска', 'десерт', 'випічка', 'напій']
@@ -17,7 +17,7 @@ export function filterDishes<D extends { name: string; favorite?: boolean; categ
       (!f.onlyFav || d.favorite) &&
       (!f.meal || (d.categories ?? []).includes(f.meal)) &&
       (!f.kind || (d.categories ?? []).includes(f.kind)) &&
-      d.name.toLowerCase().includes(needle),
+      (d.name.toLowerCase().includes(needle) || food(d.name).toLowerCase().includes(needle)),
   )
 }
 

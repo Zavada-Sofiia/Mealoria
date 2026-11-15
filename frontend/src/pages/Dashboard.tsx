@@ -9,7 +9,7 @@ import WaterCard from '../components/WaterCard'
 import GettingStarted from '../components/GettingStarted'
 import { iso, mondayOf } from '../dates'
 import { mealName } from '../meals'
-import { locale, t } from '../i18n'
+import { food, locale, t } from '../i18n'
 import { energyUnit, showEnergy } from '../units'
 import { macrosLine, macrosVsTargets } from '../macros'
 import { targetsFromProfile } from '../nutrition'
@@ -143,7 +143,7 @@ export default function Dashboard() {
                     <br />
                     {meal ? (
                       <>
-                        {meal.dishes.join(', ')} <span className="muted">· {showEnergy(meal.kcal)} {energyUnit()}</span>
+                        {meal.dishes.map(food).join(', ')} <span className="muted">· {showEnergy(meal.kcal)} {energyUnit()}</span>
                       </>
                     ) : (
                       <span className="muted">{t('Не заплановано')}</span>

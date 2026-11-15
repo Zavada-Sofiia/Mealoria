@@ -7,9 +7,9 @@ import { deleteDishPhoto, uploadDishPhoto } from '../api/photos'
 import PhotoPicker from '../components/PhotoPicker'
 import { usePlan } from '../plan/context'
 import { oneStepPerLine } from '../steps'
-import { locale, t } from '../i18n'
+import { food, locale, t } from '../i18n'
 import { energyUnit, showEnergy, storeEnergy } from '../units'
-import { convertAmount } from '../units'
+import { amountWords, convertAmount } from '../units'
 import { askConfirm } from '../confirm'
 import { macrosLine } from '../macros'
 
@@ -271,8 +271,8 @@ export default function Dishes() {
 
   const sorted = (() => {
     const needle = query.trim().toLowerCase()
-    const shown = dishes.filter((d) => (!onlyFav || d.favorite) && (!meal || (d.categories ?? []).includes(meal)) && (!kind || (d.categories ?? []).includes(kind)) && d.name.toLowerCase().includes(needle))
-    const byName = (a: Dish, b: Dish) => a.name.localeCompare(b.name, locale())
+    const shown = dishes.filter((d) => (!onlyFav || d.favorite) && (!meal || (d.categories ?? []).includes(meal)) && (!kind || (d.categories ?? []).includes(kind)) && (d.name.toLowerCase().includes(needle) || food(d.name).toLowerCase().includes(needle)))
+    const byName = (a: Dish, b: Dish) => food(a.name).localeCompare(food(b.name), locale())
     const kcal = (d: Dish, dir: 1 | -1) => (d.calories == null ? Infinity : d.calories * dir)
     switch (sort) {
       case 'old':
@@ -409,9 +409,10 @@ export default function Dishes() {
     window.scrollTo(0, 0)
     setEditingId(d.id)
     setForm({
-      name: d.name,
-      recipe: d.recipe,
-      ingredients: d.ingredients,
+      // a dish copied from the catalogue opens in the language of the site
+      name: food(d.name),
+      recipe: food(d.recipe),
+      ingredients: d.ingredients.map((i) => ({ ...i, name: food(i.name), amount: amountWords(i.amount) })),
       calories: d.calories,
       protein_g: d.protein_g,
       fat_g: d.fat_g,
@@ -675,7 +676,7 @@ export default function Dishes() {
             >
               {d.favorite ? '★' : '☆'}
             </button>
-            <strong>{d.name}</strong>
+            <strong>{food(d.name)}</strong>
             {(d.categories ?? []).map((c) => (
               <span key={c} className="badge" style={{ marginLeft: 6 }}>{t(c)}</span>
             ))}
@@ -684,7 +685,7 @@ export default function Dishes() {
               ` · ${macrosLine(d.protein_g, d.fat_g, d.carbs_g, d.fiber_g)}`}
             {d.servings > 1 && ` · ${t('Порцій: {n}', { n: d.servings })}`}
             {d.ingredients.length > 0 && (
-              <div>{d.ingredients.map((i) => `${i.name}${i.amount ? ` (${convertAmount(i.amount)})` : ''}`).join(', ')}</div>
+              <div>{d.ingredients.map((i) => `${food(i.name)}${i.amount ? ` (${convertAmount(i.amount)})` : ''}`).join(', ')}</div>
             )}
             <div className="actions" style={{ marginTop: 8 }}>
             <button onClick={() => drawPhoto(d)} disabled={drawing !== null}>

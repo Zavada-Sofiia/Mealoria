@@ -66,9 +66,49 @@ export const storeGrams = (shown: number) => (isImperial() ? round(shown / G_TO_
 
 const AMOUNT = /(\d+(?:[.,]\d+)?)\s*(кг|г|мл|л|kg|g|ml|l)(?![A-Za-zА-Яа-яІіЇїЄєҐґ])/gi
 
-/** "150 г" -> "5.3 унц." in imperial units; metric text and text without a quantity stay as they are. */
+/** An ingredient amount for the screen: "150 г" -> "5.3 унц." in imperial units, unit words in English on the English site. */
 export function convertAmount(text: string): string {
-  if (!isImperial() || !text) return text
+  if (!text) return text
+  return amountWords(isImperial() ? toImperial(text) : text)
+}
+
+const L = 'A-Za-zА-Яа-яІіЇїЄєҐґ'
+// Ukrainian units of the catalogue and of saved dishes, with the English singular and plural
+const word = (stem: string) => new RegExp(`(?<![${L}])${stem}(?![${L}])`, 'g')
+// spoons go before "л" (litre), which they end with
+const UNIT_WORDS: [RegExp, string, string][] = [
+  [word('ст\\.\\s?л\\.?'), 'tbsp', 'tbsp'],
+  [word('ч\\.\\s?л\\.?'), 'tsp', 'tsp'],
+  [word('кг'), 'kg', 'kg'],
+  [word('г'), 'g', 'g'],
+  [word('мл'), 'ml', 'ml'],
+  [word('л'), 'l', 'l'],
+  [word('шт\\.?'), 'pc', 'pcs'],
+  [word('зубч(?:ик|ики|иків)'), 'clove', 'cloves'],
+  [word('скиб(?:ка|ки|ок)'), 'slice', 'slices'],
+  [word('склян(?:ка|ки|ок)'), 'cup', 'cups'],
+  [word('пуч(?:ок|ки|ків)'), 'bunch', 'bunches'],
+  [word('щіп(?:ка|ки|ок)'), 'pinch', 'pinches'],
+  [word('за смаком'), 'to taste', 'to taste'],
+]
+// without a number "щіпка" reads "a pinch"
+const COUNTED = new Set(['clove', 'slice', 'cup', 'bunch', 'pinch'])
+
+/** "2 зубчики" → "2 cloves", "щіпка" → "a pinch" when the site is in English; numbers stay as they are. */
+export function amountWords(text: string): string {
+  if (getLang() !== 'en' || !text) return text
+  let out = text
+  for (const [pattern, one, many] of UNIT_WORDS) {
+    out = out.replace(pattern, (_word, offset: number, whole: string) => {
+      const n = whole.slice(0, offset).match(/(\d+(?:[.,]\d+)?)\s*$/)?.[1]
+      if (n === undefined) return COUNTED.has(one) ? `a ${one}` : one
+      return Number(n.replace(',', '.')) === 1 ? one : many
+    })
+  }
+  return out
+}
+
+function toImperial(text: string): string {
   return text.replace(AMOUNT, (_m, n: string, unit: string) => {
     const value = Number(n.replace(',', '.'))
     switch (unit.toLowerCase()) {

@@ -8,7 +8,7 @@ import { usePlan } from '../plan/context'
 import { oneStepPerLine } from '../steps'
 import { aiErrorText as errorText } from '../aiError'
 import { kcalMacros as macros } from '../macros'
-import { t } from '../i18n'
+import { food, t } from '../i18n'
 import { convertAmount } from '../units'
 
 type Ingredient = { name: string; amount: string }
@@ -158,7 +158,7 @@ function AIPage({ userId }: { userId: string }) {
     try {
       const rows = await apiFetch<{ name: string }[]>('/api/shopping/pantry')
       if (!rows.length) return setStatus(t('У «Вже є вдома» ще нічого немає'))
-      setFridge([...new Set([...fridgeProducts(), ...rows.map((r) => r.name)])].join(', '))
+      setFridge([...new Set([...fridgeProducts(), ...rows.map((r) => food(r.name))])].join(', '))
       setStatus('')
     } catch {
       setStatus(t('Не вдалося завантажити «Вже є вдома»'))

@@ -7,7 +7,7 @@ import SectionRail from '../components/SectionRail'
 import WaterCard from '../components/WaterCard'
 import { mealName } from '../meals'
 import { addDays, fmtDate, fmtShortDate, iso } from '../dates'
-import { t } from '../i18n'
+import { food, t } from '../i18n'
 import { targetsFromProfile, type Targets } from '../nutrition'
 import { energyUnit, showEnergy } from '../units'
 import { showWeight, storeWeight, weightUnit } from '../units'
@@ -118,7 +118,7 @@ function DaySummary() {
             <ul>
               {data.meals.map((m) => (
                 <li key={m.slot}>
-                  {t('{n}: {kcal} {unit} — {dishes}', { n: mealName(mealsPerDay, m.slot), kcal: showEnergy(m.kcal), unit: energyUnit(), dishes: m.dishes.join(', ') })}
+                  {t('{n}: {kcal} {unit} — {dishes}', { n: mealName(mealsPerDay, m.slot), kcal: showEnergy(m.kcal), unit: energyUnit(), dishes: m.dishes.map(food).join(', ') })}
                 </li>
               ))}
             </ul>
