@@ -3980,3 +3980,51 @@ textarea::placeholder {
   white-space: nowrap;
   vertical-align: middle;
 }
+
+/* =================================================================
+   Weak hardware (html.lite, set in index.html): the same look, less work.
+   Decorative endless animations play twice and rest on their first frame; the frosted (blurred) backgrounds,
+   which the GPU recomputes on every scroll frame, become almost opaque fills of the same colour.
+   ================================================================= */
+html.lite .shine-text,
+html.lite .hero .dot,
+html.lite .preview-card.float-a,
+html.lite .preview-card.float-b,
+html.lite .spot-chip,
+html.lite .spot-photo .scan-line,
+html.lite a:has(> button.glow)::before,
+html.lite .pulse-dot::after,
+html.lite .tabbar a.tab-photo::before,
+html.lite .tabbar a.tab-photo::after,
+html.lite .photo-cta::after,
+html.lite .photo-card.standalone .dropzone svg,
+html.lite .buy-meter > span::after,
+html.lite .meter > span::after {
+  animation-iteration-count: 2;
+}
+/* the background glows drift too slowly to notice anyway, but a weak GPU would redraw them all the time */
+html.lite body::before,
+html.lite .hero-aurora {
+  animation: none;
+}
+html.lite .topbar,
+html.lite .tabbar,
+html.lite .section-tabs,
+html.lite .preview-card,
+html.lite .spot-chip {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+html.lite .section-tabs {
+  background: color-mix(in srgb, var(--card) 98%, transparent);
+}
+html.lite .topbar {
+  background-color: color-mix(in srgb, var(--card) 97%, transparent);
+}
+html.lite .tabbar {
+  background: color-mix(in srgb, var(--tabbar) 97%, transparent);
+}
+html.lite .preview-card,
+html.lite .spot-chip {
+  background-color: color-mix(in srgb, var(--card) 96%, transparent);
+}

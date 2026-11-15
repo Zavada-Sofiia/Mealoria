@@ -41,6 +41,13 @@
         var t = localStorage.getItem('theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
         document.documentElement.dataset.theme = t
       } catch (e) {}
+      // weak hardware (few cores, little memory) or "save data": calmer decoration, the same look (see .lite in index.css)
+      try {
+        var n = navigator, c = n.connection
+        if ((n.hardwareConcurrency && n.hardwareConcurrency <= 4) || (n.deviceMemory && n.deviceMemory <= 4) || (c && c.saveData)) {
+          document.documentElement.classList.add('lite')
+        }
+      } catch (e) {}
     </script>
     <title>Mealoria</title>
   </head>
