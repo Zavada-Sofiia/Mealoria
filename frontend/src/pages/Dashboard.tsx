@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useCountUp } from '../useCountUp'
+import CountUp from '../components/CountUp'
 import StatusLine from '../components/StatusLine'
 import { Link } from 'react-router-dom'
 import { apiFetch } from '../api/client'
@@ -93,8 +93,6 @@ export default function Dashboard() {
   const total = Math.round(day?.total.kcal ?? 0)
   const target = day?.target
 
-  const shownTotal = useCountUp(total)
-  const shownBuy = useCountUp(toBuy ?? 0)
 
   return (
     <div>
@@ -160,15 +158,10 @@ export default function Dashboard() {
           <section className="card">
             <h3>{t('Калорії')}</h3>
             {target ? (
-              <CalorieRing
-                value={showEnergy(shownTotal)}
-                goal={showEnergy(target)}
-                label={String(showEnergy(Math.round(shownTotal)))}
-                unit={energyUnit()}
-              />
+              <CalorieRing value={showEnergy(total)} goal={showEnergy(target)} unit={energyUnit()} />
             ) : (
               <p>
-                <strong style={{ fontSize: '1.6rem' }}>{showEnergy(Math.round(shownTotal))}</strong> {energyUnit()}
+                <strong style={{ fontSize: '1.6rem' }}><CountUp value={showEnergy(total)} /></strong> {energyUnit()}
               </p>
             )}
             <p className="muted">
@@ -184,7 +177,7 @@ export default function Dashboard() {
           <section className="card red">
             <h3>{t('Список продуктів')}</h3>
             <p>
-              <strong style={{ fontSize: '1.6rem' }}>{Math.round(shownBuy)}</strong>{' '}
+              <strong style={{ fontSize: '1.6rem' }}><CountUp value={toBuy ?? 0} /></strong>{' '}
               <span className="muted">{t('лишилось купити цього тижня')}</span>
             </p>
             <Link to="/shopping">{t('Відкрити список →')}</Link>

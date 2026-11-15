@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { apiFetch } from '../api/client'
 import { locale, t } from '../i18n'
 import { showMl, showWater, waterPresets } from '../units'
+import Meter from './Meter'
 
 type WaterEntry = { id: string; amount_ml: number; created_at: string }
 type WaterDay = { total_ml: number; entries: WaterEntry[] }
@@ -64,7 +65,7 @@ export default function WaterCard({ day, target, compact = false }: { day: strin
             : t('Випито: {drunk}', { drunk: showWater(drunk) })}
         </strong>
       </p>
-      {target ? <progress className="water-bar" value={Math.min(drunk, target)} max={target} /> : null}
+      {target ? <Meter value={drunk} max={target} water /> : null}
       {target && drunk >= target && <p className="status">{t('Норму досягнуто, чудово!')}</p>}
       {status && <p className="status">{status}</p>}
       <div className="actions water-presets">

@@ -17,18 +17,18 @@ function ripple(e: PointerEvent) {
 }
 
 /** A light follows the pointer over cards (desktop only). */
-function spotlight(e: PointerEvent) {
-  const card = (e.target as Element | null)?.closest?.<HTMLElement>('ul.cards > li, .grid > .card, .preview-card')
+function spotlight(target: Element | null, x: number, y: number) {
+  const card = target?.closest?.<HTMLElement>('ul.cards > li, .grid > .card, .preview-card')
   if (!card) return
   const box = card.getBoundingClientRect()
-  card.style.setProperty('--mx', `${e.clientX - box.left}px`)
-  card.style.setProperty('--my', `${e.clientY - box.top}px`)
+  card.style.setProperty('--mx', `${x - box.left}px`)
+  card.style.setProperty('--my', `${y - box.top}px`)
 }
 
 /** Cards marked .tilt lean towards the pointer, as if they were a sheet of glass. */
 let tilted: HTMLElement | null = null
-function tilt(e: PointerEvent) {
-  const card = (e.target as Element | null)?.closest?.<HTMLElement>('.tilt') ?? null
+function tilt(target: Element | null, x: number, y: number) {
+  const card = target?.closest?.<HTMLElement>('.tilt') ?? null
   if (tilted && tilted !== card) {
     tilted.style.removeProperty('--rx')
     tilted.style.removeProperty('--ry')
@@ -36,19 +36,35 @@ function tilt(e: PointerEvent) {
   tilted = card
   if (!card) return
   const box = card.getBoundingClientRect()
-  const x = (e.clientX - box.left) / box.width - 0.5
-  const y = (e.clientY - box.top) / box.height - 0.5
+  const dx = (x - box.left) / box.width - 0.5
+  const dy = (y - box.top) / box.height - 0.5
   const strength = card.classList.contains('hero-preview') ? 10 : 5
-  card.style.setProperty('--rx', `${(-y * strength).toFixed(2)}deg`)
-  card.style.setProperty('--ry', `${(x * strength).toFixed(2)}deg`)
+  card.style.setProperty('--rx', `${(-dy * strength).toFixed(2)}deg`)
+  card.style.setProperty('--ry', `${(dx * strength).toFixed(2)}deg`)
+}
+
+// A mouse reports several moves per frame; the light and the tilt are updated once per frame, with the latest one.
+let last: PointerEvent | null = null
+let scheduled = false
+function onPointerMove(e: PointerEvent) {
+  if (e.pointerType === 'touch') return
+  last = e
+  if (scheduled) return
+  scheduled = true
+  requestAnimationFrame(() => {
+    scheduled = false
+    if (!last) return
+    const target = last.target as Element | null
+    spotlight(target, last.clientX, last.clientY)
+    tilt(target, last.clientX, last.clientY)
+  })
 }
 
 export function initEffects() {
   if (calm()) return
   document.addEventListener('pointerdown', ripple, { passive: true })
   if (window.matchMedia('(hover: hover)').matches) {
-    document.addEventListener('pointermove', spotlight, { passive: true })
-    document.addEventListener('pointermove', tilt, { passive: true })
+    document.addEventListener('pointermove', onPointerMove, { passive: true })
   }
 }
 

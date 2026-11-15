@@ -11,6 +11,7 @@ import { t } from '../i18n'
 import { targetsFromProfile, type Targets } from '../nutrition'
 import { energyUnit, showEnergy } from '../units'
 import { showWeight, storeWeight, weightUnit } from '../units'
+import Meter from '../components/Meter'
 
 type Macros = { kcal: number; protein_g: number; fat_g: number; carbs_g: number; fiber_g: number }
 type DayResponse = {
@@ -78,7 +79,7 @@ function DaySummary() {
             {target ? ` / ${showEnergy(target)} ${energyUnit()}` : t(' {unit} (задайте ціль у профілі)', { unit: energyUnit() })}
           </p>
           {target ? (
-            <progress className={total > target ? 'over' : undefined} value={Math.min(total, target)} max={target} />
+            <Meter value={total} max={target} over={total > target} />
           ) : null}
           {diff !== null && (
             <p>{diff > 0 ? t('Перевищення на {n} {unit}', { n: showEnergy(diff), unit: energyUnit() }) : t('Залишилось {n} {unit}', { n: showEnergy(-diff), unit: energyUnit() })}</p>
@@ -105,8 +106,7 @@ function DaySummary() {
                       <span>{t(label)}</span>
                       <span>{t('{value} з {target} г', { value: eaten, target: targets[key] })}</span>
                     </div>
-                    <progress value={Math.min(eaten, targets[key])} max={targets[key]}
-                      className={key !== 'fiber_g' && eaten > targets[key] * 1.15 ? 'over' : undefined} />
+                    <Meter value={eaten} max={targets[key]} over={key !== 'fiber_g' && eaten > targets[key] * 1.15} />
                   </div>
                 )
               })}

@@ -1,5 +1,9 @@
-/** Eaten against the goal as a ring; the arc turns red once the goal is passed. */
-export default function CalorieRing({ value, goal, label, unit }: { value: number; goal: number; label: string; unit: string }) {
+import { useCountUp } from '../useCountUp'
+
+/** Eaten against the goal as a ring that fills up; the arc turns red once the goal is passed. */
+export default function CalorieRing({ value: target, goal, unit }: { value: number; goal: number; unit: string }) {
+  // the glide lives here, so each frame re-renders only the ring
+  const value = useCountUp(target)
   const r = 42
   const length = 2 * Math.PI * r
   const share = goal > 0 ? Math.min(value / goal, 1) : 0
@@ -10,7 +14,7 @@ export default function CalorieRing({ value, goal, label, unit }: { value: numbe
         <circle cx="50" cy="50" r={r} className="ring-arc" strokeDasharray={length} strokeDashoffset={length * (1 - share)} />
       </svg>
       <div className="ring-center">
-        <b>{label}</b>
+        <b>{Math.round(value)}</b>
         <small>
           / {goal} {unit}
         </small>
