@@ -229,6 +229,23 @@ hr {
     max-width: 1040px;
   }
 }
+.logo,
+.about-link {
+  flex: none;
+  white-space: nowrap;
+}
+.sidebar .sidebar-more {
+  display: none;
+}
+/* a tablet or a small laptop: the links of the top bar would push the page sideways */
+@media (min-width: 761px) and (max-width: 1099px) {
+  .nav-links.right {
+    display: none;
+  }
+  .sidebar .sidebar-more {
+    display: flex;
+  }
+}
 
 /* ---------- bottom sheet (mobile menu, dish picker) ---------- */
 .sheet-backdrop {
@@ -3779,6 +3796,9 @@ textarea::placeholder {
 }
 :root[data-theme='dark'] .spot-photo {
   background: none;
+}
+.spot-photo picture {
+  display: contents;
 }
 .spot-photo img {
   width: 100%;

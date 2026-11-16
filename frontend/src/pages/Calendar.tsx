@@ -21,6 +21,7 @@ import { download, weekToIcs } from '../ics'
 import { food, t } from '../i18n'
 import { autoPlanMessage, autoPlanWeek } from '../autoplan'
 import { energyUnit, showEnergy } from '../units'
+import { useEscape } from '../useEscape'
 
 type Dish = {
   id: string
@@ -98,6 +99,7 @@ export default function Calendar() {
   const mobile = useIsMobile()
   const [dayIdx, setDayIdx] = useState(todayIndex)
   const [picking, setPicking] = useState<{ date: string; slot: number } | null>(null)
+  useEscape(picking !== null, () => setPicking(null))
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),

@@ -7,6 +7,7 @@ import { expectSignOut } from '../sessionBackup'
 import { t } from '../i18n'
 import LangToggle from './LangToggle'
 import ThemeToggle from './ThemeToggle'
+import { useEscape } from '../useEscape'
 
 const ICONS: Record<string, string> = {
   '/today': 'M3 11.5 12 4l9 7.5M5.5 10v9.5h13V10',
@@ -88,6 +89,7 @@ async function signOut() {
 export default function Nav() {
   const { me } = usePlan()
   const [moreOpen, setMoreOpen] = useState(false)
+  useEscape(moreOpen, () => setMoreOpen(false))
   const { pathname } = useLocation()
   const inMore = MORE.some(([to]) => pathname.startsWith(to))
   useEffect(() => {
@@ -132,6 +134,14 @@ export default function Nav() {
             <NavLink key={to} to={to} viewTransition className={to === '/photo' ? 'nav-photo' : undefined}>
               {t(label)}
               {to === '/photo' && <span className="nav-badge">{t('ШІ')}</span>}
+            </NavLink>
+          ))}
+        </nav>
+        {/* on a narrower desktop the top bar has no room for these, so they move here */}
+        <nav className="sidebar-more">
+          {RIGHT.map(([to, label]) => (
+            <NavLink key={to} to={to} viewTransition>
+              {t(label)}
             </NavLink>
           ))}
         </nav>
