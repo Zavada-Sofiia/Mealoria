@@ -1,6 +1,7 @@
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from './api/supabase'
 import { reportWarning } from './monitoring'
+import { SESSION_ENDED_KEY } from './authError'
 
 /*
  * iPhone home-screen apps are closed by iOS in the background, and the session that Supabase keeps in
@@ -51,6 +52,32 @@ export async function startingSession(): Promise<Session | null> {
   rememberSession(null)
   reportWarning('Session lost and the backup could not restore it', { standalone: standalone(), code: error?.code ?? error?.name })
   return null
+}
+
+/**
+ * The note for the sign-in page ("the session has ended") is written before the last try with a fresh token:
+ * a refused refresh signs Supabase out at once, and the sign-in page opens before the try is over.
+ */
+export function noteSessionEnding(on: boolean): void {
+  try {
+    if (on) sessionStorage.setItem(SESSION_ENDED_KEY, '1')
+    else sessionStorage.removeItem(SESSION_ENDED_KEY)
+  } catch {
+    // the sign-in page then opens without the explanation
+  }
+}
+
+let ending = false
+
+/** The server no longer accepts this session (expired or revoked): sign out here; the sign-in page says why. */
+export function sessionEnded(): void {
+  if (ending) return
+  ending = true
+  reportWarning('Session refused by the server', { standalone: standalone() })
+  expectSignOut()
+  void supabase.auth.signOut({ scope: 'local' }).finally(() => {
+    ending = false
+  })
 }
 
 /** Called right before a sign-out the person asked for, so it is not reported as a problem. */

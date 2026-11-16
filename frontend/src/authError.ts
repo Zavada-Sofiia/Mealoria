@@ -54,8 +54,16 @@ export function authErrorText(error: Pick<AuthError, 'code' | 'status' | 'name' 
   return t('Не вдалося виконати дію. Спробуйте ще раз пізніше.')
 }
 
+// set when the server stopped accepting the session, so the sign-in page can say why it opened
+export const SESSION_ENDED_KEY = 'sessionEnded'
+
 /** Supabase sends a failed e-mail link or Google sign-in back to the site with the reason in the address. */
 export function authLinkError(): string {
+  try {
+    if (sessionStorage.getItem(SESSION_ENDED_KEY)) return SESSION_ENDED()
+  } catch {
+    // no storage: nothing to explain
+  }
   const params = new URLSearchParams(window.location.hash.replace(/^#/, ''))
   const query = new URLSearchParams(window.location.search)
   const code = params.get('error_code') ?? query.get('error_code')
@@ -67,6 +75,11 @@ export function authLinkError(): string {
 }
 
 export function clearAuthLinkError() {
+  try {
+    sessionStorage.removeItem(SESSION_ENDED_KEY)
+  } catch {
+    // no storage
+  }
   if (/error/.test(window.location.hash + window.location.search)) {
     window.history.replaceState(null, '', window.location.pathname)
   }

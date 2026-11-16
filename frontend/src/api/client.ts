@@ -1,5 +1,6 @@
 import { getLang } from '../i18n'
 import { supabase } from './supabase'
+import { noteSessionEnding, sessionEnded } from '../sessionBackup'
 
 export class ApiError extends Error {
   status: number
@@ -14,16 +15,28 @@ export class ApiError extends Error {
 
 export const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
 
-export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
-  const { data } = await supabase.auth.getSession()
-  const res = await fetch(`${API_URL}${path}`, {
+function send(path: string, init: RequestInit, token: string | undefined): Promise<Response> {
+  return fetch(`${API_URL}${path}`, {
     ...init,
     headers: {
       ...init.headers,
-      Authorization: `Bearer ${data.session?.access_token}`,
+      Authorization: `Bearer ${token}`,
       'X-Lang': getLang(),
     },
   })
+}
+
+export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
+  const { data } = await supabase.auth.getSession()
+  let res = await send(path, init, data.session?.access_token)
+  if (res.status === 401 && data.session) {
+    // the token may have expired a moment ago: one more try with a fresh one, otherwise the session is over
+    noteSessionEnding(true)
+    const { data: fresh, error } = await supabase.auth.refreshSession()
+    if (fresh.session) res = await send(path, init, fresh.session.access_token)
+    if (res.status === 401 && error?.name !== 'AuthRetryableFetchError') sessionEnded()
+    else noteSessionEnding(false)
+  }
   if (!res.ok) {
     let detail = ''
     try {
