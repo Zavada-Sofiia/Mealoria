@@ -29,7 +29,6 @@ const FREE_FEATURES = [
 const PREMIUM_EXTRAS = [
   'ШІ сам рахує калорії, БЖВ і клітковину ваших страв',
   'ШІ пише рецепт та інгредієнти за назвою страви',
-  'Меню на сьогодні на головному екрані телефона (скоро)',
 ]
 
 export default function Pricing({ session }: { session: Session | null }) {

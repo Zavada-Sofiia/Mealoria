@@ -373,7 +373,6 @@ export const en: Record<string, string> = {
   "Менше": "Fewer",
   "Меню": "Menu",
   "Меню на сьогодні": "Today’s menu",
-  "Меню на сьогодні на головному екрані телефона (скоро)": "Today’s menu on your phone’s home screen (coming soon)",
   "Меню на тиждень": "Weekly menu",
   "Меню на цей тиждень ще не складено": "This week's menu is not planned yet",
   "Мета": "Goal",
