@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent, type InputHTMLAttributes } from 'react'
 import { t } from '../i18n'
+import { num } from '../units'
 
 /** " 300 ", "1 200" and "12,5" are numbers; "" is no value (null); anything else is NaN. */
 export function parseNumber(text: string): number | null {
@@ -63,7 +64,7 @@ export default function NumberField({ value, onChange, min, max, integer = false
           ? t('Введіть ціле число')
           : t('Введіть число')
         : parsed < min || parsed > max
-          ? t('Від {min} до {max}', { min, max })
+          ? t('Від {min} до {max}', { min: num(min), max: num(max) })
           : ''
   const check = useFieldCheck(problem)
   const sync = () => {

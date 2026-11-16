@@ -160,9 +160,12 @@ export default function Pricing({ session }: { session: Session | null }) {
             {saving > 0 && <span className="badge paid" style={{ marginLeft: 10 }}>{t('Економія {pct}%', { pct: saving })}</span>}
           </p>
           <p className="muted">
-            {pay?.enabled
-              ? t('Обирайте період і оплачуйте переказом на картку: преміум додасться до того, що в вас уже є.')
-              : t('Більші ліміти вже працюють. Оплату підключимо найближчим часом: передзамовте, і ми повідомимо.')}
+            {/* a visitor cannot ask whether card payment is on, so the text does not promise either way */}
+            {!session
+              ? t('Оформити преміум можна після входу: оберіть період і оплатіть переказом на картку.')
+              : pay?.enabled
+                ? t('Обирайте період і оплачуйте переказом на картку: преміум додасться до того, що в вас уже є.')
+                : t('Більші ліміти вже працюють. Оплату підключимо найближчим часом: передзамовте, і ми повідомимо.')}
           </p>
           <p>
             <strong>{t('Усе з безкоштовного тарифу, а також:')}</strong>
@@ -179,7 +182,7 @@ export default function Pricing({ session }: { session: Session | null }) {
             </p>
           )}
           {!session ? (
-            <Link to="/auth">{t('Увійдіть, щоб передзамовити')}</Link>
+            <Link to="/auth">{t('Увійдіть, щоб оформити преміум')}</Link>
           ) : pay?.enabled ? (
             // Premium users can pay too: the period is added to the end date they already have
             me?.plan === 'premium' && !me.premium_until ? null : <PayByCode info={pay} months={months} onPaid={refresh} />

@@ -10,7 +10,7 @@ import { addDays, fmtDate, fmtShortDate, iso } from '../dates'
 import { food, t } from '../i18n'
 import { targetsFromProfile, type Targets } from '../nutrition'
 import { energyUnit, showEnergy } from '../units'
-import { showWeight, storeWeight, weightUnit } from '../units'
+import { num, showWeight, storeWeight, weightUnit } from '../units'
 import Meter from '../components/Meter'
 
 type Macros = { kcal: number; protein_g: number; fat_g: number; carbs_g: number; fiber_g: number }
@@ -201,7 +201,7 @@ function WeightJournal() {
     const value = Number(weight.replace(',', '.'))
     const kg = storeWeight(value)
     if (!(kg >= 20 && kg <= 400))
-      return setStatus(t('Вкажіть вагу від {min} до {max} {unit}', { min: showWeight(20), max: showWeight(400), unit: weightUnit() }))
+      return setStatus(t('Вкажіть вагу від {min} до {max} {unit}', { min: num(showWeight(20)), max: num(showWeight(400)), unit: weightUnit() }))
     try {
       const saved = await apiFetch<WeightPoint>('/api/weight', {
         method: 'PUT',

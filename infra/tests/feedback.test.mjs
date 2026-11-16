@@ -79,3 +79,11 @@ test('open messages come first, newest first; deleting the user keeps the messag
   await db.query(`delete from auth.users where id = '${USER}'`)
   assert.equal((await db.query('select count(*)::int as n from public.feedback')).rows[0].n, 3)
 })
+
+test('deleting the account keeps the message but not the address', async () => {
+  const db = await setup()
+  await send(db, 'idea', 'Please add a dark theme for the PDF')
+  await db.query('select public.delete_my_account()')
+  const row = (await db.query('select user_id, email, message from public.feedback')).rows[0]
+  assert.deepEqual({ ...row }, { user_id: null, email: null, message: 'Please add a dark theme for the PDF' })
+})

@@ -5,8 +5,8 @@ import { usePageMeta } from '../seo'
 
 const UPDATED = '11 листопада 2026'
 const UPDATED_EN = '11 November 2026'
-const PRIVACY_UPDATED = '12 листопада 2026'
-const PRIVACY_UPDATED_EN = '12 November 2026'
+const PRIVACY_UPDATED = '16 листопада 2026'
+const PRIVACY_UPDATED_EN = '16 November 2026'
 
 function PrivacyUk() {
   return (
@@ -27,7 +27,7 @@ function PrivacyUk() {
           використовуємо їх лише для розрахунків і підбору рецептів.
         </li>
         <li>Ваші страви, фото страв, меню в календарі, список продуктів і продукти «вже є вдома».</li>
-        <li>Журнал ваги, якщо ви його ведете.</li>
+        <li>Журнал ваги й записи про воду, якщо ви їх ведете.</li>
         <li>Лічильники використання ШІ (скільки запитів за день), ваш тариф і промокоди, які ви активували.</li>
         <li>Позначку «передзамовив преміум», якщо ви натиснули відповідну кнопку.</li>
         <li>
@@ -59,14 +59,26 @@ function PrivacyUk() {
       </ul>
       <p>Ці провайдери можуть обробляти дані на серверах за межами України та ЄС.</p>
 
+      <h2>Камера</h2>
+      <p>
+        Камера вмикається лише для сканера штрихкодів і лише з вашого дозволу. Зображення розпізнається у вашому
+        браузері й нікуди не надсилається: на сервер іде тільки номер штрихкоду. Для «калорій по фото» ви самі
+        обираєте або знімаєте фото, і саме воно надсилається в Gemini.
+      </p>
+
       <h2>Cookie та аналітика</h2>
       <p>
         Ми не використовуємо рекламні cookie й аналітику. У браузері зберігається лише те, що потрібно для
-        роботи: ваш вхід, обрана тема та кількість людей для порцій.
+        роботи: ваш вхід, мова, тема, одиниці виміру, кількість людей для порцій і останні ідеї з «Що
+        приготувати». Єдина cookie, mealoria_rt, це запасна копія входу, щоб застосунок на телефоні не виходив
+        з акаунта сам; вона зникає, коли ви натискаєте «Вийти».
       </p>
 
       <h2>Скільки зберігаємо</h2>
-      <p>Доки у вас є акаунт. Після видалення акаунта ваші дані, фото й записи видаляються.</p>
+      <p>
+        Доки у вас є акаунт. Після видалення акаунта ваші дані, фото й записи видаляються. Повідомлення з форми
+        «Допомога» лишаються, але без вашої пошти й без зв’язку з акаунтом.
+      </p>
 
       <h2>Ваші права</h2>
       <ul>
@@ -167,7 +179,7 @@ function PrivacyEn() {
           for calculations and recipe suggestions.
         </li>
         <li>Your dishes, dish photos, calendar menu, shopping list and “already at home” products.</li>
-        <li>Your weight journal, if you keep one.</li>
+        <li>Your weight journal and water entries, if you keep them.</li>
         <li>AI usage counters (how many requests per day), your plan and the promo codes you activated.</li>
         <li>A “pre-ordered Premium” flag, if you pressed the corresponding button.</li>
         <li>
@@ -199,14 +211,26 @@ function PrivacyEn() {
       </ul>
       <p>These providers may process data on servers outside Ukraine and the EU.</p>
 
+      <h2>Camera</h2>
+      <p>
+        The camera turns on only for the barcode scanner and only with your permission. The image is read in your
+        browser and is not sent anywhere: only the barcode number goes to the server. For “calories from a photo”
+        you choose or take the photo yourself, and that photo is sent to Gemini.
+      </p>
+
       <h2>Cookies and analytics</h2>
       <p>
         We use no advertising cookies and no analytics. Your browser stores only what is needed for the site to
-        work: your sign-in, the chosen theme and language, and the number of people for servings.
+        work: your sign-in, language, theme, units, the number of people for servings and the latest ideas from
+        “What to cook”. The only cookie, mealoria_rt, is a backup of your sign-in so that the app on your phone
+        does not sign you out by itself; it is removed when you press “Sign out”.
       </p>
 
       <h2>How long we keep it</h2>
-      <p>For as long as you have an account. After you delete the account, your data, photos and entries are deleted.</p>
+      <p>
+        For as long as you have an account. After you delete the account, your data, photos and entries are deleted.
+        Messages from the Help form are kept, but without your email and without any link to the account.
+      </p>
 
       <h2>Your rights</h2>
       <ul>
