@@ -181,7 +181,10 @@ export default function Home({ signedIn }: { signedIn: boolean }) {
         </div>
         <div className="spot-visual tilt" aria-hidden="true">
           <div className="spot-photo">
-            <img src="/spotlight-salad.jpg" alt="" width="240" height="240" loading="lazy" />
+            <picture>
+              <source srcSet="/spotlight-salad.webp" type="image/webp" />
+              <img src="/spotlight-salad.jpg" alt="" width="240" height="240" loading="lazy" />
+            </picture>
             <span className="scan-line" />
           </div>
           <div className="spot-chip c1">{t('Грецький салат')}</div>
