@@ -170,6 +170,7 @@ export default function Admin() {
   const [noticeUk, setNoticeUk] = useState('')
   const [noticeEn, setNoticeEn] = useState('')
   const [noticeMessage, setNoticeMessage] = useState('')
+  const [userMessage, setUserMessage] = useState('')
 
   useEffect(() => {
     let current = true
@@ -439,6 +440,36 @@ export default function Admin() {
         err instanceof ApiError && err.detail === 'user_not_found'
           ? 'Користувача з такою поштою не знайдено'
           : 'Не вдалося змінити тариф',
+      )
+    }
+  }
+
+  async function deleteUser(target: string) {
+    setUserMessage('')
+    const ok = await askConfirm({
+      title: `Видалити акаунт ${target}?`,
+      text: 'Зникнуть профіль, страви, календар, список продуктів, преміум і передзамовлення цього акаунта. Відгуки лишаться без пошти. Повернути не можна.',
+      confirmLabel: 'Видалити',
+      cancelLabel: 'Скасувати',
+      danger: true,
+    })
+    if (!ok) return
+    try {
+      await apiFetch('/api/admin/users/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: target }),
+      })
+      setUserMessage(`Акаунт ${target} видалено`)
+      setVersion((v) => v + 1)
+    } catch (err) {
+      const detail = err instanceof ApiError ? err.detail : ''
+      setUserMessage(
+        detail === 'is_admin'
+          ? 'Це акаунт адміністратора, його тут видалити не можна'
+          : detail === 'user_not_found'
+            ? 'Такого акаунта вже немає'
+            : 'Не вдалося видалити. Якщо це перший раз, запустіть SQL 037.',
       )
     }
   }
@@ -862,6 +893,7 @@ export default function Admin() {
 
           <section className="card red" id="adm-users">
             <h3>Користувачі (останні 200)</h3>
+            {userMessage && <p className="status" role="status">{userMessage}</p>}
             <div className="week-scroll" style={{ boxShadow: 'none' }}>
               <table className="data">
                 <thead>
@@ -874,6 +906,7 @@ export default function Admin() {
                     <th className="num">Страв</th>
                     <th className="num">У календарі</th>
                     <th className="num">Передзамовив</th>
+                    <th></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -887,6 +920,13 @@ export default function Admin() {
                       <td className="num">{u.dishes}</td>
                       <td className="num">{u.planned}</td>
                       <td className="num">{u.preordered && <span className="ok">✓</span>}</td>
+                      <td>
+                        {u.email && (
+                          <button type="button" className="danger" onClick={() => void deleteUser(u.email!)}>
+                            Видалити
+                          </button>
+                        )}
+                      </td>
                     </tr>
                   ))}
                 </tbody>

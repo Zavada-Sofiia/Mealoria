@@ -102,6 +102,9 @@ class SupabaseAdminStore:
             "admin_set_promo_message", {"target_code": code, "new_uk": message_uk, "new_en": message_en}
         )
 
+    def delete_user(self, email: str) -> dict:
+        return self._rpc("admin_delete_user", {"target_email": email})
+
 
 def get_store(creds: HTTPAuthorizationCredentials = Depends(bearer)) -> SupabaseAdminStore:
     return SupabaseAdminStore(creds.credentials)
@@ -221,6 +224,23 @@ def delete_promo(
     result = _admin_only(lambda: store.delete_promo(code))
     if not result.get("ok"):
         raise HTTPException(status_code=404, detail="promo_not_found")
+
+
+class UserDelete(BaseModel):
+    email: str = Field(min_length=3, max_length=200)
+
+
+@router.post("/users/delete")
+def delete_user(
+    body: UserDelete,
+    _: str = Depends(current_user_id),
+    store: SupabaseAdminStore = Depends(get_store),
+):
+    """Deletes an account with all its data (test accounts); an admin account cannot be deleted here."""
+    result = _admin_only(lambda: store.delete_user(body.email.strip()))
+    if not result.get("ok"):
+        raise HTTPException(status_code=422, detail=result.get("error", "failed"))
+    return result
 
 
 class PromoMessageIn(BaseModel):

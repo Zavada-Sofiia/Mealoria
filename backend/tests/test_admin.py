@@ -108,3 +108,38 @@ def test_non_admins_cannot_grant_or_read_the_history(client):
     use(Refuse())
     assert client.post("/api/admin/premium/grant", json={"email": "a@x.ua", "months": 3}).status_code == 404
     assert client.get("/api/admin/premium/history").status_code == 404
+
+
+class DeleteStore:
+    def __init__(self, error=None):
+        self.error = error
+        self.deleted = []
+
+    def delete_user(self, email):
+        if self.error:
+            raise self.error
+        if email == "nobody@x.ua":
+            return {"ok": False, "error": "user_not_found"}
+        if email == "admin@x.ua":
+            return {"ok": False, "error": "is_admin"}
+        self.deleted.append(email)
+        return {"ok": True, "email": email}
+
+
+def test_admin_deletes_a_test_account(client):
+    store = DeleteStore()
+    use(store)
+    r = client.post("/api/admin/users/delete", json={"email": "  test7@x.ua "})
+    assert r.status_code == 200 and store.deleted == ["test7@x.ua"]
+
+
+def test_delete_errors_are_passed_on(client):
+    use(DeleteStore())
+    assert client.post("/api/admin/users/delete", json={"email": "nobody@x.ua"}).json() == {"detail": "user_not_found"}
+    assert client.post("/api/admin/users/delete", json={"email": "admin@x.ua"}).json() == {"detail": "is_admin"}
+
+
+def test_non_admins_cannot_delete_accounts(client):
+    use(DeleteStore(NotAdmin()))
+    r = client.post("/api/admin/users/delete", json={"email": "user@x.ua"})
+    assert r.status_code == 404 and r.json() == {"detail": "Not Found"}

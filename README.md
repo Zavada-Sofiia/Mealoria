@@ -284,7 +284,7 @@ frontend/               React + TypeScript (Vite)
   worker/               Cloudflare Worker: роздача сайту й cron-«будильник»
   public/               іконки, маніфест PWA, service worker, sitemap
 infra/
-  supabase/             SQL-міграції бази й сховища (001…035)
+  supabase/             SQL-міграції бази й сховища (001…037)
   tests/                тести SQL-міграцій на PGlite
   email-templates/      шаблони листів Supabase (код підтвердження, відновлення)
   scripts/              генерація фото каталогу рецептів
