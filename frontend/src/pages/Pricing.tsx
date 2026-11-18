@@ -5,7 +5,6 @@ import { ApiError, apiFetch } from '../api/client'
 import { usePageMeta } from '../seo'
 import { formatDate, limitLines, usePlan } from '../plan/context'
 import { getLang, t } from '../i18n'
-import PayByCode, { type PayInfo } from '../components/PayByCode'
 
 // Shown to visitors; change here when the real prices are decided (hryvnias).
 const MONTHLY = 49
@@ -42,12 +41,20 @@ export default function Pricing({ session }: { session: Session | null }) {
   // the admin's own text for the redeemed code (for example a thank-you for a survey)
   const [promoNote, setPromoNote] = useState('')
   const [promoBusy, setPromoBusy] = useState(false)
+  const [preordered, setPreordered] = useState(false)
+  const [preorderedMonths, setPreorderedMonths] = useState<number | null>(null)
   const [months, setMonths] = useState(1)
-  const [pay, setPay] = useState<PayInfo | null>(null)
+  const [status, setStatus] = useState('')
 
   useEffect(() => {
     if (!session) return
-    apiFetch<PayInfo>('/api/payments/info').then(setPay).catch(() => {})
+    apiFetch<{ preordered: boolean; months: number | null }>('/api/preorder')
+      .then((r) => {
+        setPreordered(r.preordered)
+        setPreorderedMonths(r.months)
+        if (r.months) setMonths(r.months)
+      })
+      .catch(() => setStatus(t('Не вдалося перевірити передзамовлення')))
   }, [session])
 
   async function redeem(e: FormEvent) {
@@ -94,9 +101,23 @@ export default function Pricing({ session }: { session: Session | null }) {
     }
   }
 
-  const base = PERIODS.find((p) => p.months === months) ?? PERIODS[0]
-  const chosen = { ...base, price: pay?.prices[String(months)] ?? base.price }
+  const chosen = PERIODS.find((p) => p.months === months) ?? PERIODS[0]
   const saving = Math.round(100 * (1 - chosen.price / (MONTHLY * chosen.months)))
+
+  async function preorder() {
+    try {
+      await apiFetch('/api/preorder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ months }),
+      })
+      setPreordered(true)
+      setPreorderedMonths(months)
+      setStatus('')
+    } catch {
+      setStatus(t('Не вдалося зберегти. Спробуйте ще раз'))
+    }
+  }
 
   return (
     <div>
@@ -133,16 +154,9 @@ export default function Pricing({ session }: { session: Session | null }) {
             {t('{n} грн на місяць', { n: Math.round(chosen.price / chosen.months) })}
             {saving > 0 && <span className="badge paid" style={{ marginLeft: 10 }}>{t('Економія {pct}%', { pct: saving })}</span>}
           </p>
-          {/* a visitor cannot ask whether card payment is on, so the text does not promise either way */}
-          {(!session || pay) && (
-            <p className="muted">
-              {!session
-                ? t('Оформити преміум можна після входу: оберіть період і оплатіть переказом на картку.')
-                : pay?.enabled
-                  ? t('Обирайте період і оплачуйте переказом на картку: преміум додасться до того, що в вас уже є.')
-                  : t('Оплату карткою тимчасово вимкнено. Якщо маєте промокод, введіть його нижче.')}
-            </p>
-          )}
+          <p className="muted">
+            {t('Більші ліміти вже працюють. Оплату підключимо найближчим часом: передзамовте, і ми повідомимо.')}
+          </p>
           <p>
             <strong>{t('Усе з безкоштовного тарифу, а також:')}</strong>
           </p>
@@ -158,11 +172,21 @@ export default function Pricing({ session }: { session: Session | null }) {
             </p>
           )}
           {!session ? (
-            <Link to="/auth">{t('Увійдіть, щоб оформити преміум')}</Link>
-          ) : pay?.enabled && !(me?.plan === 'premium' && !me.premium_until) ? (
-            // Premium users can pay too: the period is added to the end date they already have
-            <PayByCode info={pay} months={months} onPaid={refresh} />
-          ) : null}
+            <Link to="/auth">{t('Увійдіть, щоб передзамовити')}</Link>
+          ) : me?.plan === 'premium' ? null : preordered && preorderedMonths === months ? (
+            <p className="status">{t('Дякуємо! Ви в списку передзамовлень на {n} міс. Гроші зараз не списуються.', { n: months })}</p>
+          ) : (
+            <>
+              <button onClick={preorder}>
+                {preordered
+                  ? t('Змінити період на {n} міс', { n: months })
+                  : t('Передзамовити преміум на {n} міс', { n: months })}
+              </button>
+              <p>
+                <small>{t('Гроші зараз не списуються.')}</small>
+              </p>
+            </>
+          )}
         </section>
       </div>
       {session && (
@@ -184,6 +208,7 @@ export default function Pricing({ session }: { session: Session | null }) {
           {promoMessage && <p className="status" style={{ marginTop: 12 }}>{promoMessage}</p>}
         </section>
       )}
+      {status && <p className="status">{status}</p>}
       <p>
         <Link to="/support">{t('Підтримати проєкт донатом')}</Link>
       </p>

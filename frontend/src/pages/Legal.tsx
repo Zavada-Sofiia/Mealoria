@@ -29,7 +29,7 @@ function PrivacyUk() {
         <li>Ваші страви, фото страв, меню в календарі, список продуктів і продукти «вже є вдома».</li>
         <li>Журнал ваги й записи про воду, якщо ви їх ведете.</li>
         <li>Лічильники використання ШІ (скільки запитів за день), ваш тариф і промокоди, які ви активували.</li>
-        <li>Позначку «передзамовив преміум», якщо ви натискали таку кнопку раніше (зараз передзамовлень немає).</li>
+        <li>Позначку «передзамовив преміум», якщо ви натиснули відповідну кнопку.</li>
         <li>
           Замовлення на оплату преміуму: код замовлення, період, сума й час оплати. Дані вашої банківської картки ми не
           бачимо й не зберігаємо, переказ ви робите самі у своєму банку.
@@ -181,7 +181,7 @@ function PrivacyEn() {
         <li>Your dishes, dish photos, calendar menu, shopping list and “already at home” products.</li>
         <li>Your weight journal and water entries, if you keep them.</li>
         <li>AI usage counters (how many requests per day), your plan and the promo codes you activated.</li>
-        <li>A “pre-ordered Premium” flag, if you pressed that button earlier (pre-orders are no longer offered).</li>
+        <li>A “pre-ordered Premium” flag, if you pressed the corresponding button.</li>
         <li>
           Premium payment orders: the order code, period, amount and time of payment. We do not see or store your bank
           card details; you make the transfer yourself in your bank.
