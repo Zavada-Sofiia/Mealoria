@@ -301,7 +301,7 @@ docs/images/            скриншоти для цього README
 
 ### 1. База даних
 
-У Supabase → **SQL Editor** по черзі виконайте файли з `infra/supabase/` — від `001` до `035`.
+У Supabase → **SQL Editor** по черзі виконайте файли з `infra/supabase/` — від `001` до `037`.
 Скрипти можна запускати повторно. Каталог рецептів і посилання на фото лежать у `005`, `011`, `033` і `034`
 (фото мають бути завантажені в Storage, див. [Дані та джерела](#дані-та-джерела)).
 
@@ -355,8 +355,8 @@ npm run dev                  # http://localhost:5173
 ## Тести й CI
 
 ```bash
-cd backend && pytest                 # 250 тестів API та бізнес-логіки
-cd infra/tests && npm ci && node --test   # 40 тестів: усі SQL-міграції в Postgres у пам'яті (PGlite)
+cd backend && pytest                 # 253 тести API та бізнес-логіки
+cd infra/tests && npm ci && node --test   # 44 тести: усі SQL-міграції в Postgres у пам'яті (PGlite)
 cd frontend && npm run lint && npm run build
 ```
 
